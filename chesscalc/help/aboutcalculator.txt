@@ -1,0 +1,13 @@
+ChessPerfCalc displays numerical performance indicators from the game results supplied in a text file for the players who played in the games.
+
+
+This is chesscalc-1.2.1
+
+It depends on the following being installed
+solentware-misc-1.3
+
+ChessPerfCalc uses features introduced at Python3.2.
+
+Python3.2, or later versions when available, must be installed to run ChessPerfCalc.
+
+tkinter, part of Python, must be installed to run ChessPerfCalc.  Sometimes this is installed separately.
