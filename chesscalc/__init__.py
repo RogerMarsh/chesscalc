@@ -13,5 +13,5 @@ The performances are not grades because the results of calculations in previous
 runs are not used in this calculation.
 
 """
-APPLICATION_NAME = 'ChessPerfCalc'
-ERROR_LOG = 'ErrorLog'
+APPLICATION_NAME = "ChessPerfCalc"
+ERROR_LOG = "ErrorLog"

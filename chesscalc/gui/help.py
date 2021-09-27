@@ -17,8 +17,7 @@ import chesscalc.help
 def help_about_calculator(master):
     """Display About document for ChessPerfCalc."""
 
-    help_widget(
-        master, chesscalc.help.ABOUT, chesscalc.help)
+    help_widget(master, chesscalc.help.ABOUT, chesscalc.help)
 
 
 def help_notes_calculator(master):
@@ -27,8 +26,8 @@ def help_notes_calculator(master):
     help_widget(master, chesscalc.help.NOTES, chesscalc.help)
 
 
-if __name__=='__main__':
-    #Display all help documents without running ChessResults application
+if __name__ == "__main__":
+    # Display all help documents without running ChessResults application
 
     root = tkinter.Tk()
     help_about_calculator(root)
