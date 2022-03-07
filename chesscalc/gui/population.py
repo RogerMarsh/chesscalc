@@ -7,7 +7,7 @@
 """
 import tkinter
 
-from solentware_misc.gui.reports import show_report
+from solentware_misc.gui.reports import AppSysReport
 
 from ..core import performances
 
@@ -25,6 +25,7 @@ class Population(object):
         game_opponent,
         opponents,
         names,
+        show_report=AppSysReport,
     ):
         """Create widget to display population map analysis"""
         super().__init__()

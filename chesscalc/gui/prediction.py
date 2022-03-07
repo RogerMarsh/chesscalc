@@ -7,7 +7,7 @@
 """
 import tkinter
 
-from solentware_misc.gui.reports import show_report
+from solentware_misc.gui.reports import AppSysReport
 
 from ..core import performances
 
@@ -26,6 +26,7 @@ class Prediction(object):
         game_opponent,
         opponents,
         names,
+        show_report=AppSysReport,
     ):
         """Create widget to display performance calculations for games"""
         super(Prediction, self).__init__()
