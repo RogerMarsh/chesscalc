@@ -2,9 +2,7 @@
 # Copyright 2012 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""Display chess performance calculation by iteration for selected events.
-
-"""
+"""Display chess performance calculation by iteration for selected events."""
 import tkinter
 
 from solentware_misc.gui.reports import AppSysReport
@@ -27,7 +25,7 @@ class Performance(object):
         names,
         show_report=AppSysReport,
     ):
-        """Create widget to display performance calculations for games"""
+        """Create widget to display performance calculations for games."""
         super(Performance, self).__init__()
         self.games = games
         self.players = players
@@ -65,6 +63,7 @@ class Performance(object):
         self.calculate_performance()
 
     def calculate_performance(self):
+        """Calculate performances by iteration."""
         if self.performance is not None:
             return
         self.performance = performances.Performances()

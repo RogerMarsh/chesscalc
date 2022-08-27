@@ -2,9 +2,7 @@
 # Copyright 2009 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""Functions to create Help widgets for performance calculations.
-
-"""
+"""Functions to create Help widgets for performance calculations."""
 
 import tkinter
 
@@ -16,13 +14,11 @@ import chesscalc.help
 
 def help_about_calculator(master):
     """Display About document for ChessPerfCalc."""
-
     help_widget(master, chesscalc.help.ABOUT, chesscalc.help)
 
 
 def help_notes_calculator(master):
     """Display Notes document for ChessPerfCalc."""
-
     help_widget(master, chesscalc.help.NOTES, chesscalc.help)
 
 

@@ -2,9 +2,7 @@
 # Copyright 2012 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""Player performance calculation from results in selected events.
-
-"""
+"""Player performance calculation from results in selected events."""
 
 import math
 import collections
@@ -55,11 +53,10 @@ SUM_SCORE = "Sum Score"
 
 
 class Performances(object):
-
-    """Player performances in a set of events"""
+    """Player performances in a set of events."""
 
     def __init__(self):
-        """Initialise calculation data from database records for events"""
+        """Initialise calculation data from database records for events."""
         super(Performances, self).__init__()
         self.games = None
         self.players = None
@@ -149,7 +146,7 @@ class Performances(object):
                 self.removed.append(sp[1])
 
     def get_events(self, games, players, game_opponent, opponents):
-        """Initialise calculation data from database records for events"""
+        """Initialise calculation data from database records for events."""
         if self.games is not None:
             return
         self.games = games
@@ -158,7 +155,7 @@ class Performances(object):
         self.opponents = opponents
 
     def get_largest_population(self):
-        """Trim the games to match the largest connected population"""
+        """Trim the games to match the largest connected population."""
         if len(self.populations) < 2:
             return
         pops = sorted([(len(p), p) for p in self.populations])
@@ -218,29 +215,27 @@ class Performances(object):
 
 
 class Gap(object):
-
-    """Actual and expected results for a performance differences"""
+    """Actual and expected results for a performance differences."""
 
     def __init__(self, actual, expected):
-        """Initialise gap data for actual and expected scores"""
+        """Initialise gap data for actual and expected scores."""
         super(Gap, self).__init__()
         self.count = 1
         self.actual = actual
         self.expected = expected
 
     def add(self, actual, expected):
-        """Add actual and expected scores for game to gap data"""
+        """Add actual and expected scores for game to gap data."""
         self.count += 1
         self.actual += actual
         self.expected += expected
 
 
 class Person(object):
-
-    """Player details and calculation answers"""
+    """Player details and calculation answers."""
 
     def __init__(self, initialperformance):
-        """Initialise calculation data
+        """Initialise calculation data.
 
         If initialperformance is not None the value is used as the player's
         performance in all calculations of performance but iteration[0] is
@@ -264,77 +259,77 @@ class Person(object):
         self.grade = 0
 
     def add_grade_points(self, points):
-        """Add opponent's performance to grade points"""
+        """Add opponent's performance to grade points."""
         self.grade_points += points
 
     def add_points(self, points):
-        """Add opponent's performance to points"""
+        """Add opponent's performance to points."""
         self.points += points
 
     def add_predicted_score_grade(self, predicted_score):
-        """Increment predicted score using calculated grade"""
+        """Increment predicted score using calculated grade."""
         self.predicted_score_grade += predicted_score
 
     def add_predicted_score(self, predicted_score):
-        """Increment predicted score using calculated performance"""
+        """Increment predicted score using calculated performance."""
         self.predicted_score += predicted_score
 
     def add_predicted_score_initial(self, predicted_score):
-        """Increment predicted score using initial performance if available"""
+        """Increment predicted score using initial performance if available."""
         self.predicted_score_initial += predicted_score
 
     def add_reward(self, reward, measure):
-        """Increment total reward, total score and game count"""
+        """Increment total reward, total score and game count."""
         self.reward += reward * measure
         self.game_count += 1
         self.score += _REWARD_TO_RESULT[reward]
 
     def calculate_grade(self):
-        """Calculate and set player's grade"""
+        """Calculate and set player's grade."""
         self.grade = float(self.grade_points + self.reward) / self.game_count
 
     def calculate_performance(self):
-        """Calculate and set player's performance"""
+        """Calculate and set player's performance."""
         self.iteration.insert(
             0, float(self.points + self.reward) / self.game_count
         )
         del self.iteration[3:]
 
     def get_grade(self):
-        """Return player's grade"""
+        """Return player's grade."""
         if self.initial_performance is None:
             return self.grade
         else:
             return self.initial_performance
 
     def get_calculated_performance(self):
-        """Return player's calculated performance"""
+        """Return player's calculated performance."""
         return self.iteration[0]
 
     def get_initial_performance(self):
-        """Return player's initial performance"""
+        """Return player's initial performance."""
         if self.initial_performance is None:
             return 0
         else:
             return self.initial_performance
 
     def get_performance(self):
-        """Return player's performance for use in next ieration"""
+        """Return player's performance for use in next ieration."""
         if self.initial_performance is None:
             return self.iteration[0]
         else:
             return self.initial_performance
 
     def get_score(self):
-        """Return player's actual total score"""
+        """Return player's actual total score."""
         return self.score
 
     def is_performance_constant(self):
-        """Return True if performance is fixed for iteration calculations"""
+        """Return True if performance is fixed for iteration calculations."""
         return self.initial_performance is not None
 
     def is_performance_stable(self, delta):
-        """Return True if performance is fixed for iteration calculations"""
+        """Return True if performance is fixed for iteration calculations."""
         if self.initial_performance is not None:
             return True
         for e, i in enumerate(self.iteration[1:]):
@@ -345,13 +340,12 @@ class Person(object):
         return False
 
     def set_points(self, points=0):
-        """Initialise sum of opponent's performance to points"""
+        """Initialise sum of opponent's performance to points."""
         self.points = points
 
 
 class Calculation(object):
-
-    """Player performances calculated from a collection of results"""
+    """Player performances calculated from a collection of results."""
 
     def __init__(
         self,
@@ -363,7 +357,7 @@ class Calculation(object):
         limit=40,
         measure=50,
     ):
-        """Initialise calculation data"""
+        """Initialise calculation data."""
         super(Calculation, self).__init__()
         if initialperformance == None:
             initialperformance = {}
@@ -394,6 +388,7 @@ class Calculation(object):
                     persons[player].add_reward(reward, measure)
 
     def do_iterations(self, calculation=None, finalcalculation=None):
+        """Do iterations with calculation and final_calculation functions."""
         if self.games is None:
             return
         for i in range(self.iterations):
@@ -408,6 +403,7 @@ class Calculation(object):
             self.result_prediction(self.games[g])
 
     def get_statistics(self):
+        """Return dict of performance statistics."""
         if self.statistics is not None:
             return self.statistics.copy()
 
@@ -530,6 +526,7 @@ class Calculation(object):
         return self.statistics.copy()
 
     def grade_difference(self, game):
+        """Calculate grade: self.limit on difference is implied."""
         for p, o in game.items():
             op = self.persons[o].get_performance()
             pp = self.persons[p].get_performance()
@@ -541,6 +538,7 @@ class Calculation(object):
                 self.persons[p].add_grade_points(op)
 
     def iterate_performance(self, calculation=None):
+        """Do one iteration of the performance calculation."""
         if not isinstance(calculation, collections.Callable):
             calculation = self.performance_difference
         for p in self.persons.values():
@@ -550,10 +548,12 @@ class Calculation(object):
             p.calculate_performance()
 
     def performance_difference(self, game):
+        """Calculate game performances without a limit on difference."""
         for p, o in game.items():
             self.persons[p].add_points(self.persons[o].get_performance())
 
     def performance_difference_limited(self, game):
+        """Calculate game performances with self.limit on difference."""
         for p, o in game.items():
             op = self.persons[o].get_performance()
             pp = self.persons[p].get_performance()
@@ -565,14 +565,14 @@ class Calculation(object):
                 self.persons[p].add_points(op)
 
     def process_all_results(self, process):
-        """Do process on games where both players are in population"""
+        """Do process on games where both players are in population."""
         if self.opponents is None:
             return
         for popgame in self.popgames:
             process(self.opponents[popgame])
 
     def _performance_prediction(self, get_player, get_opponent, add):
-        """Add predicted score into entry using add method"""
+        """Add predicted score into entry using add method."""
         gap = get_player() - get_opponent()
         if gap > self.measure:
             add(1)
@@ -580,7 +580,7 @@ class Calculation(object):
             add((gap + self.measure) / self.span)
 
     def performance_prediction(self, game):
-        """Calculate predicted scores from calculated performances"""
+        """Calculate predicted scores from calculated performances."""
         for player, opponent in [
             (self.persons[p], self.persons[o]) for p, o in game.items()
         ]:
@@ -601,7 +601,7 @@ class Calculation(object):
             )
 
     def _result_prediction(self, actual, gap, gaps):
-        """Add actual and expected result for gap into gaps entry for gap"""
+        """Add actual and expected result for gap into gaps entry for gap."""
         if gap > self.measure:
             expected = 1
         elif -gap > self.measure:
@@ -620,7 +620,7 @@ class Calculation(object):
             gaps[int(min(gap, self.measure + 1))] = Gap(actual, expected)
 
     def result_prediction(self, game):
-        """Calculate actual and expected scores for performance differences
+        """Calculate actual and expected scores for performance differences.
 
         Calculation is from point of view of player with higher performance
         number.  So 1 >= expected score in any game >= 0.5.
@@ -650,7 +650,15 @@ class Calculation(object):
         )
 
     def do_iterations_until_stable(self, delta=0.000000000001, cycles=None):
-        """ """
+        """Iterate until all performances vary by less tham delta.
+
+        Performances in an iteration are compared with the previous iteration.
+
+        A cycles argument which is not None allows iterations to continue
+        until the condition on deleta is met.  Otherwise the number of
+        iterations is limited by self.iterations.
+
+        """
         if self.games is None:
             return
         cycle_iterations = self.iterations * 2
@@ -669,7 +677,6 @@ class Calculation(object):
 
 
 class Distribution(object):
-
     """Game results partitioned by performance difference between players.
 
     Partition a set of games against the performance calculation for a set of
@@ -682,7 +689,7 @@ class Distribution(object):
     """
 
     def __init__(self, players, games):
-        """Initialise distribution data"""
+        """Initialise distribution data."""
         super(Distribution, self).__init__()
         if isinstance(players, Calculation):
             players = players.persons
@@ -705,7 +712,7 @@ class Distribution(object):
         self.distributions = {}
 
     def calculate_distribution(self, interval):
-        """calculate and cache the result distribution using interval."""
+        """Calculate and cache the result distribution using interval."""
         if interval in self.distributions:
             return
         distribution = {}
@@ -722,7 +729,6 @@ class Distribution(object):
 
 
 class Interval(object):
-
     """Accumulate results for a performance difference.
 
     Results are recorded from the point of view of the player with the higher
@@ -731,7 +737,7 @@ class Interval(object):
     """
 
     def __init__(self, bucket, width):
-        """Initialise interval description"""
+        """Initialise interval description."""
         super(Interval, self).__init__()
         self.base = bucket * width
         self.width = width
@@ -740,7 +746,7 @@ class Interval(object):
         self.losses = 0
 
     def add_result(self, game, reference):
-        """Increment the appropriate win, draw, loss counter for result"""
+        """Increment the appropriate win, draw, loss counter for result."""
         p1, p2 = ((k, v) for k, v in game[-1].items())
         if p1[1] == 0:
             self.draws += 1
@@ -762,8 +768,7 @@ class Interval(object):
 
 
 class PopulationMap(object):
-
-    """Partitition a population into core, link, and remainder populations.
+    """Partition a population into core, link, and remainder populations.
 
     Partitioning is done using the number of edges attached to a node.
 

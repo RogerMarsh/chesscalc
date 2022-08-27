@@ -2,8 +2,7 @@
 # Copyright 2011 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""chesscalc help package
-"""
+"""chesscalc help package."""
 
 import os
 

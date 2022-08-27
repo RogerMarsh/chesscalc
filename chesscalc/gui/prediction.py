@@ -2,9 +2,7 @@
 # Copyright 2013 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""Display chess performance predictions by season for selected events.
-
-"""
+"""Display chess performance predictions by season for selected events."""
 import tkinter
 
 from solentware_misc.gui.reports import AppSysReport
@@ -28,7 +26,7 @@ class Prediction(object):
         names,
         show_report=AppSysReport,
     ):
-        """Create widget to display performance calculations for games"""
+        """Create widget to display performance calculations for games."""
         super(Prediction, self).__init__()
         self.seasons = seasons
         self.games = games
@@ -67,6 +65,7 @@ class Prediction(object):
         self.calculate_prediction()
 
     def calculate_prediction(self):
+        """Calculate predicted performance for performance differences."""
         if self.predictions is not None:
             return
 
@@ -317,7 +316,7 @@ class Prediction(object):
             self.report_prediction(bs)
 
     def report_prediction(self, bucket_size):
-
+        """Report prediction for performance difference bucket size."""
         # Output is buffered for, in practical terms, an infinite improvement
         # in time taken to display answer on OpenBSD.
         pc = []

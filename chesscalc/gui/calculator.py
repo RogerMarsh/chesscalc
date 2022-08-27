@@ -2,9 +2,7 @@
 # Copyright 2012 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""Display chess performance calculation by iteration for file of games.
-
-"""
+"""Display chess performance calculation by iteration for file of games."""
 
 import tkinter
 import tkinter.messagebox
@@ -26,11 +24,10 @@ SCORE = {
 
 
 class Calculator(ExceptionHandler):
-
     """Base class for reports and dialogues."""
 
     def __init__(self):
-        """Create widget to display performance calculations for games"""
+        """Create widget to display performance calculations for games."""
         super(Calculator, self).__init__()
         self.filename = None
         self.games = None
@@ -133,6 +130,7 @@ class Calculator(ExceptionHandler):
         pw.pack(side=tkinter.BOTTOM, fill=tkinter.BOTH, expand=tkinter.TRUE)
 
     def calculate_performance(self):
+        """Calculate performances for connected population by iteration."""
         if self.filename is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
@@ -398,6 +396,7 @@ class Calculator(ExceptionHandler):
         self.report.insert(tkinter.END, "\n".join(report_lines))
 
     def find_populations(self):
+        """Find distinct populations created by removing games one by one."""
         if self.filename is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
@@ -461,6 +460,7 @@ class Calculator(ExceptionHandler):
         )
 
     def get_games_from_text_file(self):
+        """Get games from a file with one game per line."""
         filename = tkinter.filedialog.askopenfilename(
             parent=self.pcgames,
             title="Open file",

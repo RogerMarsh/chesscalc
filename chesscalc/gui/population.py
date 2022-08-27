@@ -2,9 +2,7 @@
 # Copyright 2013 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""Display chess player population map analysis.
-
-"""
+"""Display chess player population map analysis."""
 import tkinter
 
 from solentware_misc.gui.reports import AppSysReport
@@ -27,7 +25,7 @@ class Population(object):
         names,
         show_report=AppSysReport,
     ):
-        """Create widget to display population map analysis"""
+        """Create widget to display population map analysis."""
         super().__init__()
         self.games = games
         self.players = players
