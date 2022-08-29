@@ -359,7 +359,7 @@ class Calculation(object):
     ):
         """Initialise calculation data."""
         super(Calculation, self).__init__()
-        if initialperformance == None:
+        if initialperformance is None:
             initialperformance = {}
         self.iterations = iterations
         self.opponents = opponents
@@ -982,7 +982,7 @@ def stdev(nums):
         return math.sqrt(sumsq([x - avg for x in nums]) / (len(nums) - 1))
     except ZeroDivisionError:
         return None
-    except:
+    except Exception:
         if avg is None:
             return None
         else:

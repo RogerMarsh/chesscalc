@@ -14,7 +14,7 @@ from solentware_misc.gui.exceptionhandler import ExceptionHandler
 from ..core import performances
 from . import help
 
-GAME_RE_STR = "\s*(.*?)\s+(1-0|draw|0-1)\s+(.*?)\s*$"
+GAME_RE_STR = r"\s*(.*?)\s+(1-0|draw|0-1)\s+(.*?)\s*$"
 re_game = re.compile(GAME_RE_STR)
 SCORE = {
     "1-0": (1, -1),
@@ -205,9 +205,9 @@ class Calculator(ExceptionHandler):
                                 str(epops + 1),
                                 " opponents (some players may have played ",
                                 str(epops + 1),
-                                " games) so no players will be removed from the ",
-                                "population on this cycle and the performance ",
-                                "calculation is not done.\n\n",
+                                " games) so no players will be removed from ",
+                                "the population on this cycle and the ",
+                                "performance calculation is not done.\n\n",
                             )
                         ),
                     )
@@ -234,8 +234,8 @@ class Calculator(ExceptionHandler):
                         tkinter.END,
                         "".join(
                             (
-                                "The following performance calculation excludes ",
-                                "players who played less than ",
+                                "The following performance calculation ",
+                                "excludes players who played less than ",
                                 str(epops + 1),
                                 " opponents.\n\n",
                             )
@@ -339,9 +339,10 @@ class Calculator(ExceptionHandler):
             report_lines.append(
                 "".join(
                     (
-                        "\n\n\nThe following performance calculation includes ",
-                        "all players but the performances calculated earlier ",
-                        "by ignoring all players with less than ",
+                        "\n\n\nThe following performance calculation ",
+                        "includes all players but the performances ",
+                        "calculated earlier by ignoring all players with ",
+                        "less than ",
                         str(cfpc + 1),
                         " opponents are used as fixed values for this ",
                         "calculation.",

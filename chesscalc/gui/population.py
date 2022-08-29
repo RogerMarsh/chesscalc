@@ -262,8 +262,8 @@ class Population(object):
                 pc.append(
                     "".join(
                         (
-                            "\nThe number of opponents of core players in the ",
-                            "link populations are: ",
+                            "\nThe number of opponents of core players in ",
+                            "the link populations are: ",
                         )
                     )
                 )
@@ -365,8 +365,8 @@ class Population(object):
                 pc.append(
                     "".join(
                         (
-                            "\nThe number of opponents of link players in the ",
-                            "remainder populations are: ",
+                            "\nThe number of opponents of link players in ",
+                            "the remainder populations are: ",
                         )
                     )
                 )
