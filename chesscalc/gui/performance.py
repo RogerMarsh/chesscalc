@@ -42,8 +42,8 @@ class Performance(object):
         self.calculation = None
 
         self.perfcalc = show_report(
-            parent,
-            title,
+            parent=parent,
+            title=title,
             save=(
                 "Save",
                 "Save Performance Report",

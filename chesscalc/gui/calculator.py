@@ -9,7 +9,7 @@ import tkinter.messagebox
 import tkinter.filedialog
 import re
 
-from solentware_misc.gui.exceptionhandler import ExceptionHandler
+from solentware_misc.gui.bindings import Bindings
 
 from ..core import performances
 from . import help
@@ -23,12 +23,12 @@ SCORE = {
 }
 
 
-class Calculator(ExceptionHandler):
+class Calculator(Bindings):
     """Base class for reports and dialogues."""
 
     def __init__(self):
         """Create widget to display performance calculations for games."""
-        super(Calculator, self).__init__()
+        super().__init__()
         self.filename = None
         self.games = None
         self.players = None

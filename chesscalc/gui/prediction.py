@@ -44,8 +44,8 @@ class Prediction(object):
         self.calculations = None
 
         self.perfcalc = show_report(
-            parent,
-            title,
+            parent=parent,
+            title=title,
             save=(
                 "Save",
                 "Save Prediction Report",

@@ -42,8 +42,8 @@ class Population(object):
         self.population_maps = None
 
         self.mapcalc = show_report(
-            parent,
-            title,
+            parent=parent,
+            title=title,
             save=(
                 "Save",
                 "Save Population Report",
