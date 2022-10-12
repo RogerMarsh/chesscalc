@@ -5,6 +5,7 @@
 """Display chess performance calculation by iteration for file of games."""
 
 import tkinter
+import tkinter.ttk
 import tkinter.messagebox
 import tkinter.filedialog
 import re
@@ -12,7 +13,7 @@ import re
 from solentware_misc.gui.bindings import Bindings
 
 from ..core import performances
-from . import help
+from . import help_
 
 GAME_RE_STR = r"\s*(.*?)\s+(1-0|draw|0-1)\s+(.*?)\s*$"
 re_game = re.compile(GAME_RE_STR)
@@ -39,10 +40,11 @@ class Calculator(Bindings):
         self.fixed_performance = None
         self.widget = tkinter.Tk()
         self.widget.wm_title("Performance Calculation")
-        sbf = tkinter.Frame(master=self.widget, cnf={})
-        self.sbiter = tkinter.Spinbox(
+        sbf = tkinter.ttk.Frame(master=self.widget)
+        self.sbiter = tkinter.ttk.Spinbox(
             master=sbf, from_=10, to=1000, increment=10
         )
+        self.sbiter.set(10)
         self.menubar = tkinter.Menu(master=self.widget)
 
         def close_display():
@@ -55,10 +57,10 @@ class Calculator(Bindings):
                 self.widget.winfo_toplevel().destroy()
 
         def help_about():
-            help.help_about_calculator(self.widget)
+            help_.help_about_calculator(self.widget)
 
         def help_notes():
-            help.help_notes_calculator(self.widget)
+            help_.help_notes_calculator(self.widget)
 
         self.menubar.add_command(
             label="Open",
@@ -72,7 +74,8 @@ class Calculator(Bindings):
             underline=0,
             command=self.try_command(close_display, self.menubar),
         )
-        menuhelp = tkinter.Menu(self.menubar, name="help", tearoff=False)
+        menuhelp = tkinter.Menu(
+            self.menubar, cnf=dict(name="help_", tearoff=False))
         self.menubar.add_cascade(label="Help", menu=menuhelp, underline=0)
         menuhelp.add_command(
             label="Notes",
@@ -85,20 +88,19 @@ class Calculator(Bindings):
             command=self.try_command(help_about, menuhelp),
         )
         self.widget.configure(menu=self.menubar)
-        tkinter.Label(master=sbf, text="Iterations ").pack(side=tkinter.LEFT)
+        tkinter.ttk.Label(master=sbf, text="Iterations ").pack(side=tkinter.LEFT)
         self.sbiter.pack(side=tkinter.LEFT)
         sbf.pack(fill=tkinter.X)
-        pw = tkinter.PanedWindow(
+        pw = tkinter.ttk.PanedWindow(
             master=self.widget,
-            opaqueresize=tkinter.FALSE,
             orient=tkinter.VERTICAL,
         )
-        pwgames = tkinter.PanedWindow(
-            master=pw, opaqueresize=tkinter.FALSE, orient=tkinter.VERTICAL
+        pwgames = tkinter.ttk.PanedWindow(
+            master=pw, orient=tkinter.VERTICAL
         )
-        ef = tkinter.Frame(master=pwgames, cnf={})
+        ef = tkinter.ttk.Frame(master=pwgames)
         self.pcgames = tkinter.Text(
-            master=ef, wrap=tkinter.WORD, tabstyle="tabular"
+            master=ef, cnf=dict(wrap=tkinter.WORD, tabstyle="tabular")
         )
         scrollbar = tkinter.Scrollbar(
             master=ef, orient=tkinter.VERTICAL, command=self.pcgames.yview
@@ -109,14 +111,14 @@ class Calculator(Bindings):
             side=tkinter.LEFT, fill=tkinter.BOTH, expand=tkinter.TRUE
         )
         pwgames.add(ef)
-        pwcalc = tkinter.PanedWindow(
-            master=pw, opaqueresize=tkinter.FALSE, orient=tkinter.VERTICAL
+        pwcalc = tkinter.ttk.PanedWindow(
+            master=pw, orient=tkinter.VERTICAL
         )
-        ef = tkinter.Frame(master=pwcalc, cnf={})
+        ef = tkinter.ttk.Frame(master=pwcalc)
         self.report = tkinter.Text(
-            master=ef, wrap=tkinter.WORD, tabstyle="tabular"
+            master=ef, cnf=dict(wrap=tkinter.WORD, tabstyle="tabular")
         )
-        scrollbar = tkinter.Scrollbar(
+        scrollbar = tkinter.ttk.Scrollbar(
             master=ef, orient=tkinter.VERTICAL, command=self.report.yview
         )
         self.report.configure(yscrollcommand=scrollbar.set)
@@ -478,7 +480,7 @@ class Calculator(Bindings):
             opponents = dict()
             names = dict()
             lines = []
-            inp = open(filename, mode="rb")
+            inp = open(filename, mode="r", encoding="utf-8")
             try:
                 for line in inp:
                     gn = len(games)

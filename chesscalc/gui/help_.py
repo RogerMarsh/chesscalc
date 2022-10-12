@@ -1,4 +1,4 @@
-# help.py
+# help_.py
 # Copyright 2009 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
@@ -7,19 +7,19 @@
 import tkinter
 
 import solentware_misc.gui.textreadonly
-from solentware_misc.gui.help import help_widget
+from solentware_misc.gui.help_ import help_widget
 
-import chesscalc.help
+import chesscalc.help_
 
 
 def help_about_calculator(master):
     """Display About document for ChessPerfCalc."""
-    help_widget(master, chesscalc.help.ABOUT, chesscalc.help)
+    help_widget(master, chesscalc.help_.ABOUT, chesscalc.help_)
 
 
 def help_notes_calculator(master):
     """Display Notes document for ChessPerfCalc."""
-    help_widget(master, chesscalc.help.NOTES, chesscalc.help)
+    help_widget(master, chesscalc.help_.NOTES, chesscalc.help_)
 
 
 if __name__ == "__main__":

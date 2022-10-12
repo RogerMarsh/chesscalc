@@ -1,7 +1,7 @@
 Summary
 
 
-Analyse a file of game results and display performance calculations.
+Analyse a file (utf-8 encoding) of game results and display performance calculations.
 
 The results are checked to confirm that each player is connected to every other player by some chain of results.
 
@@ -35,6 +35,8 @@ Open
 
 
 Select a file from which the game results to be processed are taken.
+
+The file encoding must be 'utf-8'.
 
 Game results are:
 
