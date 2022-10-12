@@ -39,7 +39,7 @@ class Calculator(Bindings):
         self.fixed_performance = None
         self.widget = tkinter.Tk()
         self.widget.wm_title("Performance Calculation")
-        sbf = tkinter.Frame(master=self.widget)
+        sbf = tkinter.Frame(master=self.widget, cnf={})
         self.sbiter = tkinter.Spinbox(
             master=sbf, from_=10, to=1000, increment=10
         )
@@ -96,7 +96,7 @@ class Calculator(Bindings):
         pwgames = tkinter.PanedWindow(
             master=pw, opaqueresize=tkinter.FALSE, orient=tkinter.VERTICAL
         )
-        ef = tkinter.Frame(master=pwgames)
+        ef = tkinter.Frame(master=pwgames, cnf={})
         self.pcgames = tkinter.Text(
             master=ef, wrap=tkinter.WORD, tabstyle="tabular"
         )
@@ -112,7 +112,7 @@ class Calculator(Bindings):
         pwcalc = tkinter.PanedWindow(
             master=pw, opaqueresize=tkinter.FALSE, orient=tkinter.VERTICAL
         )
-        ef = tkinter.Frame(master=pwcalc)
+        ef = tkinter.Frame(master=pwcalc, cnf={})
         self.report = tkinter.Text(
             master=ef, wrap=tkinter.WORD, tabstyle="tabular"
         )
