@@ -75,7 +75,8 @@ class Calculator(Bindings):
             command=self.try_command(close_display, self.menubar),
         )
         menuhelp = tkinter.Menu(
-            self.menubar, cnf=dict(name="help_", tearoff=False))
+            self.menubar, cnf=dict(name="help_", tearoff=False)
+        )
         self.menubar.add_cascade(label="Help", menu=menuhelp, underline=0)
         menuhelp.add_command(
             label="Notes",
@@ -88,21 +89,21 @@ class Calculator(Bindings):
             command=self.try_command(help_about, menuhelp),
         )
         self.widget.configure(menu=self.menubar)
-        tkinter.ttk.Label(master=sbf, text="Iterations ").pack(side=tkinter.LEFT)
+        tkinter.ttk.Label(master=sbf, text="Iterations ").pack(
+            side=tkinter.LEFT
+        )
         self.sbiter.pack(side=tkinter.LEFT)
         sbf.pack(fill=tkinter.X)
         pw = tkinter.ttk.PanedWindow(
             master=self.widget,
             orient=tkinter.VERTICAL,
         )
-        pwgames = tkinter.ttk.PanedWindow(
-            master=pw, orient=tkinter.VERTICAL
-        )
+        pwgames = tkinter.ttk.PanedWindow(master=pw, orient=tkinter.VERTICAL)
         ef = tkinter.ttk.Frame(master=pwgames)
         self.pcgames = tkinter.Text(
             master=ef, cnf=dict(wrap=tkinter.WORD, tabstyle="tabular")
         )
-        scrollbar = tkinter.Scrollbar(
+        scrollbar = tkinter.ttk.Scrollbar(
             master=ef, orient=tkinter.VERTICAL, command=self.pcgames.yview
         )
         self.pcgames.configure(yscrollcommand=scrollbar.set)
@@ -111,9 +112,7 @@ class Calculator(Bindings):
             side=tkinter.LEFT, fill=tkinter.BOTH, expand=tkinter.TRUE
         )
         pwgames.add(ef)
-        pwcalc = tkinter.ttk.PanedWindow(
-            master=pw, orient=tkinter.VERTICAL
-        )
+        pwcalc = tkinter.ttk.PanedWindow(master=pw, orient=tkinter.VERTICAL)
         ef = tkinter.ttk.Frame(master=pwcalc)
         self.report = tkinter.Text(
             master=ef, cnf=dict(wrap=tkinter.WORD, tabstyle="tabular")
