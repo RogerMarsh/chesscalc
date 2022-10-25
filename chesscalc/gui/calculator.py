@@ -10,7 +10,7 @@ import tkinter.messagebox
 import tkinter.filedialog
 import re
 
-from solentware_misc.gui.bindings import Bindings
+from solentware_bind.gui.bindings import Bindings
 
 from ..core import performances
 from . import help_
