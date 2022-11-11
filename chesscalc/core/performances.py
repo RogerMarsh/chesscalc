@@ -393,7 +393,7 @@ class Calculation(object):
             return
         for i in range(self.iterations):
             self.iterate_performance(calculation)
-        if isinstance(finalcalculation, collections.Callable):
+        if isinstance(finalcalculation, collections.abc.Callable):
             self.iterate_performance(finalcalculation)
         self.process_all_results(self.grade_difference)
         for p in self.persons.values():
@@ -539,7 +539,7 @@ class Calculation(object):
 
     def iterate_performance(self, calculation=None):
         """Do one iteration of the performance calculation."""
-        if not isinstance(calculation, collections.Callable):
+        if not isinstance(calculation, collections.abc.Callable):
             calculation = self.performance_difference
         for p in self.persons.values():
             p.set_points()
