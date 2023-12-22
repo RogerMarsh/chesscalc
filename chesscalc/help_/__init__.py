@@ -2,7 +2,7 @@
 # Copyright 2011 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""chesscalc help package."""
+"""Identify and initialise help_ as a sub-package in chesscalc."""
 
 import os
 

@@ -6,7 +6,12 @@
 
 if __name__ == "__main__":
 
+    import multiprocessing
+
     from . import APPLICATION_NAME
+
+    multiprocessing.set_start_method("spawn")
+    del multiprocessing
 
     try:
         from solentware_misc.gui.startstop import (
@@ -32,7 +37,7 @@ if __name__ == "__main__":
                     )
                 ),
             )
-        except BaseException:
+        except tkinter.TclError:
             pass
         raise SystemExit("Unable to import start application utilities")
     try:
@@ -41,14 +46,18 @@ if __name__ == "__main__":
         start_application_exception(
             error, appname=APPLICATION_NAME, action="import"
         )
-        raise SystemExit(" import ".join(("Unable to", APPLICATION_NAME)))
+        raise SystemExit(
+            " import ".join(("Unable to", APPLICATION_NAME))
+        ) from error
     try:
         app = Calculator()
     except Exception as error:
         start_application_exception(
             error, appname=APPLICATION_NAME, action="initialise"
         )
-        raise SystemExit(" initialise ".join(("Unable to", APPLICATION_NAME)))
+        raise SystemExit(
+            " initialise ".join(("Unable to", APPLICATION_NAME))
+        ) from error
     try:
         app.widget.mainloop()
     except SystemExit:
@@ -62,3 +71,8 @@ if __name__ == "__main__":
             title="Chess Performace Calculator",
             appname=APPLICATION_NAME,
         )
+        raise SystemExit(
+            " reporting exception in ".join(
+                ("Exception while", APPLICATION_NAME)
+            )
+        ) from error
