@@ -19,15 +19,12 @@ class ModesRow(performancerecord.ModeDBrecord, datarow.DataRow):
     header_specification = [
         {
             datarow.WIDGET: tkinter.Label,
-            datarow.WIDGET_CONFIGURE: dict(
-                text=text, anchor=tkinter.CENTER
-            ),
+            datarow.WIDGET_CONFIGURE: dict(text=text, anchor=tkinter.CENTER),
             datarow.GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
             datarow.GRID_COLUMNCONFIGURE: dict(weight=0, uniform=uniform),
             datarow.ROW: 0,
-        } for column, text, uniform in (
-            (0, constants.TAG_MODE, "u0"),
-        )
+        }
+        for column, text, uniform in ((0, constants.TAG_MODE, "u0"),)
     ]
 
     def __init__(self, database=None):
@@ -44,9 +41,8 @@ class ModesRow(performancerecord.ModeDBrecord, datarow.DataRow):
                 WIDGET_CONFIGURE: dict(anchor=anchor),
                 GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
                 ROW: 0,
-            } for column, anchor in (
-                (0, tkinter.CENTER),
-            )
+            }
+            for column, anchor in ((0, tkinter.CENTER),)
         ]
 
     def grid_row(self, **kargs):
@@ -57,8 +53,5 @@ class ModesRow(performancerecord.ModeDBrecord, datarow.DataRow):
         """
         value = self.value
         return super().grid_row(
-            textitems=(
-                value.mode if value.mode is not None else "",
-            ),
-            **kargs
+            textitems=(value.mode if value.mode is not None else "",), **kargs
         )

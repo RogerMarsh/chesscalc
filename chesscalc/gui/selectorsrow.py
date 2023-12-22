@@ -19,13 +19,12 @@ class SelectorsRow(performancerecord.SelectorDBrecord, datarow.DataRow):
     header_specification = [
         {
             datarow.WIDGET: tkinter.Label,
-            datarow.WIDGET_CONFIGURE: dict(
-                text=text, anchor=tkinter.CENTER
-            ),
+            datarow.WIDGET_CONFIGURE: dict(text=text, anchor=tkinter.CENTER),
             datarow.GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
             datarow.GRID_COLUMNCONFIGURE: dict(weight=0, uniform=uniform),
             datarow.ROW: 0,
-        } for column, text, uniform in (
+        }
+        for column, text, uniform in (
             (0, "Rule", "u0"),
             (1, "From", "u1"),
             (2, "To", "u2"),
@@ -48,7 +47,8 @@ class SelectorsRow(performancerecord.SelectorDBrecord, datarow.DataRow):
                 WIDGET_CONFIGURE: dict(anchor=anchor),
                 GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
                 ROW: 0,
-            } for column, anchor in (
+            }
+            for column, anchor in (
                 (0, tkinter.CENTER),
                 (1, tkinter.CENTER),
                 (2, tkinter.CENTER),
@@ -69,7 +69,9 @@ class SelectorsRow(performancerecord.SelectorDBrecord, datarow.DataRow):
                 value.name if value.name is not None else "",
                 value.from_date if value.from_date is not None else "",
                 value.to_date if value.to_date is not None else "",
-                value.person_identity if value.person_identity is not None else "",
+                value.person_identity
+                if value.person_identity is not None
+                else "",
                 value.event_names if value.event_names is not None else "",
             ),
             **kargs

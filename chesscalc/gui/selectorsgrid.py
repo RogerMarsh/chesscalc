@@ -31,9 +31,9 @@ class SelectorsGrid(gridbindings.GridBindings, datagrid.DataGridReadOnly):
         self.set_data_source(source)
 
         # Not using appsys* modules: so how does chesstab do this if needed?
-        #self.appsyspanel.get_appsys().get_data_register().register_in(
+        # self.appsyspanel.get_appsys().get_data_register().register_in(
         #    self, self.on_data_change
-        #)
+        # )
 
     def show_popup_menu_no_row(self, event=None):
         """Override superclass to do nothing."""

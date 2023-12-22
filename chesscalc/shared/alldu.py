@@ -61,9 +61,7 @@ def du_delete_backup_after_task(
     if cdb.take_backup_before_deferred_update:
         if reporter is not None:
             reporter.append_text(
-                taskname.lower().join(
-                    ("Delete backup for ", ".")
-                )
+                taskname.lower().join(("Delete backup for ", "."))
             )
         cdb.delete_archive(name=file)
         if reporter is not None:
@@ -113,7 +111,7 @@ def du_import(
     importer = performancerecord.GameDBImporter()
     for key in cdb.table.keys():
         if key == file:
-            #if hasattr(cdb.__class__, "segment_size_bytes"):
+            # if hasattr(cdb.__class__, "segment_size_bytes"):
             #    #if increases is None:
             #    #    counts = [0, 0]
             #    #else:
@@ -229,7 +227,10 @@ def _pre_unset_defer_update_reports(database, file, reporter):
             "".join(
                 (
                     "Data pages used in import: ",
-                    str(sizes["BHIGHPG"] - database.table[name].table_b_pages_used),
+                    str(
+                        sizes["BHIGHPG"]
+                        - database.table[name].table_b_pages_used
+                    ),
                 )
             )
         )
@@ -254,13 +255,9 @@ def _post_unset_defer_update_reports(database, file, reporter, dsize):
     for name, sizes in database.get_database_table_sizes(
         files=set((file,))
     ).items():
-        reporter.append_text(
-            "".join(("Index size status for ", name, "."))
-        )
+        reporter.append_text("".join(("Index size status for ", name, ".")))
         new_dsize = sizes["DSIZE"]
-        reporter.append_text_only(
-            "Index area size: " + str(new_dsize)
-        )
+        reporter.append_text_only("Index area size: " + str(new_dsize))
         reporter.append_text_only(
             "".join(
                 (
@@ -286,11 +283,11 @@ def _post_unset_defer_update_reports(database, file, reporter, dsize):
 
 def do_deferred_update(cdb, *args, file=None, **kwargs):
     """Open database, delegate to du_import, and close database."""
-    #du_backup_before_task(cdb, "import", file=file, **kwargs)
+    # du_backup_before_task(cdb, "import", file=file, **kwargs)
     cdb.open_database()
     du_import(cdb, *args, file=file, **kwargs)
     cdb.close_database()
-    #du_delete_backup_after_task(cdb, "import", file=file, **kwargs)
+    # du_delete_backup_after_task(cdb, "import", file=file, **kwargs)
 
 
 def players_du_copy(
@@ -321,7 +318,7 @@ def players_du_copy(
             )
             reporter.append_text_only("")
         return
-    #cdb.set_defer_update()
+    # cdb.set_defer_update()
     cdb.start_transaction()
     try:
         if not importer.copy_player_names_from_games(
@@ -334,28 +331,26 @@ def players_du_copy(
         if reporter is not None:
             reporter.append_text("Finishing copy: please wait.")
             reporter.append_text_only("")
-        #cdb.do_final_segment_deferred_updates()
+        # cdb.do_final_segment_deferred_updates()
     except Exception as exc:
         _report_exception(cdb, reporter, exc)
         raise
-    #cdb.unset_defer_update()
+    # cdb.unset_defer_update()
     cdb.commit()
 
 
-def do_players_deferred_update(
-    cdb, pgn_directory, *args, file=None, **kwargs
-):
+def do_players_deferred_update(cdb, pgn_directory, *args, file=None, **kwargs):
     """Open database, delegate to players_du_copy, and close database.
 
     Argument pgn_directory is supplied but not used in the events_du_copy()
     call.
 
     """
-    #du_backup_before_task(cdb, "copy", file=file, **kwargs)
+    # du_backup_before_task(cdb, "copy", file=file, **kwargs)
     cdb.open_database()
     players_du_copy(cdb, *args, file=file, **kwargs)
     cdb.close_database()
-    #du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
+    # du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
 
 
 def events_du_copy(
@@ -386,7 +381,7 @@ def events_du_copy(
             )
             reporter.append_text_only("")
         return
-    #cdb.set_defer_update()
+    # cdb.set_defer_update()
     cdb.start_transaction()
     try:
         if not importer.copy_event_names_from_games(
@@ -399,28 +394,26 @@ def events_du_copy(
         if reporter is not None:
             reporter.append_text("Finishing copy: please wait.")
             reporter.append_text_only("")
-        #cdb.do_final_segment_deferred_updates()
+        # cdb.do_final_segment_deferred_updates()
     except Exception as exc:
         _report_exception(cdb, reporter, exc)
         raise
-    #cdb.unset_defer_update()
+    # cdb.unset_defer_update()
     cdb.commit()
 
 
-def do_events_deferred_update(
-    cdb, pgn_directory, *args, file=None, **kwargs
-):
+def do_events_deferred_update(cdb, pgn_directory, *args, file=None, **kwargs):
     """Open database, delegate to events_du_copy, and close database.
 
     Argument pgn_directory is supplied but not used in the events_du_copy()
     call.
 
     """
-    #du_backup_before_task(cdb, "copy", file=file, **kwargs)
+    # du_backup_before_task(cdb, "copy", file=file, **kwargs)
     cdb.open_database()
     events_du_copy(cdb, *args, file=file, **kwargs)
     cdb.close_database()
-    #du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
+    # du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
 
 
 def time_controls_du_copy(
@@ -451,7 +444,7 @@ def time_controls_du_copy(
             )
             reporter.append_text_only("")
         return
-    #cdb.set_defer_update()
+    # cdb.set_defer_update()
     cdb.start_transaction()
     try:
         if not importer.copy_time_control_names_from_games(
@@ -464,11 +457,11 @@ def time_controls_du_copy(
         if reporter is not None:
             reporter.append_text("Finishing copy: please wait.")
             reporter.append_text_only("")
-        #cdb.do_final_segment_deferred_updates()
+        # cdb.do_final_segment_deferred_updates()
     except Exception as exc:
         _report_exception(cdb, reporter, exc)
         raise
-    #cdb.unset_defer_update()
+    # cdb.unset_defer_update()
     cdb.commit()
 
 
@@ -481,11 +474,11 @@ def do_time_controls_deferred_update(
     call.
 
     """
-    #du_backup_before_task(cdb, "copy", file=file, **kwargs)
+    # du_backup_before_task(cdb, "copy", file=file, **kwargs)
     cdb.open_database()
     time_controls_du_copy(cdb, *args, file=file, **kwargs)
     cdb.close_database()
-    #du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
+    # du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
 
 
 def modes_du_copy(
@@ -516,7 +509,7 @@ def modes_du_copy(
             )
             reporter.append_text_only("")
         return
-    #cdb.set_defer_update()
+    # cdb.set_defer_update()
     cdb.start_transaction()
     try:
         if not importer.copy_mode_names_from_games(
@@ -529,11 +522,11 @@ def modes_du_copy(
         if reporter is not None:
             reporter.append_text("Finishing copy: please wait.")
             reporter.append_text_only("")
-        #cdb.do_final_segment_deferred_updates()
+        # cdb.do_final_segment_deferred_updates()
     except Exception as exc:
         _report_exception(cdb, reporter, exc)
         raise
-    #cdb.unset_defer_update()
+    # cdb.unset_defer_update()
     cdb.commit()
 
 
@@ -553,14 +546,14 @@ def do_modes_deferred_update(
     This is final copy stage so report finished when database is closed.
 
     """
-    #du_backup_before_task(cdb, "copy", file=file, **kwargs)
+    # du_backup_before_task(cdb, "copy", file=file, **kwargs)
     cdb.open_database()
     modes_du_copy(cdb, *args, reporter=reporter, file=file, **kwargs)
     cdb.close_database()
     if reporter is not None:
         reporter.append_text("Import finished.")
         reporter.append_text_only("")
-    #du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
+    # du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
 
 
 def _du_report_increases(reporter, file, size_increases):
@@ -703,7 +696,6 @@ class Alldu:
             try:
                 b" " * m
             except MemoryError:
-
                 # Override the value in the superclass.
                 deferred_update_points = frozenset(
                     i

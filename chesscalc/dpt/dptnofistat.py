@@ -44,7 +44,7 @@ class Database(database.Database, dpt_database.Database):
             dpt_records=dpt_records,
         )
 
-        #if not kargs.get("allowcreate", False):
+        # if not kargs.get("allowcreate", False):
         #    try:
         #        for dd_name in ddnames:
         #            if FILEDESC in ddnames[dd_name]:

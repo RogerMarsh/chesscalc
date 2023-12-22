@@ -57,7 +57,8 @@ def identify_players_as_person(database, players, person):
             )
             person_record.load_record(
                 database.get_primary_record(
-                    filespec.PLAYER_FILE_DEF, recordlist.first()[1])
+                    filespec.PLAYER_FILE_DEF, recordlist.first()[1]
+                )
             )
         else:
             recordlist = database.recordlist_key(
@@ -168,9 +169,7 @@ def split_person_into_all_players(database, person):
         )
         count = recordlist.count_records()
         if count == 0:
-            raise PlayerToPerson(
-                "Cannot split: no players with this identity"
-            )
+            raise PlayerToPerson("Cannot split: no players with this identity")
         while True:
             record = recordlist.next()
             if not record:

@@ -8,7 +8,7 @@ import os
 
 from solentware_base import dptdu_database
 from solentware_base import dpt_database
-from solentware_base.core import constants  as sb_core_constants
+from solentware_base.core import constants as sb_core_constants
 
 from ..shared import litedu
 from ..shared import alldu

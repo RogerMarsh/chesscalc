@@ -60,9 +60,7 @@ class Rule(Bindings):
         self._playing_mode.grid_configure(
             column=1, columnspan=4, row=4, sticky=tkinter.EW
         )
-        self._events = tkinter.Text(
-            master=master, height=5, wrap=tkinter.WORD
-        )
+        self._events = tkinter.Text(master=master, height=5, wrap=tkinter.WORD)
         self._events.grid_configure(
             column=1, columnspan=4, row=5, sticky=tkinter.EW
         )
@@ -86,7 +84,9 @@ class Rule(Bindings):
                 column=column, row=row, padx=5
             )
         tkinter.ttk.Label(
-            master=master, text="Performance Calculation", anchor=tkinter.CENTER
+            master=master,
+            text="Performance Calculation",
+            anchor=tkinter.CENTER,
         ).grid_configure(
             column=0, columnspan=5, row=6, sticky=tkinter.EW, pady=(5, 0)
         )
@@ -240,7 +240,7 @@ class Rule(Bindings):
                                 " after character ",
                                 str(position),
                                 " starting '",
-                                line[position:position+10],
+                                line[position : position + 10],
                                 "'",
                             )
                         ),
@@ -264,7 +264,7 @@ class Rule(Bindings):
                         ),
                     )
                     return None
-                event = [line[position:match_.start()].strip()]
+                event = [line[position : match_.start()].strip()]
                 if not event[0]:
                     tkinter.messagebox.showinfo(
                         parent=self.frame,
@@ -276,7 +276,7 @@ class Rule(Bindings):
                                 " at character ",
                                 str(position),
                                 " '",
-                                line[position:position+10],
+                                line[position : position + 10],
                                 "'",
                             )
                         ),

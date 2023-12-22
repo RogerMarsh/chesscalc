@@ -5,7 +5,6 @@
 """Calculate performances from a file of chess game results."""
 
 if __name__ == "__main__":
-
     import multiprocessing
 
     from . import APPLICATION_NAME

@@ -44,9 +44,7 @@ def identify(database, bookmarks, selection):
         )
         for event in bookmarks:
             mode_record.load_record(
-                database.get_primary_record(
-                    filespec.MODE_FILE_DEF, event[1]
-                )
+                database.get_primary_record(filespec.MODE_FILE_DEF, event[1])
             )
             if mode_record.value.alias != mode_record.value.identity:
                 database.backout()
@@ -90,9 +88,7 @@ def break_bookmarked_aliases(database, bookmarks, selection):
         )
         for event in bookmarks:
             mode_record.load_record(
-                database.get_primary_record(
-                    filespec.MODE_FILE_DEF, event[1]
-                )
+                database.get_primary_record(filespec.MODE_FILE_DEF, event[1])
             )
             if mode_record.value.alias != selection_record.value.alias:
                 database.backout()
@@ -143,9 +139,7 @@ def split_aliases(database, selection):
             if not record:
                 break
             mode_record.load_record(
-                database.get_primary_record(
-                    filespec.MODE_FILE_DEF, record[1]
-                )
+                database.get_primary_record(filespec.MODE_FILE_DEF, record[1])
             )
             if mode_record.value.alias == mode_record.value.identity:
                 continue
@@ -192,9 +186,7 @@ def change_aliases(database, selection):
             if not record:
                 break
             mode_record.load_record(
-                database.get_primary_record(
-                    filespec.MODE_FILE_DEF, record[1]
-                )
+                database.get_primary_record(filespec.MODE_FILE_DEF, record[1])
             )
             clone_record = mode_record.clone()
             clone_record.value.alias = selection_record.value.identity
@@ -217,6 +209,4 @@ def _set_value(value, alias):
     value is expected to be a ModeDBvalue instance.
 
     """
-    (
-        value.mode,
-    ) = literal_eval(alias)
+    (value.mode,) = literal_eval(alias)

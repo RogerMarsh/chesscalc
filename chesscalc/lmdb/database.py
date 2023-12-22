@@ -53,4 +53,3 @@ class Database(database.Database, lmdb_database.Database):
 
         """
         self._set_map_size_above_used_pages_between_transactions(0)
-

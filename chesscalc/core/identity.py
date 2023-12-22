@@ -107,9 +107,7 @@ def _get_next_identity_value_after_allocation(database, keytype, exception):
     value.code += 1
 
     # None is safe because self.srkey == new_record.srkey.
-    record.edit_record(
-        database, filespec.IDENTITY_FILE_DEF, None, new_record
-    )
+    record.edit_record(database, filespec.IDENTITY_FILE_DEF, None, new_record)
 
     # Plain value.code, an int object, is acceptable in sqlite3 but str(...)
     # is necessary for berkeleydb, lmdb, and others.

@@ -70,9 +70,9 @@ class GameDBvalue(ValueList):
     attributes = dict(
         reference=None,  # dict of PGN file name and game number within file.
         headers=None,  # dict of PGN tag name and value pairs for game.
-        #status=None,  # set of import actions not yet done.
+        # status=None,  # set of import actions not yet done.
     )
-    _attribute_order = ("headers", "reference")#, "status")
+    _attribute_order = ("headers", "reference")  # , "status")
     assert set(_attribute_order) == set(attributes)
 
     def pack(self):
@@ -102,7 +102,7 @@ class GameDBvalue(ValueList):
         these references.
 
         """
-        #self.verify_status_values()
+        # self.verify_status_values()
         for attr, defn in (
             (constants.FILE, filespec.GAME_PGNFILE_FIELD_DEF),
             (constants.GAME, filespec.GAME_NUMBER_FIELD_DEF),
@@ -157,9 +157,9 @@ class GameDBvalue(ValueList):
                 )
             ),
         ]
-        #index[filespec.GAME_STATUS_FIELD_DEF] = list(
+        # index[filespec.GAME_STATUS_FIELD_DEF] = list(
         #    _FILE_NAMES_TO_BE_POPULATED
-        #)
+        # )
 
     def __eq__(self, other):
         """Return True if attributes of self and other are same."""
@@ -221,7 +221,7 @@ class GameDBImportvalue(GameDBvalue):
         within file) and import status only.
 
         """
-        #self.verify_status_values()
+        # self.verify_status_values()
         index[filespec.GAME_STATUS_FIELD_DEF] = list(
             _FILE_AND_FIELD_NAMES_TO_BE_POPULATED
         )
@@ -300,7 +300,7 @@ class GameDBImporter(GameDBrecord):
         self.value.reference = {}
         done_ok = self._extract_pgn_headers_from_directory(
             database, path, reporter, quit_event
-            )
+        )
         if reporter is not None:
             reporter.append_text_only("")
         return done_ok
@@ -341,7 +341,7 @@ class GameDBImporter(GameDBrecord):
             return False
         done_ok = self._count_pgn_games_in_directory(
             database, path, reporter, quit_event
-            )
+        )
         if reporter is not None:
             reporter.append_text_only("")
         return done_ok
@@ -457,7 +457,7 @@ class GameDBImporter(GameDBrecord):
         user = os.path.realpath(os.path.expanduser("~"))
 
         if pgnpath.startswith(user):
-            refbase = pgnpath[len(user)+1:]
+            refbase = pgnpath[len(user) + 1 :]
         else:
             refbase = pgnpath
         parser = tagpair_parser.PGNTagPair(
@@ -481,7 +481,7 @@ class GameDBImporter(GameDBrecord):
             with open(pgnpath, mode="r", encoding=try_encoding) as pgntext:
                 try:
                     while True:
-                        if not pgntext.read(1024*1000):
+                        if not pgntext.read(1024 * 1000):
                             encoding = try_encoding
                             break
                 except UnicodeDecodeError:
@@ -529,7 +529,9 @@ class GameDBImporter(GameDBrecord):
                 file_games = database.recordlist_key(
                     filespec.GAME_FILE_DEF,
                     filespec.GAME_PGNFILE_FIELD_DEF,
-                    key=database.encode_record_selector(reference[constants.FILE]),
+                    key=database.encode_record_selector(
+                        reference[constants.FILE]
+                    ),
                 )
                 file_count = file_games.count_records()
                 if file_count:
@@ -538,7 +540,7 @@ class GameDBImporter(GameDBrecord):
                         filespec.GAME_NUMBER_FIELD_DEF,
                         key=database.encode_record_selector(reference[GAME]),
                     )
-                    present_game = (number_games & file_games)
+                    present_game = number_games & file_games
                     present_count = present_game.count_records()
                     present_game.close()
                     number_games.close()
@@ -651,12 +653,10 @@ class GameDBImporter(GameDBrecord):
         user = os.path.realpath(os.path.expanduser("~"))
 
         if pgnpath.startswith(user):
-            refbase = pgnpath[len(user)+1:]
+            refbase = pgnpath[len(user) + 1 :]
         else:
             refbase = pgnpath
-        parser = tagpair_parser.PGNTagPair(
-            game_class=tagpair_parser.GameCount
-        )
+        parser = tagpair_parser.PGNTagPair(game_class=tagpair_parser.GameCount)
         game_number = 0
         game_offset = None
         # The PGN specification assumes 'iso-8859-1' encoding but do not
@@ -695,13 +695,13 @@ class _PlayerDBvalue(ValueList):
     """
 
     attributes = dict(
-        name=None,            # TAG_BLACK or TAG_WHITE.
-        event=None,           # TAG_EVENT.
-        eventdate=None,       # TAG_EVENTDATE.
-        section=None,         # TAG_SECTION.
-        stage=None,           # TAG_STAGE.
-        team=None,            # TAG_BLACKTEAM or TAG_WHITETEAM.
-        fideid=None,          # TAG_BLACKFIDEID or TAG_WHITEFIDEID.
+        name=None,  # TAG_BLACK or TAG_WHITE.
+        event=None,  # TAG_EVENT.
+        eventdate=None,  # TAG_EVENTDATE.
+        section=None,  # TAG_SECTION.
+        stage=None,  # TAG_STAGE.
+        team=None,  # TAG_BLACKTEAM or TAG_WHITETEAM.
+        fideid=None,  # TAG_BLACKFIDEID or TAG_WHITEFIDEID.
         alias=None,
         identity=None,
     )
@@ -926,12 +926,12 @@ class PlayerDBImporter(PlayerDBrecord):
                 # and lmdb too.
                 # (Events and the others do not reach housekeeping yet.)
                 # Not doing deferred updates.
-                #cursor.close()
-                #database.deferred_update_housekeeping()
-                #cursor = database.database_cursor(
+                # cursor.close()
+                # database.deferred_update_housekeeping()
+                # cursor = database.database_cursor(
                 #    filespec.GAME_FILE_DEF, filespec.GAME_PLAYER_FIELD_DEF
-                #)
-                #cursor.setat(record)
+                # )
+                # cursor.setat(record)
 
         if reporter is not None:
             reporter.append_text_only("")
@@ -1123,7 +1123,7 @@ class SelectorDBvalue(ValueList):
         from_date=None,
         to_date=None,
         person_identity=None,
-        event_names=None
+        event_names=None,
     )
     _attribute_order = (
         "person_identity",
@@ -1138,17 +1138,17 @@ class SelectorDBvalue(ValueList):
         """Customise ValueList for identity data."""
         super().__init__()
         self.name = None
-        self.from_date = None,
-        self.to_date = None,
-        self.person_identity = None,
+        self.from_date = (None,)
+        self.to_date = (None,)
+        self.person_identity = (None,)
         self.event_names = []
 
     def empty(self):
         """(Re)Initialize value attribute."""
         self.name = None
-        self.from_date = None,
-        self.to_date = None,
-        self.person_identity = None,
+        self.from_date = (None,)
+        self.to_date = (None,)
+        self.person_identity = (None,)
         self.event_names = []
 
     def pack(self):
@@ -1190,10 +1190,10 @@ class EventDBvalue(ValueList):
     """Event data."""
 
     attributes = dict(
-        event=None,           # TAG_EVENT.
-        eventdate=None,       # TAG_EVENTDATE.
-        section=None,         # TAG_SECTION.
-        stage=None,           # TAG_STAGE.
+        event=None,  # TAG_EVENT.
+        eventdate=None,  # TAG_EVENTDATE.
+        section=None,  # TAG_SECTION.
+        stage=None,  # TAG_STAGE.
         alias=None,
         identity=None,
     )
@@ -1364,12 +1364,12 @@ class EventDBImporter(EventDBrecord):
                 # and lmdb too.
                 # (Events and the others do not reach housekeeping yet.)
                 # Not doing deferred updates.
-                #cursor.close()
-                #database.deferred_update_housekeeping()
-                #cursor = database.database_cursor(
+                # cursor.close()
+                # database.deferred_update_housekeeping()
+                # cursor = database.database_cursor(
                 #    filespec.GAME_FILE_DEF, filespec.GAME_EVENT_FIELD_DEF
-                #)
-                #cursor.setat(record)
+                # )
+                # cursor.setat(record)
 
         if reporter is not None:
             reporter.append_text_only("")
@@ -1464,7 +1464,7 @@ class TimeControlDBvalue(ValueList):
     """Time control data."""
 
     attributes = dict(
-        timecontrol=None,       # TAG_TIMECONTROL.
+        timecontrol=None,  # TAG_TIMECONTROL.
         alias=None,
         identity=None,
     )
@@ -1490,11 +1490,7 @@ class TimeControlDBvalue(ValueList):
 
     def alias_index_key(self):
         """Return the key for the timealias index."""
-        return repr(
-            (
-                self.timecontrol,
-            )
-        )
+        return repr((self.timecontrol,))
 
     def pack(self):
         """Delegate to generate time control data then add index data.
@@ -1620,12 +1616,12 @@ class TimeControlDBImporter(TimeControlDBrecord):
                 # and lmdb too.
                 # (Events and the others do not reach housekeeping yet.)
                 # Not doing deferred updates.
-                #cursor.close()
-                #database.deferred_update_housekeeping()
-                #cursor = database.database_cursor(
+                # cursor.close()
+                # database.deferred_update_housekeeping()
+                # cursor = database.database_cursor(
                 #    filespec.GAME_FILE_DEF, filespec.GAME_TIMECONTROL_FIELD_DEF
-                #)
-                #cursor.setat(record)
+                # )
+                # cursor.setat(record)
 
         if reporter is not None:
             reporter.append_text_only("")
@@ -1717,7 +1713,7 @@ class ModeDBvalue(ValueList):
     """Playing mode data."""
 
     attributes = dict(
-        mode=None,       # TAG_MODE.
+        mode=None,  # TAG_MODE.
         alias=None,
         identity=None,
     )
@@ -1743,11 +1739,7 @@ class ModeDBvalue(ValueList):
 
     def alias_index_key(self):
         """Return the key for the modealias index."""
-        return repr(
-            (
-                self.mode,
-            )
-        )
+        return repr((self.mode,))
 
     def pack(self):
         """Delegate to generate playing mode data then add index data.
@@ -1871,12 +1863,12 @@ class ModeDBImporter(ModeDBrecord):
                 # and lmdb too.
                 # (Events and the others do not reach housekeeping yet.)
                 # Not doing deferred updates.
-                #cursor.close()
-                #database.deferred_update_housekeeping()
-                #cursor = database.database_cursor(
+                # cursor.close()
+                # database.deferred_update_housekeeping()
+                # cursor = database.database_cursor(
                 #    filespec.GAME_FILE_DEF, filespec.GAME_MODE_FIELD_DEF
-                #)
-                #cursor.setat(record)
+                # )
+                # cursor.setat(record)
 
         if reporter is not None:
             reporter.append_text_only("")
@@ -1937,9 +1929,7 @@ class ModeDBImporter(ModeDBrecord):
             if prev_record == this_record:
                 continue
             prev_record = this_record
-            (
-                value.mode,
-            ) = this_record
+            (value.mode,) = this_record
             alias = value.alias_index_key()
             if quit_event and quit_event.is_set():
                 if reporter is not None:

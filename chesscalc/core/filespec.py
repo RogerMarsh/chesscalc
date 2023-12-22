@@ -148,7 +148,10 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         fld(GAME_PGNFILE_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_NUMBER_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_DATE_FIELD_DEF): {INV: True, ORD: True},
-                        fld(GAME_TIMECONTROL_FIELD_DEF): {INV: True, ORD: True},
+                        fld(GAME_TIMECONTROL_FIELD_DEF): {
+                            INV: True,
+                            ORD: True,
+                        },
                         fld(GAME_MODE_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_PLAYER_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_EVENT_FIELD_DEF): {INV: True, ORD: True},

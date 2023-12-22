@@ -40,9 +40,7 @@ def identify(database, bookmarks, selection):
         )
         for event in bookmarks:
             event_record.load_record(
-                database.get_primary_record(
-                    filespec.EVENT_FILE_DEF, event[1]
-                )
+                database.get_primary_record(filespec.EVENT_FILE_DEF, event[1])
             )
             if event_record.value.alias != event_record.value.identity:
                 database.backout()
@@ -86,9 +84,7 @@ def break_bookmarked_aliases(database, bookmarks, selection):
         )
         for event in bookmarks:
             event_record.load_record(
-                database.get_primary_record(
-                    filespec.EVENT_FILE_DEF, event[1]
-                )
+                database.get_primary_record(filespec.EVENT_FILE_DEF, event[1])
             )
             if event_record.value.alias != selection_record.value.alias:
                 database.backout()
@@ -139,9 +135,7 @@ def split_aliases(database, selection):
             if not record:
                 break
             event_record.load_record(
-                database.get_primary_record(
-                    filespec.EVENT_FILE_DEF, record[1]
-                )
+                database.get_primary_record(filespec.EVENT_FILE_DEF, record[1])
             )
             if event_record.value.alias == event_record.value.identity:
                 continue
@@ -188,9 +182,7 @@ def change_aliases(database, selection):
             if not record:
                 break
             event_record.load_record(
-                database.get_primary_record(
-                    filespec.EVENT_FILE_DEF, record[1]
-                )
+                database.get_primary_record(filespec.EVENT_FILE_DEF, record[1])
             )
             clone_record = event_record.clone()
             clone_record.value.alias = selection_record.value.identity

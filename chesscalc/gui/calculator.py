@@ -90,7 +90,7 @@ _HELP_TEXT = "".join(
         "Event, time control, and playing mode entries can be identified ",
         "as references to the same thing by the relevant 'Identify ...' ",
         "action in the 'Other identities' menu.\n\n",
-        ""
+        "",
     )
 )
 
@@ -403,7 +403,6 @@ class Calculator(Bindings):
             ),
         )
         if dlg == tkinter.messagebox.YES:
-
             # Replicate _database_close replacing close_database() call with
             # delete_database() call.  The close_database() call just before
             # setting database to None is removed.  The 'database is None'
@@ -731,9 +730,7 @@ class Calculator(Bindings):
             self.database
         )
         self.database_folder = database_folder
-        self.set_error_file_name(
-            os.path.join(self.database_folder, ERROR_LOG)
-        )
+        self.set_error_file_name(os.path.join(self.database_folder, ERROR_LOG))
 
     def _database_close(self):
         """Close performance calculation database."""
@@ -877,9 +874,9 @@ class Calculator(Bindings):
                 message="List of identified persons not available at present",
             )
             return
-        if self._notebook.index(
-            self._players_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._players_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_player_identify[1],
@@ -914,9 +911,9 @@ class Calculator(Bindings):
                 message="List of identified persons not available at present",
             )
             return
-        if self._notebook.index(
-            self._persons_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._persons_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_player_break[1],
@@ -946,9 +943,9 @@ class Calculator(Bindings):
                 message="List of identified persons not available at present",
             )
             return
-        if self._notebook.index(
-            self._persons_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._persons_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_player_split[1],
@@ -978,9 +975,9 @@ class Calculator(Bindings):
                 message="List of identified persons not available at present",
             )
             return
-        if self._notebook.index(
-            self._persons_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._persons_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_player_split[1],
@@ -1005,9 +1002,9 @@ class Calculator(Bindings):
 
         # Do not prevent 'New Rule' based on current tab: maybe take some
         # default values based on selection in current tab.
-        #if self._notebook.index(
+        # if self._notebook.index(
         #    self._calculations_tab
-        #) != self._notebook.index(self._notebook.select()):
+        # ) != self._notebook.index(self._notebook.select()):
         #    tkinter.messagebox.showinfo(
         #        parent=self.widget,
         #        title=EventSpec.menu_selectors_new[1],
@@ -1147,9 +1144,9 @@ class Calculator(Bindings):
                 message="List of events not available at present",
             )
             return
-        if self._notebook.index(
-            self._events_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._events_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_event_identify[1],
@@ -1184,9 +1181,9 @@ class Calculator(Bindings):
                 message="List of events not available at present",
             )
             return
-        if self._notebook.index(
-            self._events_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._events_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_event_break[1],
@@ -1216,9 +1213,9 @@ class Calculator(Bindings):
                 message="List of events not available at present",
             )
             return
-        if self._notebook.index(
-            self._events_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._events_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_event_split[1],
@@ -1248,9 +1245,9 @@ class Calculator(Bindings):
                 message="List of events not available at present",
             )
             return
-        if self._notebook.index(
-            self._events_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._events_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_event_change[1],
@@ -1280,9 +1277,9 @@ class Calculator(Bindings):
                 message="List of time controls not available at present",
             )
             return
-        if self._notebook.index(
-            self._time_limits_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._time_limits_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_identify[1],
@@ -1317,9 +1314,9 @@ class Calculator(Bindings):
                 message="List of time controls not available at present",
             )
             return
-        if self._notebook.index(
-            self._time_limits_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._time_limits_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_break[1],
@@ -1349,9 +1346,9 @@ class Calculator(Bindings):
                 message="List of time controls not available at present",
             )
             return
-        if self._notebook.index(
-            self._time_limits_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._time_limits_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_split[1],
@@ -1381,9 +1378,9 @@ class Calculator(Bindings):
                 message="List of time controls not available at present",
             )
             return
-        if self._notebook.index(
-            self._time_limits_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._time_limits_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_change[1],
@@ -1413,9 +1410,9 @@ class Calculator(Bindings):
                 message="List of playing modes not available at present",
             )
             return
-        if self._notebook.index(
-            self._modes_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._modes_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_mode_identify[1],
@@ -1450,9 +1447,9 @@ class Calculator(Bindings):
                 message="List of playing modes not available at present",
             )
             return
-        if self._notebook.index(
-            self._modes_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._modes_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_mode_break[1],
@@ -1482,9 +1479,9 @@ class Calculator(Bindings):
                 message="List of playing modes not available at present",
             )
             return
-        if self._notebook.index(
-            self._modes_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._modes_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_mode_split[1],
@@ -1514,9 +1511,9 @@ class Calculator(Bindings):
                 message="List of playing modes not available at present",
             )
             return
-        if self._notebook.index(
-            self._modes_tab
-        ) != self._notebook.index(self._notebook.select()):
+        if self._notebook.index(self._modes_tab) != self._notebook.index(
+            self._notebook.select()
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_mode_change[1],

@@ -92,5 +92,4 @@ class CreateChessCalcDatabase(create_database.CreateDatabase):
 
 
 if __name__ == "__main__":
-
     CreateChessCalcDatabase().root.mainloop()

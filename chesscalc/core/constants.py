@@ -7,35 +7,35 @@
 # The PGN tag names used in identifying players and games.
 
 # The Seven Tag Roster with comments on effect for player identification.
-TAG_EVENT = "Event"             # Event name: part of player identity.
-TAG_SITE = "Site"               # Ignore if possible: part of player identity.
-TAG_DATE = "Date"               # Date game played.
-TAG_ROUND = "Round"             # Event, section, or stage may have rounds.
-TAG_WHITE = "White"             # Name index: part of player identity.
-TAG_BLACK = "Black"             # Name index: part of player identity.
-TAG_RESULT = "Result"           # Game result.
+TAG_EVENT = "Event"  # Event name: part of player identity.
+TAG_SITE = "Site"  # Ignore if possible: part of player identity.
+TAG_DATE = "Date"  # Date game played.
+TAG_ROUND = "Round"  # Event, section, or stage may have rounds.
+TAG_WHITE = "White"  # Name index: part of player identity.
+TAG_BLACK = "Black"  # Name index: part of player identity.
+TAG_RESULT = "Result"  # Game result.
 
 # Supplemental tags used in identifying players and games.
 # These tags are optional but contribute if present.
 # 'Open' is a typical 'Section' value.
 # 'Semi-final' is a typical 'Stage' value.
-TAG_EVENTDATE = "EventDate"     # Event start date: part of player identity.
-TAG_SECTION = "Section"         # Playing section: part of player identity.
-TAG_STAGE = "Stage"             # Stage of event: part of player identity.
-TAG_TIMECONTROL = "TimeControl" # Formatted desciption of time controls.
-TAG_MODE = "Mode"               # 'OTB' for example.
+TAG_EVENTDATE = "EventDate"  # Event start date: part of player identity.
+TAG_SECTION = "Section"  # Playing section: part of player identity.
+TAG_STAGE = "Stage"  # Stage of event: part of player identity.
+TAG_TIMECONTROL = "TimeControl"  # Formatted desciption of time controls.
+TAG_MODE = "Mode"  # 'OTB' for example.
 
 # Supplemental tags which do not affect formal identification of players and
 # games but may provide useful context.
-TAG_WHITEELO = "WhiteElo"       # FIDE Elo rating.
-TAG_BLACKELO = "BlackElo"       # FIDE Elo rating.
-TAG_BOARD = "Board"             # Board number (often in round or team).
+TAG_WHITEELO = "WhiteElo"  # FIDE Elo rating.
+TAG_BLACKELO = "BlackElo"  # FIDE Elo rating.
+TAG_BOARD = "Board"  # Board number (often in round or team).
 
 # Tags not mentioned in PGN specification but seen in real PGN files.
-TAG_WHITEFIDEID = "WhiteFideId" # FIDE Number: part of player identity.
-TAG_BLACKFIDEID = "BlackFideId" # FIDE Number: part of player identity.
-TAG_WHITETEAM = "WhiteTeam"     # Team name: part of player identity.
-TAG_BLACKTEAM = "BlackTeam"     # Team name: part of player identity.
+TAG_WHITEFIDEID = "WhiteFideId"  # FIDE Number: part of player identity.
+TAG_BLACKFIDEID = "BlackFideId"  # FIDE Number: part of player identity.
+TAG_WHITETEAM = "WhiteTeam"  # Team name: part of player identity.
+TAG_BLACKTEAM = "BlackTeam"  # Team name: part of player identity.
 
 # Most recently accessed database and configuation files for selecting and
 # extracting game headers from PGN files.

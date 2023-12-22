@@ -129,5 +129,7 @@ def _extract_pgn_headers_from_file(pgnpath, pgnhdrpath, json_):
                 if not line and headers:
                     reference[GAME] += 1
                     if headers.get(RESULT, STAR) != STAR:
-                        pgnhdr.write(format_((reference, headers)) + os.linesep)
+                        pgnhdr.write(
+                            format_((reference, headers)) + os.linesep
+                        )
                     headers.clear()

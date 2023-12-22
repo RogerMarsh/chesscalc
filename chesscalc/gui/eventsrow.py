@@ -19,13 +19,12 @@ class EventsRow(performancerecord.EventDBrecord, datarow.DataRow):
     header_specification = [
         {
             datarow.WIDGET: tkinter.Label,
-            datarow.WIDGET_CONFIGURE: dict(
-                text=text, anchor=tkinter.CENTER
-            ),
+            datarow.WIDGET_CONFIGURE: dict(text=text, anchor=tkinter.CENTER),
             datarow.GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
             datarow.GRID_COLUMNCONFIGURE: dict(weight=0, uniform=uniform),
             datarow.ROW: 0,
-        } for column, text, uniform in (
+        }
+        for column, text, uniform in (
             (0, constants.TAG_EVENT, "u0"),
             (1, constants.TAG_EVENTDATE, "u1"),
             (2, constants.TAG_SECTION, "u2"),
@@ -49,7 +48,8 @@ class EventsRow(performancerecord.EventDBrecord, datarow.DataRow):
                 WIDGET_CONFIGURE: dict(anchor=anchor),
                 GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
                 ROW: 0,
-            } for column, anchor in (
+            }
+            for column, anchor in (
                 (0, tkinter.CENTER),
                 (1, tkinter.CENTER),
                 (2, tkinter.CENTER),

@@ -19,15 +19,12 @@ class TimeControlsRow(performancerecord.TimeControlDBrecord, datarow.DataRow):
     header_specification = [
         {
             datarow.WIDGET: tkinter.Label,
-            datarow.WIDGET_CONFIGURE: dict(
-                text=text, anchor=tkinter.CENTER
-            ),
+            datarow.WIDGET_CONFIGURE: dict(text=text, anchor=tkinter.CENTER),
             datarow.GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
             datarow.GRID_COLUMNCONFIGURE: dict(weight=0, uniform=uniform),
             datarow.ROW: 0,
-        } for column, text, uniform in (
-            (0, constants.TAG_TIMECONTROL, "u0"),
-        )
+        }
+        for column, text, uniform in ((0, constants.TAG_TIMECONTROL, "u0"),)
     ]
 
     def __init__(self, database=None):
@@ -44,9 +41,8 @@ class TimeControlsRow(performancerecord.TimeControlDBrecord, datarow.DataRow):
                 WIDGET_CONFIGURE: dict(anchor=anchor),
                 GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
                 ROW: 0,
-            } for column, anchor in (
-                (0, tkinter.CENTER),
-            )
+            }
+            for column, anchor in ((0, tkinter.CENTER),)
         ]
 
     def grid_row(self, **kargs):

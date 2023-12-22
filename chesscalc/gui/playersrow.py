@@ -24,13 +24,12 @@ class PlayersRow(performancerecord.PlayerDBrecord, datarow.DataRow):
     header_specification = [
         {
             datarow.WIDGET: tkinter.Label,
-            datarow.WIDGET_CONFIGURE: dict(
-                text=text, anchor=tkinter.CENTER
-            ),
+            datarow.WIDGET_CONFIGURE: dict(text=text, anchor=tkinter.CENTER),
             datarow.GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
             datarow.GRID_COLUMNCONFIGURE: dict(weight=0, uniform=uniform),
             datarow.ROW: 0,
-        } for column, text, uniform in (
+        }
+        for column, text, uniform in (
             (0, "FideId", "u0"),
             (1, "Name", "u1"),
             (2, constants.TAG_EVENT, "u2"),
@@ -55,7 +54,8 @@ class PlayersRow(performancerecord.PlayerDBrecord, datarow.DataRow):
                 WIDGET_CONFIGURE: dict(anchor=anchor),
                 GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
                 ROW: 0,
-            } for column, anchor in (
+            }
+            for column, anchor in (
                 (0, tkinter.CENTER),
                 (1, tkinter.CENTER),
                 (2, tkinter.CENTER),

@@ -29,7 +29,6 @@ class Database(dptnofistat.Database):
     account when attempting to open the database.
     """
 
-
     def __init__(self, *args, **kwargs):
         """Define chess database.
 

@@ -216,10 +216,7 @@ class Persons(Bindings):
             parent=self.frame,
             title=title,
             message="".join(
-                (
-                        "The selected alias will become the identified ",
-                        "person"
-                )
+                ("The selected alias will become the identified ", "person")
             ),
         ):
             return
