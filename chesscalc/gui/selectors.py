@@ -32,7 +32,7 @@ class Selectors(Bindings):
         return self._selectors_grid.frame
 
     @property
-    def selectors_grid(self):
+    def data_grid(self):
         """Return the persons widget."""
         return self._selectors_grid
 

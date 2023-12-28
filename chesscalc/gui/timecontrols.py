@@ -43,31 +43,31 @@ class TimeControls(Bindings):
         database = self.get_database(title)
         if not database:
             return
-        limits_sel = self._time_limits_grid.selection
-        limits_bmk = self._time_limits_grid.bookmarks
-        if len(limits_sel) == 0:
+        time_controls_sel = self._time_limits_grid.selection
+        time_controls_bmk = self._time_limits_grid.bookmarks
+        if len(time_controls_sel) == 0:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
                 message="No time control is selected",
             )
             return False
-        if len(limits_bmk) == 0:
+        if len(time_controls_bmk) == 0:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
                 message="No time controls are bookmarked so no changes done",
             )
             return False
-        if limits_bmk == limits_sel:
+        if time_controls_bmk == time_controls_sel:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
                 message="Selection and bookmark is same so no changes done",
             )
             return False
-        new = set(limits_bmk)
-        if new.intersection(limits_sel):
+        new = set(time_controls_bmk)
+        if new.intersection(time_controls_sel):
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
@@ -79,7 +79,9 @@ class TimeControls(Bindings):
                 ),
             )
             return False
-        message = identify_timecontrol.identify(database, new, limits_sel)
+        message = identify_timecontrol.identify(
+            database, new, time_controls_sel
+        )
         if message is not None:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -95,31 +97,31 @@ class TimeControls(Bindings):
         database = self.get_database(title)
         if not database:
             return
-        limits_sel = self._time_limits_grid.selection
-        limits_bmk = self._time_limits_grid.bookmarks
-        if len(limits_sel) == 0:
+        time_controls_sel = self._time_limits_grid.selection
+        time_controls_bmk = self._time_limits_grid.bookmarks
+        if len(time_controls_sel) == 0:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
                 message="No time control is selected",
             )
             return False
-        if len(limits_bmk) == 0:
+        if len(time_controls_bmk) == 0:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
                 message="No time controls are bookmarked so no changes done",
             )
             return False
-        if limits_bmk == limits_sel:
+        if time_controls_bmk == time_controls_sel:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
                 message="Selection and bookmark is same so no changes done",
             )
             return False
-        new = set(limits_bmk)
-        if new.intersection(limits_sel):
+        new = set(time_controls_bmk)
+        if new.intersection(time_controls_sel):
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
@@ -132,7 +134,7 @@ class TimeControls(Bindings):
             )
             return False
         message = identify_timecontrol.break_bookmarked_aliases(
-            database, new, limits_sel
+            database, new, time_controls_sel
         )
         if message is not None:
             tkinter.messagebox.showinfo(
@@ -149,23 +151,25 @@ class TimeControls(Bindings):
         database = self.get_database(title)
         if not database:
             return
-        limits_sel = self._time_limits_grid.selection
-        limits_bmk = self._time_limits_grid.bookmarks
-        if len(limits_sel) == 0:
+        time_controls_sel = self._time_limits_grid.selection
+        time_controls_bmk = self._time_limits_grid.bookmarks
+        if len(time_controls_sel) == 0:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
                 message="No time control is selected",
             )
             return False
-        if len(limits_bmk) != 0:
+        if len(time_controls_bmk) != 0:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
                 message="Time controls are bookmarked so no changes done",
             )
             return False
-        message = identify_timecontrol.split_aliases(database, limits_sel)
+        message = identify_timecontrol.split_aliases(
+            database, time_controls_sel
+        )
         if message is not None:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -180,23 +184,25 @@ class TimeControls(Bindings):
         database = self.get_database(title)
         if not database:
             return
-        limits_sel = self._time_limits_grid.selection
-        limits_bmk = self._time_limits_grid.bookmarks
-        if len(limits_sel) == 0:
+        time_controls_sel = self._time_limits_grid.selection
+        time_controls_bmk = self._time_limits_grid.bookmarks
+        if len(time_controls_sel) == 0:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
                 message="No time control is selected",
             )
             return False
-        if len(limits_bmk) != 0:
+        if len(time_controls_bmk) != 0:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
                 message="Time controls are bookmarked so no changes done",
             )
             return False
-        message = identify_timecontrol.change_aliases(database, limits_sel)
+        message = identify_timecontrol.change_aliases(
+            database, time_controls_sel
+        )
         if message is not None:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -211,8 +217,8 @@ class TimeControls(Bindings):
         Return False otherwise after dialogue indicating problem.
 
         """
-        limits_ds = self._time_limits_grid.datasource
-        if limits_ds is None:
+        time_controls_ds = self._time_limits_grid.datasource
+        if time_controls_ds is None:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
@@ -224,8 +230,8 @@ class TimeControls(Bindings):
                 ),
             )
             return False
-        limits_db = limits_ds.dbhome
-        if limits_db is None:
+        time_controls_db = time_controls_ds.dbhome
+        if time_controls_db is None:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
@@ -237,4 +243,4 @@ class TimeControls(Bindings):
                 ),
             )
             return False
-        return limits_db
+        return time_controls_db

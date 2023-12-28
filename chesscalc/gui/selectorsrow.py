@@ -26,10 +26,12 @@ class SelectorsRow(performancerecord.SelectorDBrecord, datarow.DataRow):
         }
         for column, text, uniform in (
             (0, "Rule", "u0"),
-            (1, "From", "u1"),
-            (2, "To", "u2"),
-            (3, "Person", "u3"),
-            (4, "Events", "u4"),
+            (1, "From Date", "u1"),
+            (2, "To Date", "u2"),
+            (3, "Mode", "u3"),
+            (4, "Time Control", "u4"),
+            (5, "Person", "u5"),
+            (6, "Events", "u6"),
         )
     ]
 
@@ -54,6 +56,8 @@ class SelectorsRow(performancerecord.SelectorDBrecord, datarow.DataRow):
                 (2, tkinter.CENTER),
                 (3, tkinter.CENTER),
                 (4, tkinter.CENTER),
+                (5, tkinter.CENTER),
+                (6, tkinter.CENTER),
             )
         ]
 
@@ -69,10 +73,16 @@ class SelectorsRow(performancerecord.SelectorDBrecord, datarow.DataRow):
                 value.name if value.name is not None else "",
                 value.from_date if value.from_date is not None else "",
                 value.to_date if value.to_date is not None else "",
+                value.mode_identity if value.mode_identity is not None else "",
+                value.time_control_identity
+                if value.time_control_identity is not None
+                else "",
                 value.person_identity
                 if value.person_identity is not None
                 else "",
-                value.event_names if value.event_names is not None else "",
+                value.event_identities
+                if value.event_identities is not None
+                else "",
             ),
             **kargs
         )

@@ -24,7 +24,11 @@ class TimeControlsRow(performancerecord.TimeControlDBrecord, datarow.DataRow):
             datarow.GRID_COLUMNCONFIGURE: dict(weight=0, uniform=uniform),
             datarow.ROW: 0,
         }
-        for column, text, uniform in ((0, constants.TAG_TIMECONTROL, "u0"),)
+        for column, text, uniform in (
+            (0, constants.TAG_TIMECONTROL, "u0"),
+            (4, "Alias", "u1"),
+            (5, "Identity", "u2"),
+        )
     ]
 
     def __init__(self, database=None):
@@ -42,7 +46,11 @@ class TimeControlsRow(performancerecord.TimeControlDBrecord, datarow.DataRow):
                 GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
                 ROW: 0,
             }
-            for column, anchor in ((0, tkinter.CENTER),)
+            for column, anchor in (
+                (0, tkinter.CENTER),
+                (1, tkinter.CENTER),
+                (2, tkinter.CENTER),
+            )
         ]
 
     def grid_row(self, **kargs):
@@ -55,6 +63,8 @@ class TimeControlsRow(performancerecord.TimeControlDBrecord, datarow.DataRow):
         return super().grid_row(
             textitems=(
                 value.timecontrol if value.timecontrol is not None else "",
+                value.alias if value.alias is not None else "",
+                value.identity if value.identity is not None else "",
             ),
             **kargs
         )

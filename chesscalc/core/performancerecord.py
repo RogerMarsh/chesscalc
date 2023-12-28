@@ -526,28 +526,30 @@ class GameDBImporter(GameDBrecord):
                 game_offset = collected_game.game_offset
                 game_number += 1
                 reference[GAME] = str(game_number)
-                file_games = database.recordlist_key(
-                    filespec.GAME_FILE_DEF,
-                    filespec.GAME_PGNFILE_FIELD_DEF,
-                    key=database.encode_record_selector(
-                        reference[constants.FILE]
-                    ),
-                )
-                file_count = file_games.count_records()
                 if file_count:
                     number_games = database.recordlist_key(
                         filespec.GAME_FILE_DEF,
                         filespec.GAME_NUMBER_FIELD_DEF,
                         key=database.encode_record_selector(reference[GAME]),
                     )
-                    present_game = number_games & file_games
-                    present_count = present_game.count_records()
-                    present_game.close()
-                    number_games.close()
-                    if present_count:
+                    number_count = number_games.count_records()
+                    if number_count:
+                        file_games = database.recordlist_key(
+                            filespec.GAME_FILE_DEF,
+                            filespec.GAME_PGNFILE_FIELD_DEF,
+                            key=database.encode_record_selector(
+                                reference[constants.FILE]
+                            ),
+                        )
+                        present_game = number_games & file_games
+                        present_count = present_game.count_records()
+                        present_game.close()
+                        if present_count:
+                            file_games.close()
+                            number_games.close()
+                            continue
                         file_games.close()
-                        continue
-                file_games.close()
+                    number_games.close()
                 seen_number += 1
                 self.value.headers = collected_game.pgn_tags
                 headers = self.value.headers
@@ -1123,14 +1125,18 @@ class SelectorDBvalue(ValueList):
         from_date=None,
         to_date=None,
         person_identity=None,
-        event_names=None,
+        event_identities=None,
+        time_control_identity=None,
+        mode_identity=None,
     )
     _attribute_order = (
         "person_identity",
         "name",
         "from_date",
         "to_date",
-        "event_names",
+        "event_identities",
+        "time_control_identity",
+        "mode_identity",
     )
     assert set(_attribute_order) == set(attributes)
 
@@ -1138,18 +1144,22 @@ class SelectorDBvalue(ValueList):
         """Customise ValueList for identity data."""
         super().__init__()
         self.name = None
-        self.from_date = (None,)
-        self.to_date = (None,)
-        self.person_identity = (None,)
-        self.event_names = []
+        self.from_date = None
+        self.to_date = None
+        self.person_identity = None
+        self.time_control_identity = None
+        self.mode_identity = None
+        self.event_identities = []
 
     def empty(self):
         """(Re)Initialize value attribute."""
         self.name = None
-        self.from_date = (None,)
-        self.to_date = (None,)
-        self.person_identity = (None,)
-        self.event_names = []
+        self.from_date = None
+        self.to_date = None
+        self.person_identity = None
+        self.time_control_identity = None
+        self.mode_identity = None
+        self.event_identities = []
 
     def pack(self):
         """Generate game selector record and index data."""

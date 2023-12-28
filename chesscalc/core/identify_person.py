@@ -57,7 +57,7 @@ def identify_players_as_person(database, players, person):
             )
             person_record.load_record(
                 database.get_primary_record(
-                    filespec.PLAYER_FILE_DEF, recordlist.first()[1]
+                    filespec.PLAYER_FILE_DEF, recordlist.first()[0]
                 )
             )
         else:
@@ -72,7 +72,7 @@ def identify_players_as_person(database, players, person):
             if count > 1:
                 raise PlayerToPerson("New person record duplicated")
             primary_record = database.get_primary_record(
-                filespec.PLAYER_FILE_DEF, recordlist.first()[1]
+                filespec.PLAYER_FILE_DEF, recordlist.first()[0]
             )
             player_record = performancerecord.PlayerDBrecord()
             player_record.load_record(primary_record)
@@ -105,7 +105,7 @@ def identify_players_as_person(database, players, person):
             if count == 0:
                 raise PlayerToPerson("Player record does not exists")
             primary_record = database.get_primary_record(
-                filespec.PLAYER_FILE_DEF, recordlist.first()[1]
+                filespec.PLAYER_FILE_DEF, recordlist.first()[0]
             )
             player_record = performancerecord.PlayerDBrecord()
             player_record.load_record(primary_record)

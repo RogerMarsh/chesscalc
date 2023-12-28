@@ -44,7 +44,7 @@ class EventSpec:
     menu_other_mode_identify = ("", "Identify", "", 0)
     menu_other_mode_break = ("", "Break Selected", "", 0)
     menu_other_mode_split = ("", "Split All", "", 0)
-    menu_other_mode_change = ("", "Change Playing mode Name", "", 0)
+    menu_other_mode_change = ("", "Change Mode Name", "", 0)
     menu_selectors_new = ("", "New Rule", "", 0)
     menu_selectors_show = ("", "Show Rule", "", 0)
     menu_selectors_edit = ("", "Edit Rule", "", 0)

@@ -11,11 +11,12 @@ from . import filespec
 def insert_record(
     database,
     rule,
-    identity,
-    player_name,
+    player_identity,
     from_date,
     to_date,
     event_list,
+    time_control_identity,
+    mode_identity,
 ):
     """Insert record for rule, and details, into database.
 
@@ -26,7 +27,9 @@ def insert_record(
         return False
     if not rule:
         return False
-    if (identity and event_list) or (not identity and not event_list):
+    if (player_identity and event_list) or (
+        not player_identity and not event_list
+    ):
         return False
     if (from_date and not to_date) or (not from_date and to_date):
         return False
@@ -35,8 +38,10 @@ def insert_record(
     value.name = rule
     value.from_date = from_date
     value.to_date = to_date
-    value.person_identity = identity
-    value.event_names.extend(event_list)
+    value.person_identity = player_identity
+    value.event_identities.extend(event_list)
+    value.time_control_identity = time_control_identity
+    value.mode_identity = mode_identity
     record.key.recno = None
     database.start_transaction()
     try:

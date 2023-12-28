@@ -30,8 +30,11 @@ from . import events
 from . import timecontrols
 from . import modes
 from . import selectors
-from . import rule
+from . import ruleedit
+from . import ruleinsert
+from . import ruleshow
 from ..core import identity
+from ..core import tab_from_selection
 
 
 ExceptionHandler.set_application_name(APPLICATION_NAME)
@@ -45,7 +48,7 @@ _HELP_TEXT = "".join(
         "Performance calculations are based on either a particular ",
         "player or a list of events.\n\n",
         "Games are included only if they are associated with a player ",
-        "entry listed on the 'Identified players' tab.  This lists ",
+        "entry listed on the 'Known players' tab.  This lists ",
         "the same entries as the right-hand list of the 'New players' ",
         "tab.  Games associated with player entries on the left-hand ",
         "list of the 'New players' tab are not included.\n\n",
@@ -59,7 +62,7 @@ _HELP_TEXT = "".join(
         "'Calculations' tab.  New rules are added by the 'Selectors | "
         "New Rule' action: a blank 'New Rule' tab is shown by default, ",
         "but values can be set by selecting and bookmarking entries ",
-        "on the 'Identified players', 'Events', 'Time controls', and ",
+        "on the 'Known players', 'Events', 'Time controls', and ",
         "'Mode' tabs.\n\n\n",
         "A date range for a player limits the games used in the ",
         "calculation to all games played in that range by the player ",
@@ -71,7 +74,7 @@ _HELP_TEXT = "".join(
         "played by their opponents outside the selected events are ",
         "not included.\n\n\n",
         "A player is selected by identity number.  The name associated ",
-        "with the identity on the 'Identified players' tab must be the one ",
+        "with the identity on the 'Known players' tab must be the one ",
         "given as name on the 'New Rule' tab.\n\n",
         "The games of all players whose alias matches the given ",
         "identity number are included.  Often it will be clear the ",
@@ -86,7 +89,7 @@ _HELP_TEXT = "".join(
         "is applied on the 'New players' tab.\n\n\n",
         "Identifications can be undone by the 'Player identity | ",
         "Break selected' and 'Player identity | Split All' actions on the "
-        "'Identified players' tab.\n\n\n",
+        "'Known players' tab.\n\n\n",
         "Event, time control, and playing mode entries can be identified ",
         "as references to the same thing by the relevant 'Identify ...' ",
         "action in the 'Other identities' menu.\n\n",
@@ -143,7 +146,7 @@ class Calculator(Bindings):
         self._players = None
         self._persons = None
         self._events = None
-        self._time_limits = None
+        self._time_controls = None
         self._modes = None
         self._selectors = None
         self.widget = tkinter.Tk()
@@ -244,7 +247,7 @@ class Calculator(Bindings):
             )
         menu3.add_cascade(label="Time controls", menu=menu31, underline=0)
         menu3.add_separator()
-        menu3.add_cascade(label="Playing modes", menu=menu32, underline=0)
+        menu3.add_cascade(label="Modes", menu=menu32, underline=0)
         menu3.add_separator()
 
     def _initialize_database_interface(self):
@@ -275,7 +278,7 @@ class Calculator(Bindings):
 
         # Third tab: will be a list of players with their identifiers.
         self._persons_tab = tkinter.ttk.Frame(master=notebook)
-        notebook.add(self._persons_tab, text="Identified players", underline=0)
+        notebook.add(self._persons_tab, text="Known players", underline=0)
         self._persons_tab.grid_rowconfigure(0, weight=1)
         self._persons_tab.grid_columnconfigure(0, weight=1)
         self._persons = persons.Persons(self._persons_tab, self.database)
@@ -294,10 +297,10 @@ class Calculator(Bindings):
         notebook.add(self._time_limits_tab, text="Time controls", underline=0)
         self._time_limits_tab.grid_rowconfigure(0, weight=1)
         self._time_limits_tab.grid_columnconfigure(0, weight=1)
-        self._time_limits = timecontrols.TimeControls(
+        self._time_controls = timecontrols.TimeControls(
             self._time_limits_tab, self.database
         )
-        self._time_limits.frame.grid(column=0, row=0, sticky=tkinter.NSEW)
+        self._time_controls.frame.grid(column=0, row=0, sticky=tkinter.NSEW)
 
         # Sixth tab: will be a list of playing modes.
         self._modes_tab = tkinter.ttk.Frame(master=notebook)
@@ -806,7 +809,7 @@ class Calculator(Bindings):
         self._players.players_grid.bind_off()
         self._players.persons_grid.bind_off()
         self._persons.data_grid.bind_off()
-        self._selectors.selectors_grid.bind_off()
+        self._selectors.data_grid.bind_off()
         self.database.close_database_contexts()
         self.set_import_subprocess(
             subprocess_id=multiprocessing.Process(
@@ -849,7 +852,8 @@ class Calculator(Bindings):
         self._players.players_grid.bind_on()
         self._players.persons_grid.bind_on()
         self._persons.data_grid.bind_on()
-        self._selectors.selectors_grid.bind_on()
+        self._selectors.data_grid.bind_on()
+        self._games.games_grid.fill_view_from_top()
 
     def player_identify(self):
         """Identify selected and bookmarked new players as selected person."""
@@ -993,47 +997,58 @@ class Calculator(Bindings):
 
     def selectors_new(self):
         """Define new rule to select games for performance calculation."""
-
-        # Is there a good reason to ban creating this type of tab if
-        # no database is open?
-        # At present the notebook does not exist unless a database is open.
         if not self._selectors_availbable(EventSpec.menu_selectors_new):
             return False
-
-        # Do not prevent 'New Rule' based on current tab: maybe take some
-        # default values based on selection in current tab.
-        # if self._notebook.index(
-        #    self._calculations_tab
-        # ) != self._notebook.index(self._notebook.select()):
-        #    tkinter.messagebox.showinfo(
-        #        parent=self.widget,
-        #        title=EventSpec.menu_selectors_new[1],
-        #        message="".join(
-        #            (
-        #                "List of game selection rules is ",
-        #                "not the visible tab at present",
-        #            )
-        #        ),
-        #    )
-        #    return
-
-        # A new 'New Rule' tab.
-        rule_tab = tkinter.ttk.Frame(master=self._notebook)
-        selector = rule.Rule(rule_tab, self.database)
-        self._rule_tabs[
-            rule_tab.winfo_pathname(rule_tab.winfo_id())
-        ] = selector
-        self._notebook.add(rule_tab, text="New Rule")
+        persons_sel = self._persons.data_grid.selection
+        events_sel = self._events.data_grid.selection
+        modes_sel = self._modes.data_grid.selection
+        time_controls_sel = self._time_controls.data_grid.selection
+        frame = tkinter.ttk.Frame(master=self._notebook)
+        tab = ruleinsert.RuleInsert(frame, self.database)
+        tab_from_selection.get_person(tab, persons_sel, self.database)
+        tab_from_selection.get_time_control(
+            tab, time_controls_sel, self.database
+        )
+        tab_from_selection.get_mode(tab, modes_sel, self.database)
+        tab_from_selection.get_events(tab, events_sel, self.database)
+        self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        self._notebook.add(frame, text="New Rule")
 
     def selectors_show(self):
         """Show selected rule to select games for performance calculation."""
         if not self._selectors_choose(EventSpec.menu_selectors_show):
             return
+        selectors_sel = self._selectors.data_grid.selection
+        if not selectors_sel:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=EventSpec.menu_selectors_show[1],
+                message="Please select a calculation rule",
+            )
+            return
+        frame = tkinter.ttk.Frame(master=self._notebook)
+        tab = ruleshow.RuleShow(frame, self.database)
+        tab_from_selection.get_rule(tab, selectors_sel, self.database)
+        self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        self._notebook.add(frame, text="Show Rule")
 
     def selectors_edit(self):
         """Edit selected rule to select games for performance calculation."""
         if not self._selectors_choose(EventSpec.menu_selectors_edit):
             return
+        selectors_sel = self._selectors.data_grid.selection
+        if not selectors_sel:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=EventSpec.menu_selectors_edit[1],
+                message="Please select a calculation rule",
+            )
+            return
+        frame = tkinter.ttk.Frame(master=self._notebook)
+        tab = ruleedit.RuleEdit(frame, self.database)
+        tab_from_selection.get_rule(tab, selectors_sel, self.database)
+        self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        self._notebook.add(frame, text="Edit Rule")
 
     def _selectors_choose(self, menu_event_spec):
         """Return True if the selection rule list tab is visible."""
@@ -1070,29 +1085,33 @@ class Calculator(Bindings):
 
     def selectors_close(self):
         """Close rule tab to select games for performance calculation."""
-        if not self._selectors_apply(EventSpec.menu_selectors_close):
+        tab = self._selectors_apply(EventSpec.menu_selectors_close)
+        if not tab:
             return
         self._notebook.forget(tab)
         del self._rule_tabs[tab]
 
     def selectors_insert(self):
         """Insert rule to select games for performance calculation."""
-        if not self._selectors_apply(EventSpec.menu_selectors_insert):
+        tab = self._selectors_apply(EventSpec.menu_selectors_insert)
+        if not tab:
             return
         self._rule_tabs[tab].insert_rule()
 
     def selectors_update(self):
         """Update rule to select games for performance calculation."""
-        if not self._selectors_apply(EventSpec.menu_selectors_update):
+        tab = self._selectors_apply(EventSpec.menu_selectors_update)
+        if not tab:
             return
 
     def selectors_delete(self):
         """Delete rule to select games for performance calculation."""
-        if not self._selectors_apply(EventSpec.menu_selectors_delete):
+        tab = self._selectors_apply(EventSpec.menu_selectors_delete)
+        if not tab:
             return
 
     def _selectors_apply(self, menu_event_spec):
-        """Return True if a selection rule tab is visible."""
+        """Return tab if a selection rule tab is visible, False otherwise."""
         if self._selectors is None or self._selectors.frame is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
@@ -1115,11 +1134,11 @@ class Calculator(Bindings):
                 ),
             )
             return False
-        return True
+        return tab
 
     def _selectors_grid_available(self, menu_event_spec):
         """Return True if the selectors grid is visible."""
-        if self._selectors.selectors_grid is None:
+        if self._selectors.data_grid is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=menu_event_spec[1],
@@ -1263,14 +1282,14 @@ class Calculator(Bindings):
 
     def time_identify(self):
         """Identify bookmarked time controls as selected time control."""
-        if self._time_limits is None or self._time_limits.frame is None:
+        if self._time_controls is None or self._time_controls.frame is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_identify[1],
                 message="Identify time control not available at present",
             )
             return
-        if self._time_limits.data_grid is None:
+        if self._time_controls.data_grid is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_identify[1],
@@ -1291,11 +1310,11 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._time_limits.identify()
+        self._time_controls.identify()
 
     def time_break(self):
         """Break indentity of selected and bookmarked time control aliases."""
-        if self._time_limits is None or self._time_limits.frame is None:
+        if self._time_controls is None or self._time_controls.frame is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_break[1],
@@ -1307,7 +1326,7 @@ class Calculator(Bindings):
                 ),
             )
             return
-        if self._time_limits.data_grid is None:
+        if self._time_controls.data_grid is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_break[1],
@@ -1328,18 +1347,18 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._time_limits.break_selected()
+        self._time_controls.break_selected()
 
     def time_split(self):
         """Split identity of all aliases of selected time control."""
-        if self._time_limits is None or self._time_limits.frame is None:
+        if self._time_controls is None or self._time_controls.frame is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_split[1],
                 message="Split all time controls not available at present",
             )
             return
-        if self._time_limits.data_grid is None:
+        if self._time_controls.data_grid is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_split[1],
@@ -1360,18 +1379,18 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._time_limits.split_all()
+        self._time_controls.split_all()
 
     def time_change(self):
         """Change time control alias used as time control identity."""
-        if self._time_limits is None or self._time_limits.frame is None:
+        if self._time_controls is None or self._time_controls.frame is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_change[1],
                 message="Change time control identity not available at present",
             )
             return
-        if self._time_limits.data_grid is None:
+        if self._time_controls.data_grid is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_change[1],
@@ -1392,7 +1411,7 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._time_limits.change_identity()
+        self._time_controls.change_identity()
 
     def mode_identify(self):
         """Identify bookmarked playing modes as selected playing mode."""
