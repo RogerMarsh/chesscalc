@@ -910,8 +910,17 @@ class PlayerDBImporter(PlayerDBrecord):
             self.key.recno = None
             self.put_record(database, filespec.PLAYER_FILE_DEF)
             if int(pid) % db_segment_size == 0:
+
+                # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
+                # and lmdb too.
+                cursor.close()
                 database.commit()
                 database.start_transaction()
+                cursor = database.database_cursor(
+                    filespec.GAME_FILE_DEF, filespec.GAME_PLAYER_FIELD_DEF
+                )
+                cursor.setat(record)
+
                 if reporter is not None:
                     reporter.append_text(
                         "".join(
@@ -923,18 +932,6 @@ class PlayerDBImporter(PlayerDBrecord):
                             )
                         )
                     )
-
-                # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
-                # and lmdb too.
-                # (Events and the others do not reach housekeeping yet.)
-                # Not doing deferred updates.
-                # cursor.close()
-                # database.deferred_update_housekeeping()
-                # cursor = database.database_cursor(
-                #    filespec.GAME_FILE_DEF, filespec.GAME_PLAYER_FIELD_DEF
-                # )
-                # cursor.setat(record)
-
         if reporter is not None:
             reporter.append_text_only("")
             reporter.append_text(
@@ -1272,8 +1269,17 @@ class EventDBImporter(EventDBrecord):
             self.key.recno = None
             self.put_record(database, filespec.EVENT_FILE_DEF)
             if int(pid) % db_segment_size == 0:
+
+                # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
+                # and lmdb too.
+                cursor.close()
                 database.commit()
                 database.start_transaction()
+                cursor = database.database_cursor(
+                    filespec.GAME_FILE_DEF, filespec.GAME_EVENT_FIELD_DEF
+                )
+                cursor.setat(record)
+
                 if reporter is not None:
                     reporter.append_text(
                         "".join(
@@ -1285,18 +1291,6 @@ class EventDBImporter(EventDBrecord):
                             )
                         )
                     )
-
-                # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
-                # and lmdb too.
-                # (Events and the others do not reach housekeeping yet.)
-                # Not doing deferred updates.
-                # cursor.close()
-                # database.deferred_update_housekeeping()
-                # cursor = database.database_cursor(
-                #    filespec.GAME_FILE_DEF, filespec.GAME_EVENT_FIELD_DEF
-                # )
-                # cursor.setat(record)
-
         if reporter is not None:
             reporter.append_text_only("")
             reporter.append_text(
@@ -1524,8 +1518,17 @@ class TimeControlDBImporter(TimeControlDBrecord):
             self.key.recno = None
             self.put_record(database, filespec.TIME_FILE_DEF)
             if int(pid) % db_segment_size == 0:
+
+                # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
+                # and lmdb too.
+                cursor.close()
                 database.commit()
                 database.start_transaction()
+                cursor = database.database_cursor(
+                    filespec.GAME_FILE_DEF, filespec.GAME_TIMECONTROL_FIELD_DEF
+                )
+                cursor.setat(record)
+
                 if reporter is not None:
                     reporter.append_text(
                         "".join(
@@ -1537,18 +1540,6 @@ class TimeControlDBImporter(TimeControlDBrecord):
                             )
                         )
                     )
-
-                # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
-                # and lmdb too.
-                # (Events and the others do not reach housekeeping yet.)
-                # Not doing deferred updates.
-                # cursor.close()
-                # database.deferred_update_housekeeping()
-                # cursor = database.database_cursor(
-                #    filespec.GAME_FILE_DEF, filespec.GAME_TIMECONTROL_FIELD_DEF
-                # )
-                # cursor.setat(record)
-
         if reporter is not None:
             reporter.append_text_only("")
             reporter.append_text(
@@ -1771,8 +1762,17 @@ class ModeDBImporter(ModeDBrecord):
             self.key.recno = None
             self.put_record(database, filespec.MODE_FILE_DEF)
             if int(pid) % db_segment_size == 0:
+
+                # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
+                # and lmdb too.
+                cursor.close()
                 database.commit()
                 database.start_transaction()
+                cursor = database.database_cursor(
+                    filespec.GAME_FILE_DEF, filespec.GAME_MODE_FIELD_DEF
+                )
+                cursor.setat(record)
+
                 if reporter is not None:
                     reporter.append_text(
                         "".join(
@@ -1784,18 +1784,6 @@ class ModeDBImporter(ModeDBrecord):
                             )
                         )
                     )
-
-                # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
-                # and lmdb too.
-                # (Events and the others do not reach housekeeping yet.)
-                # Not doing deferred updates.
-                # cursor.close()
-                # database.deferred_update_housekeeping()
-                # cursor = database.database_cursor(
-                #    filespec.GAME_FILE_DEF, filespec.GAME_MODE_FIELD_DEF
-                # )
-                # cursor.setat(record)
-
         if reporter is not None:
             reporter.append_text_only("")
             reporter.append_text(
