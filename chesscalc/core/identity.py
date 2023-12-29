@@ -4,7 +4,9 @@
 
 """Provide a unique identifier for each player record."""
 
-from . import performancerecord
+from solentware_base.core.record import KeyData
+from solentware_base.core.record import ValueList, Record
+
 from . import constants
 from . import filespec
 
@@ -25,6 +27,90 @@ class NoModeIdentity(Exception):
     """Raise if unable to allocate playing mode identity code."""
 
 
+class IdentityDBkey(KeyData):
+    """Primary key of identity code."""
+
+
+class _IdentityDBvalue(ValueList):
+    """Identity data.
+
+    This class is not intended for direct use as it lacks an extended
+    version of the pack() method.  Subclasses will need to supply a
+    suitable pack() method.
+    """
+
+    attributes = dict(
+        code=None,
+        type_=None,
+    )
+    _attribute_order = ("type_", "code")
+    assert set(_attribute_order) == set(attributes)
+
+    def __init__(self):
+        """Customise ValueList for identity data."""
+        super().__init__()
+        self.code = None
+        self.type_ = None
+
+    def empty(self):
+        """(Re)Initialize value attribute."""
+        self.code = None
+        self.type_ = None
+
+
+class IdentityDBvalue(_IdentityDBvalue):
+    """Identity data.
+
+    Expected use is IdentityDBrecord(valueclass=IdentityDBvalue).
+    """
+
+    def pack(self):
+        """Generate identity record and index data."""
+        v = super().pack()
+        index = v[1]
+        index[filespec.IDENTITY_TYPE_FIELD_DEF] = [self.type_]
+        return v
+
+
+class NextIdentityDBvalue(_IdentityDBvalue):
+    """Identity data for next code.
+
+    The pack() method is not extended to populate, or depopulate, indicies.
+    Thus this class safe to use in deferred updates when modifying the most
+    recently allocated identity.
+
+    Expected use is IdentityDBrecord(valueclass=NextIdentityDBvalue).
+    """
+
+
+# For sqlite3, berkeleydb, and others except dpt, this level of indirection
+# seems unnecessary: the record key could be the player and person identity
+# directly.  Record numbers are arbitrary in DPT and are liable to change
+# when a file is reorganized: hence an explicit record to provide unique,
+# and permanent, identities for records.
+class IdentityDBrecord(Record):
+    """Customise Record with IdentityDBkey and IdentityDBvalue by default."""
+
+    def __init__(self, keyclass=IdentityDBkey, valueclass=IdentityDBvalue):
+        """Delegate with keyclass and valueclass arguments."""
+        super().__init__(keyclass, valueclass)
+
+    def get_keys(self, datasource=None, partial=None):
+        """Override, return [(key, value), ...] by partial key in datasource."""
+        try:
+            if partial != None:
+                return []
+            srkey = datasource.dbhome.encode_record_number(self.key.pack())
+            if datasource.primary:
+                return [(srkey, self.srvalue)]
+            dbname = datasource.dbname
+            if dbname == filespec.IDENTITY_TYPE_FIELD_DEF:
+                return [(self.value.type_, srkey)]
+            return []
+        except:
+            return []
+
+
 def _create_identity_record_if_not_exists(database, key_type):
     """Create record for next identity if it does not exist."""
     database.start_read_only_transaction()
@@ -36,7 +122,7 @@ def _create_identity_record_if_not_exists(database, key_type):
         database.end_read_only_transaction()
         return
     database.end_read_only_transaction()
-    record = performancerecord.IdentityDBrecord()
+    record = IdentityDBrecord()
     record.value.code = 0
     record.value.type_ = key_type
     database.start_transaction()
@@ -93,9 +179,7 @@ def _get_next_identity_value_after_allocation(database, keytype, exception):
         filespec.IDENTITY_FIELD_DEF,
         recordset=recordlist,
     )
-    record = performancerecord.IdentityDBrecord(
-        valueclass=performancerecord.NextIdentityDBvalue
-    )
+    record = IdentityDBrecord(valueclass=NextIdentityDBvalue)
     instance = cursor.first()
     if not instance:
         raise exception("Identity code record expected but not found")
