@@ -10,7 +10,7 @@ import tkinter.ttk
 from solentware_bind.gui.bindings import Bindings
 
 from .eventspec import EventSpec
-from ..core import tab_from_selection
+from ..core import name_lookup
 
 
 class RuleError(Exception):
@@ -232,8 +232,8 @@ class Rule(Bindings):
             tkinter.END, "\n".join(value.event_identities)
         )
         if value.person_identity:
-            detail = tab_from_selection.get_person_detail(
-                value.person_identity, self._database
+            detail = name_lookup.get_player_record_from_identity(
+                self._database, value.person_identity
             )
             self._player_name.configure(state=tkinter.NORMAL)
             self._player_name.delete("0", tkinter.END)
@@ -242,8 +242,8 @@ class Rule(Bindings):
             )
             self._player_name.configure(state=tkinter.DISABLED)
         if value.time_control_identity:
-            detail = tab_from_selection.get_time_control_detail(
-                value.time_control_identity, self._database
+            detail = name_lookup.get_time_control_record_from_identity(
+                self._database, value.time_control_identity
             )
             self._time_control_name.configure(state=tkinter.NORMAL)
             self._time_control_name.delete("0", tkinter.END)
@@ -252,8 +252,8 @@ class Rule(Bindings):
             )
             self._time_control_name.configure(state=tkinter.DISABLED)
         if value.mode_identity:
-            detail = tab_from_selection.get_mode_detail(
-                value.mode_identity, self._database
+            detail = name_lookup.get_mode_record_from_identity(
+                self._database, value.mode_identity
             )
             self._mode_name.configure(state=tkinter.NORMAL)
             self._mode_name.delete("0", tkinter.END)
