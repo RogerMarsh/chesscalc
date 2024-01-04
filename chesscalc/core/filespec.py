@@ -7,31 +7,31 @@
 from solentware_base.core.constants import (
     PRIMARY,
     SECONDARY,
-    DEFER,
+    # DEFER,
     BTOD_FACTOR,
     DEFAULT_RECORDS,
     DEFAULT_INCREASE_FACTOR,
     BTOD_CONSTANT,
     DDNAME,
     FILE,
-    FOLDER,
+    # FOLDER,
     FIELDS,
     FILEDESC,
-    FLT,
+    # FLT,
     INV,
-    UAE,
+    # UAE,
     ORD,
-    ONM,
-    SPT,
-    EO,
+    # ONM,
+    # SPT,
+    # EO,
     RRN,
-    BSIZE,
+    # BSIZE,
     BRECPPG,
-    BRESERVE,
-    BREUSE,
-    DSIZE,
-    DRESERVE,
-    DPGSRES,
+    # BRESERVE,
+    # BREUSE,
+    # DSIZE,
+    # DRESERVE,
+    # DPGSRES,
     FILEORG,
     DPT_PRIMARY_FIELD_LENGTH,
 )
@@ -117,7 +117,7 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
         dptfn = FileSpec.dpt_dsn
         fld = FileSpec.field_name
 
-        super(FileSpec, self).__init__(
+        super().__init__(
             use_specification_items=use_specification_items,
             dpt_records=dpt_records,
             **{

@@ -10,7 +10,6 @@ import tkinter
 import tkinter.font
 import tkinter.messagebox
 import queue
-import time
 import multiprocessing
 import multiprocessing.dummy
 

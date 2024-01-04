@@ -42,7 +42,7 @@ class TimeControls(Bindings):
         title = EventSpec.menu_other_time_identify[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         time_controls_sel = self._time_limits_grid.selection
         time_controls_bmk = self._time_limits_grid.bookmarks
         if len(time_controls_sel) == 0:
@@ -89,14 +89,14 @@ class TimeControls(Bindings):
                 message=message,
             )
             return False
-        self.data_grid.bookmarks[:] = []  # When was clear() method added?
+        return True
 
     def break_selected(self):
         """Undo identification of bookmarked time controls as selection."""
         title = EventSpec.menu_other_time_break[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         time_controls_sel = self._time_limits_grid.selection
         time_controls_bmk = self._time_limits_grid.bookmarks
         if len(time_controls_sel) == 0:
@@ -143,14 +143,14 @@ class TimeControls(Bindings):
                 message=message,
             )
             return False
-        self.data_grid.bookmarks[:] = []  # When was clear() method added?
+        return True
 
     def split_all(self):
         """Undo identification of all aliases of selected time control."""
         title = EventSpec.menu_other_time_split[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         time_controls_sel = self._time_limits_grid.selection
         time_controls_bmk = self._time_limits_grid.bookmarks
         if len(time_controls_sel) == 0:
@@ -177,13 +177,14 @@ class TimeControls(Bindings):
                 message=message,
             )
             return False
+        return True
 
     def change_identity(self):
         """Undo identification of all aliases of selected time control."""
         title = EventSpec.menu_other_time_change[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         time_controls_sel = self._time_limits_grid.selection
         time_controls_bmk = self._time_limits_grid.bookmarks
         if len(time_controls_sel) == 0:
@@ -210,6 +211,7 @@ class TimeControls(Bindings):
                 message=message,
             )
             return False
+        return True
 
     def get_database(self, title):
         """Return database if time controls list is attached to database.

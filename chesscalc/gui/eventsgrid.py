@@ -4,8 +4,6 @@
 
 """Chess performance database datagrid class for games."""
 
-import tkinter
-
 from solentware_grid import datagrid
 from solentware_grid.core import dataclient
 from solentware_grid.gui import gridbindings

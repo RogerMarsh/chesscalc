@@ -42,7 +42,7 @@ class Persons(Bindings):
         title = EventSpec.menu_player_break[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         persons_sel = self._persons_grid.selection
         persons_bmk = self._persons_grid.bookmarks
         if len(persons_sel) == 0 and len(persons_bmk) == 0:
@@ -56,15 +56,15 @@ class Persons(Bindings):
                     )
                 ),
             )
-            return
-        elif len(persons_sel) == 0:
+            return False
+        if len(persons_sel) == 0:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
                 message="No identified person is selected",
             )
-            return
-        elif len(persons_bmk) == 0:
+            return False
+        if len(persons_bmk) == 0:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
@@ -75,7 +75,7 @@ class Persons(Bindings):
                     )
                 ),
             )
-            return
+            return False
         aliases = set(persons_bmk)
         if persons_sel[0] in aliases:
             tkinter.messagebox.showinfo(
@@ -88,7 +88,7 @@ class Persons(Bindings):
                     )
                 ),
             )
-            return
+            return False
         message = identify_person.break_person_into_picked_players(
             database, persons_sel, aliases
         )
@@ -98,14 +98,15 @@ class Persons(Bindings):
                 title=title,
                 message=message,
             )
-            return
+            return False
+        return True
 
     def split_all(self):
         """Undo identification of all player aliases as a person."""
         title = EventSpec.menu_player_split[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         persons_sel = self._persons_grid.selection
         persons_bmk = self._persons_grid.bookmarks
         if len(persons_sel) == 0:
@@ -120,7 +121,7 @@ class Persons(Bindings):
                 ),
             )
             return False
-        elif len(persons_sel) != 1:
+        if len(persons_sel) != 1:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
@@ -132,7 +133,7 @@ class Persons(Bindings):
                 ),
             )
             return False
-        elif len(persons_bmk) != 0:
+        if len(persons_bmk) != 0:
             if not tkinter.messagebox.askokcancel(
                 parent=self.frame,
                 title=title,
@@ -144,7 +145,7 @@ class Persons(Bindings):
                     )
                 ),
             ):
-                return
+                return False
         elif not tkinter.messagebox.askokcancel(
             parent=self.frame,
             title=title,
@@ -155,7 +156,7 @@ class Persons(Bindings):
                 )
             ),
         ):
-            return
+            return False
         message = identify_person.split_person_into_all_players(
             database, persons_sel
         )
@@ -165,14 +166,15 @@ class Persons(Bindings):
                 title=title,
                 message=message,
             )
-            return
+            return False
+        return True
 
     def change_identity(self):
         """Change identification of all player aliases as a person."""
         title = EventSpec.menu_player_change[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         persons_sel = self._persons_grid.selection
         persons_bmk = self._persons_grid.bookmarks
         if len(persons_sel) == 0:
@@ -187,7 +189,7 @@ class Persons(Bindings):
                 ),
             )
             return False
-        elif len(persons_sel) != 1:
+        if len(persons_sel) != 1:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
@@ -199,7 +201,7 @@ class Persons(Bindings):
                 ),
             )
             return False
-        elif len(persons_bmk) != 0:
+        if len(persons_bmk) != 0:
             if not tkinter.messagebox.askokcancel(
                 parent=self.frame,
                 title=title,
@@ -211,7 +213,7 @@ class Persons(Bindings):
                     )
                 ),
             ):
-                return
+                return False
         elif not tkinter.messagebox.askokcancel(
             parent=self.frame,
             title=title,
@@ -219,7 +221,7 @@ class Persons(Bindings):
                 ("The selected alias will become the identified ", "person")
             ),
         ):
-            return
+            return False
         message = identify_person.change_identified_person(
             database, persons_sel
         )
@@ -229,7 +231,8 @@ class Persons(Bindings):
                 title=title,
                 message=message,
             )
-            return
+            return False
+        return True
 
     def get_database(self, title):
         """Return database if identified players list is attached to database.
@@ -240,7 +243,7 @@ class Persons(Bindings):
         persons_ds = self._persons_grid.datasource
         if persons_ds is None:
             tkinter.messagebox.showinfo(
-                parent=self._players,
+                parent=self.frame,
                 title=title,
                 message="".join(
                     (
@@ -253,7 +256,7 @@ class Persons(Bindings):
         persons_db = persons_ds.dbhome
         if persons_db is None:
             tkinter.messagebox.showinfo(
-                parent=self._players,
+                parent=self.frame,
                 title=title,
                 message="".join(
                     (

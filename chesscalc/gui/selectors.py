@@ -9,7 +9,6 @@ import tkinter
 from solentware_bind.gui.bindings import Bindings
 
 from . import selectorsgrid
-from .eventspec import EventSpec
 
 
 class SelectorsError(Exception):
@@ -17,7 +16,7 @@ class SelectorsError(Exception):
 
 
 class Selectors(Bindings):
-    """Define widgets which list game selectors for performance calculations."""
+    """Define widgets which show list of game selection rules."""
 
     def __init__(self, master, database):
         """Create the persons widget."""

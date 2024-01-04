@@ -4,8 +4,6 @@
 
 """Chess performance database datagrid class for game selection."""
 
-import tkinter
-
 from solentware_grid import datagrid
 from solentware_grid.core import dataclient
 from solentware_grid.gui import gridbindings
@@ -25,7 +23,7 @@ class SelectorsGrid(gridbindings.GridBindings, datagrid.DataGridReadOnly):
         source = dataclient.DataSource(
             database,
             filespec.SELECTION_FILE_DEF,
-            filespec.SELECTION_FIELD_DEF,
+            filespec.RULE_FIELD_DEF,
             selectorsrow.SelectorsRow,
         )
         self.set_data_source(source)

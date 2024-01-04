@@ -42,6 +42,7 @@ class Database(dptnofistat.Database):
         """Increase file sizes taking file full into account."""
         # Increase the size of files allowing for the file full condition
         # which occurred while doing a deferred update for import.
+        del files
         for dbn, broken_sizes in self._broken_sizes.items():
             self.table[dbn].increase_size_of_full_file(
                 self.dbenv,

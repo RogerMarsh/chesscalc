@@ -4,8 +4,6 @@
 
 """List the games in the database."""
 
-import tkinter
-
 from solentware_bind.gui.bindings import Bindings
 
 from . import gamesgrid

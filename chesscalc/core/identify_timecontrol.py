@@ -9,15 +9,9 @@ on the database, or as separate time control, and undoing these
 identifications too.
 
 """
-from ast import literal_eval
-
 from . import performancerecord
-from . import constants
 from . import filespec
-
-
-class TimeControlIdentity(Exception):
-    """Raise if unable to change alias used as time control identity."""
+from . import identify_item
 
 
 def identify(database, bookmarks, selection):
@@ -30,40 +24,18 @@ def identify(database, bookmarks, selection):
     The changes are applied to database.
 
     """
-    time_record = performancerecord.TimeControlDBrecord()
-    selection_record = performancerecord.TimeControlDBrecord()
-    database.start_transaction()
-    try:
-        selection_record.load_record(
-            database.get_primary_record(
-                filespec.TIME_FILE_DEF, selection[0][1]
-            )
-        )
-        for event in bookmarks:
-            time_record.load_record(
-                database.get_primary_record(filespec.TIME_FILE_DEF, event[1])
-            )
-            if time_record.value.alias != time_record.value.identity:
-                database.backout()
-                return "".join(
-                    (
-                        "One of the bookmarked time controls is already ",
-                        "aliased so no changes done",
-                    )
-                )
-            clone_record = time_record.clone()
-            clone_record.value.alias = selection_record.value.alias
-            time_record.edit_record(
-                database,
-                filespec.TIME_FILE_DEF,
-                filespec.TIME_IDENTITY_FIELD_DEF,
-                clone_record,
-            )
-    except:
-        database.backout()
-        raise
-    database.commit()
-    return None
+    return identify_item.identify(
+        database,
+        bookmarks,
+        selection,
+        performancerecord.TimeControlDBvalue,
+        performancerecord.TimeControlDBrecord,
+        filespec.TIME_FILE_DEF,
+        filespec.TIME_FIELD_DEF,
+        filespec.TIME_ALIAS_FIELD_DEF,
+        filespec.TIME_IDENTITY_FIELD_DEF,
+        "time control",
+    )
 
 
 def break_bookmarked_aliases(database, bookmarks, selection):
@@ -74,41 +46,18 @@ def break_bookmarked_aliases(database, bookmarks, selection):
     The changes are applied to database.
 
     """
-    time_record = performancerecord.TimeControlDBrecord()
-    selection_record = performancerecord.TimeControlDBrecord()
-    database.start_transaction()
-    try:
-        selection_record.load_record(
-            database.get_primary_record(
-                filespec.TIME_FILE_DEF, selection[0][1]
-            )
-        )
-        for event in bookmarks:
-            time_record.load_record(
-                database.get_primary_record(filespec.TIME_FILE_DEF, event[1])
-            )
-            if time_record.value.alias != selection_record.value.alias:
-                database.backout()
-                return "".join(
-                    (
-                        "One of the bookmarked time controls is not aliased ",
-                        "to same time control as selection time control ",
-                        "so no changes done",
-                    )
-                )
-            clone_record = time_record.clone()
-            clone_record.value.alias = clone_record.value.identity
-            time_record.edit_record(
-                database,
-                filespec.TIME_FILE_DEF,
-                filespec.TIME_IDENTITY_FIELD_DEF,
-                clone_record,
-            )
-    except:
-        database.backout()
-        raise
-    database.commit()
-    return None
+    return identify_item.break_bookmarked_aliases(
+        database,
+        bookmarks,
+        selection,
+        performancerecord.TimeControlDBvalue,
+        performancerecord.TimeControlDBrecord,
+        filespec.TIME_FILE_DEF,
+        filespec.TIME_FIELD_DEF,
+        filespec.TIME_ALIAS_FIELD_DEF,
+        filespec.TIME_IDENTITY_FIELD_DEF,
+        "time control",
+    )
 
 
 def split_aliases(database, selection):
@@ -117,42 +66,17 @@ def split_aliases(database, selection):
     The changes are applied to database.
 
     """
-    time_record = performancerecord.TimeControlDBrecord()
-    selection_record = performancerecord.TimeControlDBrecord()
-    database.start_transaction()
-    try:
-        selection_record.load_record(
-            database.get_primary_record(
-                filespec.TIME_FILE_DEF, selection[0][1]
-            )
-        )
-        recordlist = database.recordlist_key(
-            filespec.TIME_FILE_DEF,
-            filespec.TIME_IDENTITY_FIELD_DEF,
-            key=selection_record.value.alias,
-        )
-        while True:
-            record = recordlist.next()
-            if not record:
-                break
-            time_record.load_record(
-                database.get_primary_record(filespec.TIME_FILE_DEF, record[1])
-            )
-            if time_record.value.alias == time_record.value.identity:
-                continue
-            clone_record = time_record.clone()
-            clone_record.value.alias = clone_record.value.identity
-            time_record.edit_record(
-                database,
-                filespec.TIME_FILE_DEF,
-                filespec.TIME_IDENTITY_FIELD_DEF,
-                clone_record,
-            )
-    except:
-        database.backout()
-        raise
-    database.commit()
-    return None
+    return identify_item.split_aliases(
+        database,
+        selection,
+        performancerecord.TimeControlDBvalue,
+        performancerecord.TimeControlDBrecord,
+        filespec.TIME_FILE_DEF,
+        filespec.TIME_FIELD_DEF,
+        filespec.TIME_ALIAS_FIELD_DEF,
+        filespec.TIME_IDENTITY_FIELD_DEF,
+        "time control",
+    )
 
 
 def change_aliases(database, selection):
@@ -164,46 +88,14 @@ def change_aliases(database, selection):
     The changes are applied to database.
 
     """
-    time_record = performancerecord.TimeControlDBrecord()
-    selection_record = performancerecord.TimeControlDBrecord()
-    database.start_transaction()
-    try:
-        selection_record.load_record(
-            database.get_primary_record(
-                filespec.TIME_FILE_DEF, selection[0][1]
-            )
-        )
-        recordlist = database.recordlist_key(
-            filespec.TIME_FILE_DEF,
-            filespec.TIME_IDENTITY_FIELD_DEF,
-            key=selection_record.value.alias,
-        )
-        while True:
-            record = recordlist.next()
-            if not record:
-                break
-            time_record.load_record(
-                database.get_primary_record(filespec.TIME_FILE_DEF, record[1])
-            )
-            clone_record = time_record.clone()
-            clone_record.value.alias = selection_record.value.identity
-            time_record.edit_record(
-                database,
-                filespec.TIME_FILE_DEF,
-                filespec.TIME_IDENTITY_FIELD_DEF,
-                clone_record,
-            )
-    except:
-        database.backout()
-        raise
-    database.commit()
-    return None
-
-
-def _set_value(value, alias):
-    """Populate value from alias.
-
-    value is expected to be a TimeControlDBvalue instance.
-
-    """
-    (value.timecontrol,) = literal_eval(alias)
+    return identify_item.change_aliases(
+        database,
+        selection,
+        performancerecord.TimeControlDBvalue,
+        performancerecord.TimeControlDBrecord,
+        filespec.TIME_FILE_DEF,
+        filespec.TIME_FIELD_DEF,
+        filespec.TIME_ALIAS_FIELD_DEF,
+        filespec.TIME_IDENTITY_FIELD_DEF,
+        "time control",
+    )

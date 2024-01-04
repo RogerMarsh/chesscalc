@@ -9,7 +9,9 @@ import tkinter.ttk
 
 from solentware_bind.gui.bindings import Bindings
 
+from ..core.utilities import AppSysDate
 from .eventspec import EventSpec
+from ..core import update_database
 from ..core import name_lookup
 
 
@@ -30,35 +32,67 @@ class RuleIdentityValuesDisplayed:
         self.player = None
         self.from_date = None
         self.to_date = None
-        self.event = None
         self.time_control = None
         self.mode = None
+        self.event = None
+        self.player_name = None
+        self.time_control_name = None
+        self.mode_name = None
+        self.event_names = None
 
-    def set_values(
-        self, rule, player, from_date, to_date, event, time_control, mode
-    ):
-        """Set values to those being validated."""
-        self.rule = rule
-        self.player = player
-        self.from_date = from_date
-        self.to_date = to_date
-        self.event = event
-        self.time_control = time_control
-        self.mode = mode
+    def set_values(self, *args):
+        """Set state to values in *args.
 
-    def is_changed(
-        self, rule, player, from_date, to_date, event, time_control, mode
-    ):
-        """Return True if values being validated are not those here."""
+        *args will usually be the values set in the rule widget when
+        displayed prior to editing for updating the database.
+
+        There must be 11 (eleven) items in *args, in order:
+
+        rule, player_identity, from_date, to_date, time_control_identity,
+        mode_identity, event_identities, player_name, time_control_name,
+        mode_name, and event_names.
+
+        """
+        (
+            self.rule,
+            self.player,
+            self.from_date,
+            self.to_date,
+            self.time_control,
+            self.mode,
+            self.event,
+            self.player_name,
+            self.time_control_name,
+            self.mode_name,
+            self.event_names,
+        ) = args
+
+    def is_changed(self, *args):
+        """Return True if state is not equal the value in *args.
+
+        *args will usually be the values in the rule widget when
+        submitted for updating the database.
+
+        There must be 11 (eleven) items in *args, in order:
+
+        rule, player_identity, from_date, to_date, time_control_identity,
+        mode_identity, event_identities, player_name, time_control_name,
+        mode_name, and event_names.
+
+        """
         return (
-            self.rule != rule
-            or self.player != player
-            or self.from_date != from_date
-            or self.to_date != to_date
-            or self.event != event
-            or self.time_control != time_control
-            or self.mode != mode
-        )
+            self.rule,
+            self.player,
+            self.from_date,
+            self.to_date,
+            self.time_control,
+            self.mode,
+            self.event,
+            self.player_name,
+            self.time_control_name,
+            self.mode_name,
+            self.event_names,
+        ) != args
 
 
 class Rule(Bindings):
@@ -68,6 +102,7 @@ class Rule(Bindings):
         """Create the rule widget."""
         super().__init__()
         self._database = database
+        self._rule_record = None
         self._identity_values = RuleIdentityValuesDisplayed()
         self._frame = master
         entry_widgets = []
@@ -212,7 +247,9 @@ class Rule(Bindings):
 
     def populate_rule_from_record(self, record):
         """Populate rule widget with values from record."""
+        assert self._rule_record is None
         value = record.value
+        self._enable_entry_widgets()
         self._rule.delete("0", tkinter.END)
         self._rule.insert(tkinter.END, value.name)
         self._player_identity.delete("0", tkinter.END)
@@ -235,30 +272,37 @@ class Rule(Bindings):
             detail = name_lookup.get_player_record_from_identity(
                 self._database, value.person_identity
             )
-            self._player_name.configure(state=tkinter.NORMAL)
-            self._player_name.delete("0", tkinter.END)
-            self._player_name.insert(
-                tkinter.END, detail.value.alias_index_key()
-            )
-            self._player_name.configure(state=tkinter.DISABLED)
+            if detail is not None:
+                self._player_name.configure(state=tkinter.NORMAL)
+                self._player_name.delete("0", tkinter.END)
+                self._player_name.insert(
+                    tkinter.END, detail.value.alias_index_key()
+                )
+                self._player_name.configure(state=tkinter.DISABLED)
         if value.time_control_identity:
             detail = name_lookup.get_time_control_record_from_identity(
                 self._database, value.time_control_identity
             )
-            self._time_control_name.configure(state=tkinter.NORMAL)
-            self._time_control_name.delete("0", tkinter.END)
-            self._time_control_name.insert(
-                tkinter.END, detail.value.alias_index_key()
-            )
-            self._time_control_name.configure(state=tkinter.DISABLED)
+            if detail is not None:
+                self._time_control_name.configure(state=tkinter.NORMAL)
+                self._time_control_name.delete("0", tkinter.END)
+                self._time_control_name.insert(
+                    tkinter.END, detail.value.alias_index_key()
+                )
+                self._time_control_name.configure(state=tkinter.DISABLED)
         if value.mode_identity:
             detail = name_lookup.get_mode_record_from_identity(
                 self._database, value.mode_identity
             )
-            self._mode_name.configure(state=tkinter.NORMAL)
-            self._mode_name.delete("0", tkinter.END)
-            self._mode_name.insert(tkinter.END, detail.value.alias_index_key())
-            self._mode_name.configure(state=tkinter.DISABLED)
+            if detail is not None:
+                self._mode_name.configure(state=tkinter.NORMAL)
+                self._mode_name.delete("0", tkinter.END)
+                self._mode_name.insert(
+                    tkinter.END, detail.value.alias_index_key()
+                )
+                self._mode_name.configure(state=tkinter.DISABLED)
+        self._disable_entry_widgets()
+        self._rule_record = record
 
     def populate_rule_person_from_record(self, record):
         """Populate rule widget person with values from record."""
@@ -289,3 +333,407 @@ class Rule(Bindings):
         self._mode_name.delete("0", tkinter.END)
         self._mode_name.insert(tkinter.END, value.alias_index_key())
         self._mode_name.configure(state=tkinter.DISABLED)
+
+    def get_selection_values_from_widget(self):
+        """Return values in rule widget excluding performance calculation."""
+        return (
+            self._rule.get().strip(),
+            self._player_identity.get().strip(),
+            self._from_date.get().strip(),
+            self._to_date.get().strip(),
+            self._time_control_identity.get().strip(),
+            self._mode_identity.get().strip(),
+            self._event_identities.get("1.0", tkinter.END).strip(),
+            self._player_name.get().strip(),
+            self._time_control_name.get().strip(),
+            self._mode_name.get().strip(),
+            self._event_names.get("1.0", tkinter.END).strip(),
+        )
+
+    def _disable_entry_widgets(self):
+        """Do nothing.
+
+        Subclasses should override this method if entry widgets should be
+        disabled at the end of populate_rule_from_record() call.
+
+        """
+
+    def _enable_entry_widgets(self):
+        """Do nothing.
+
+        Subclasses should override this method if entry widgets should be
+        enabled at the start of populate_rule_from_record() call to allow
+        changes.
+
+        """
+
+    def insert_rule(self):
+        """Insert selection rule into database."""
+        valid_values = self._validate_rule(
+            *self.get_selection_values_from_widget()
+        )
+        if not valid_values:
+            return False
+        if update_database.insert_record(self._database, *valid_values):
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=EventSpec.menu_selectors_insert[1],
+                message="Record inserted",
+            )
+            return True
+        tkinter.messagebox.showinfo(
+            parent=self.frame,
+            title=EventSpec.menu_selectors_insert[1],
+            message="Record not inserted",
+        )
+        return False
+
+    def update_rule(self):
+        """Update selection rule on database."""
+        if self._rule_record is None:
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=EventSpec.menu_selectors_update[1],
+                message="Record not known, perhaps it has been deleted",
+            )
+            return False
+        valid_values = self._validate_rule(
+            *self.get_selection_values_from_widget(), insert=False
+        )
+        if not valid_values:
+            return False
+        if update_database.update_record(
+            self._database, self._rule_record, *valid_values
+        ):
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=EventSpec.menu_selectors_update[1],
+                message="Record updated",
+            )
+            return True
+        tkinter.messagebox.showinfo(
+            parent=self.frame,
+            title=EventSpec.menu_selectors_update[1],
+            message="Record not updated",
+        )
+        return False
+
+    def delete_rule(self):
+        """Delete selection rule from database."""
+        if self._rule_record is None:
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=EventSpec.menu_selectors_delete[1],
+                message="Record not known, perhaps already deleted",
+            )
+            return False
+        if update_database.delete_record(self._database, self._rule_record):
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=EventSpec.menu_selectors_delete[1],
+                message="Record deleted",
+            )
+            self._rule_record = None
+            return True
+        tkinter.messagebox.showinfo(
+            parent=self.frame,
+            title=EventSpec.menu_selectors_delete[1],
+            message="Record not deleted",
+        )
+        return False
+
+    def _validate_rule(
+        self,
+        rule,
+        player_identity,
+        from_date,
+        to_date,
+        time_control_identity,
+        mode_identity,
+        event_identities,
+        player_name,
+        time_control_name,
+        mode_name,
+        event_names,
+        insert=True,
+    ):
+        """Return valid values for insert or update, or False."""
+        if insert:
+            title = EventSpec.menu_selectors_insert[1]
+        else:
+            title = EventSpec.menu_selectors_update[1]
+        if not rule:
+            if insert:
+                message = "Please give a rule name for selector"
+            else:
+                message = "Cannot update because the rule has no name"
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message=message,
+            )
+            return False
+        if (not player_identity and not event_identities) or (
+            player_identity and event_identities
+        ):
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="".join(
+                    (
+                        "Please give either a player identity, or list of ",
+                        "event names and dates, but not both for selector",
+                    )
+                ),
+            )
+            return False
+        if player_identity and not player_identity.isdigit():
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="Player identity must contain digits only",
+            )
+            return False
+        if (from_date and not to_date) or (not from_date and to_date):
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="".join(
+                    (
+                        "Please give either both from date and to date, ",
+                        "or neither, for selector",
+                    )
+                ),
+            )
+            return False
+        iso_from_date = ""
+        iso_to_date = ""
+        if from_date and to_date:
+            appsysdate = AppSysDate()
+            if appsysdate.parse_date(from_date) != len(from_date):
+                tkinter.messagebox.showinfo(
+                    parent=self.frame,
+                    title=title,
+                    message="Please give a date as 'From Date'",
+                )
+                return False
+            iso_from_date = appsysdate.iso_format_date()
+            if appsysdate.parse_date(to_date) != len(to_date):
+                tkinter.messagebox.showinfo(
+                    parent=self.frame,
+                    title=title,
+                    message="Please give a date as 'To Date'",
+                )
+                return False
+            iso_to_date = appsysdate.iso_format_date()
+            if len(from_date) < 11:
+                tkinter.messagebox.showinfo(
+                    parent=self.frame,
+                    title=title,
+                    message="".join(
+                        (
+                            "'From Date' is less than 11 characters and ",
+                            "has been interpreted as '",
+                            iso_from_date,
+                            "' in 'yyyy-mm-dd' format",
+                        )
+                    ),
+                )
+            if len(to_date) < 11:
+                tkinter.messagebox.showinfo(
+                    parent=self.frame,
+                    title=title,
+                    message="".join(
+                        (
+                            "'To Date' is less than 11 characters and ",
+                            "has been interpreted as '",
+                            iso_to_date,
+                            "' in 'yyyy-mm-dd' format",
+                        )
+                    ),
+                )
+        if time_control_identity and not time_control_identity.isdigit():
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="Time control identity must contain digits only",
+            )
+            return False
+        if mode_identity and not mode_identity.isdigit():
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="Mode identity must contain digits only",
+            )
+            return False
+        for event_identity in event_identities.split():
+            if event_identity and not event_identity.isdigit():
+                tkinter.messagebox.showinfo(
+                    parent=self.frame,
+                    title=title,
+                    message=event_identity.join(
+                        (
+                            "Event identity '",
+                            "' must contain digits only",
+                        )
+                    ),
+                )
+                return False
+        validate = True
+        messages = []
+        # Assume rule name is unchanged if widget state is 'disabled'.
+        if self._rule.cget("state") == tkinter.NORMAL:
+            if rule != self._identity_values.rule:
+                messages.append("Rule name changed")
+        if player_identity:
+            name = name_lookup.get_player_name_from_identity(
+                self._database, player_identity
+            )
+            self._player_name.configure(state=tkinter.NORMAL)
+            self._player_name.delete("0", tkinter.END)
+            if name:
+                if name != player_name:
+                    messages.append("Player name changed")
+                self._player_name.insert(tkinter.END, name)
+            self._player_name.configure(state=tkinter.DISABLED)
+            if not name:
+                messages.append("Player name not found")
+                validate = False
+            elif not player_name:
+                messages.append("Player name added")
+        else:
+            self._player_name.configure(state=tkinter.NORMAL)
+            self._player_name.delete("0", tkinter.END)
+            self._player_name.configure(state=tkinter.DISABLED)
+            if player_name:
+                messages.append("No player identity for name")
+                validate = False
+        if time_control_identity:
+            name = name_lookup.get_time_control_name_from_identity(
+                self._database, time_control_identity
+            )
+            self._time_control_name.configure(state=tkinter.NORMAL)
+            self._time_control_name.delete("0", tkinter.END)
+            if name:
+                if name != time_control_name:
+                    messages.append("Time control name changed")
+                self._time_control_name.insert(tkinter.END, name)
+            self._time_control_name.configure(state=tkinter.DISABLED)
+            if not name:
+                messages.append("Time control name not found")
+                validate = False
+            elif not time_control_name:
+                messages.append("Time control name added")
+        else:
+            self._time_control_name.configure(state=tkinter.NORMAL)
+            self._time_control_name.delete("0", tkinter.END)
+            self._time_control_name.configure(state=tkinter.DISABLED)
+            if time_control_name:
+                messages.append("No time control identity for name")
+                validate = False
+        if mode_identity:
+            name = name_lookup.get_mode_name_from_identity(
+                self._database, mode_identity
+            )
+            self._mode_name.configure(state=tkinter.NORMAL)
+            self._mode_name.delete("0", tkinter.END)
+            if name:
+                if name != mode_name:
+                    messages.append("Mode name changed")
+                self._mode_name.insert(tkinter.END, name)
+            self._mode_name.configure(state=tkinter.DISABLED)
+            if not name:
+                messages.append("Mode name not found")
+                validate = False
+            elif not mode_name:
+                messages.append("Mode name added")
+        else:
+            self._mode_name.configure(state=tkinter.NORMAL)
+            self._mode_name.delete("0", tkinter.END)
+            self._mode_name.configure(state=tkinter.DISABLED)
+            if mode_name:
+                messages.append("No mode identity for name")
+                validate = False
+        if event_identities:
+            messages.append("Populate event names")
+            if not event_names:
+                validate = False
+        else:
+            self._event_names.configure(state=tkinter.NORMAL)
+            self._event_names.delete("1.0", tkinter.END)
+            self._event_names.configure(state=tkinter.DISABLED)
+            if event_names:
+                messages.append("No event identities for names")
+                validate = False
+        event_list = []
+        if event_identities:
+            messages.append("Events not yet implemented")
+            event_list = self._split_events(event_identities, event_names)
+            if not event_list:
+                validate = False
+        if not validate:
+            if len(messages) > 1:
+                messages.insert(
+                    0, "At least one of the following indicates an error:\n"
+                )
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="\n".join(messages),
+            )
+            return False
+        changed = self._identity_values.is_changed(
+            rule,
+            player_identity,
+            from_date,
+            to_date,
+            time_control_identity,
+            mode_identity,
+            event_list,
+            self._player_name.get().strip(),
+            self._time_control_name.get().strip(),
+            self._mode_name.get().strip(),
+            self._event_names.get("1.0", tkinter.END).strip(),
+        )
+        self._identity_values.set_values(
+            rule,
+            player_identity,
+            from_date,
+            to_date,
+            time_control_identity,
+            mode_identity,
+            event_list,
+            self._player_name.get().strip(),
+            self._time_control_name.get().strip(),
+            self._mode_name.get().strip(),
+            self._event_names.get("1.0", tkinter.END).strip(),
+        )
+        if messages or changed:
+            if insert:
+                message_stub = " insert this new rule "
+            else:
+                message_stub = " update rule "
+            if messages:
+                messages.insert(
+                    0,
+                    message_stub.join(
+                        ("Do you want to", "with these valid changes:\n")
+                    ),
+                )
+            else:
+                messages.append("Do you want to" + message_stub)
+            if not tkinter.messagebox.askyesno(
+                parent=self.frame,
+                title=title,
+                message="\n".join(messages),
+            ):
+                return False
+        return (
+            rule,
+            player_identity,
+            from_date,
+            to_date,
+            time_control_identity,
+            mode_identity,
+            event_list,
+        )

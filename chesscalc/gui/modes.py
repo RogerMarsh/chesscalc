@@ -46,7 +46,7 @@ class Modes(Bindings):
         title = EventSpec.menu_other_mode_identify[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         modes_sel = self._modes_grid.selection
         modes_bmk = self._modes_grid.bookmarks
         if len(modes_sel) == 0:
@@ -91,14 +91,14 @@ class Modes(Bindings):
                 message=message,
             )
             return False
-        self.data_grid.bookmarks[:] = []  # When was clear() method added?
+        return True
 
     def break_selected(self):
         """Undo identification of bookmarked modes as selection."""
         title = EventSpec.menu_other_mode_break[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         modes_sel = self._modes_grid.selection
         modes_bmk = self._modes_grid.bookmarks
         if len(modes_sel) == 0:
@@ -145,14 +145,14 @@ class Modes(Bindings):
                 message=message,
             )
             return False
-        self.data_grid.bookmarks[:] = []  # When was clear() method added?
+        return True
 
     def split_all(self):
         """Undo identification of all aliases of selected mode."""
         title = EventSpec.menu_other_mode_split[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         modes_sel = self._modes_grid.selection
         modes_bmk = self._modes_grid.bookmarks
         if len(modes_sel) == 0:
@@ -177,13 +177,14 @@ class Modes(Bindings):
                 message=message,
             )
             return False
+        return True
 
     def change_identity(self):
         """Undo identification of all aliases of selected mode."""
         title = EventSpec.menu_other_mode_change[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         modes_sel = self._modes_grid.selection
         modes_bmk = self._modes_grid.bookmarks
         if len(modes_sel) == 0:
@@ -208,6 +209,7 @@ class Modes(Bindings):
                 message=message,
             )
             return False
+        return True
 
     def get_database(self, title):
         """Return database if modes list is attached to database.

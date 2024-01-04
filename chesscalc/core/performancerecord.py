@@ -9,7 +9,7 @@ import re
 from ast import literal_eval
 
 from solentware_base.core.record import KeyData
-from solentware_base.core.record import Value, ValueList, Record
+from solentware_base.core.record import ValueList, Record
 from solentware_base.core.segmentsize import SegmentSize
 
 from pgn_read.core import tagpair_parser
@@ -77,9 +77,9 @@ class GameDBvalue(ValueList):
 
     def pack(self):
         """Extend, return game record and index data."""
-        v = super().pack()
-        self.pack_detail(v[1])
-        return v
+        val = super().pack()
+        self.pack_detail(val[1])
+        return val
 
     def verify_status_values(self):
         """Raise GameDBvalueError if certain values supplied for status.
@@ -88,10 +88,12 @@ class GameDBvalue(ValueList):
         files.
 
         """
-        if self.status.intersection(_NAMES_NOT_ALLOWED_IN_STATUS):
-            raise GameDBvalueError(
-                "One or more file names is in 'status' attribute"
-            )
+        # if self.status and self.status.intersection(
+        #    _NAMES_NOT_ALLOWED_IN_STATUS
+        # ):
+        #    raise GameDBvalueError(
+        #        "One or more file names is in 'status' attribute"
+        #    )
 
     def pack_detail(self, index):
         """Fill index with detail from value.
@@ -163,16 +165,16 @@ class GameDBvalue(ValueList):
 
     def __eq__(self, other):
         """Return True if attributes of self and other are same."""
-        s = self.__dict__
-        o = other.__dict__
-        if len(s) != len(o):
+        sdict = self.__dict__
+        odict = other.__dict__
+        if len(sdict) != len(odict):
             return False
-        for i in s:
-            if i not in o:
+        for item in sdict:
+            if item not in odict:
                 return False
-            if not isinstance(s[i], type(o[i])):
+            if not isinstance(sdict[item], type(odict[item])):
                 return False
-            if s[i] != o[i]:
+            if sdict[item] != odict[item]:
                 return False
         return True
 
@@ -194,16 +196,16 @@ class GameDBvalue(ValueList):
 
     def __ne__(self, other):
         """Return True if attributes of self and other are different."""
-        s = self.__dict__
-        o = other.__dict__
-        if len(s) != len(o):
+        sdict = self.__dict__
+        odict = other.__dict__
+        if len(sdict) != len(odict):
             return True
-        for i in s:
-            if i not in o:
+        for item in sdict:
+            if item not in odict:
                 return True
-            if not isinstance(s[i], type(o[i])):
+            if not isinstance(sdict[item], type(odict[item])):
                 return True
-            if s[i] != o[i]:
+            if sdict[item] != odict[item]:
                 return True
         return False
 
@@ -225,7 +227,6 @@ class GameDBImportvalue(GameDBvalue):
         index[filespec.GAME_STATUS_FIELD_DEF] = list(
             _FILE_AND_FIELD_NAMES_TO_BE_POPULATED
         )
-        return v
 
 
 class GameDBrecord(Record):
@@ -236,27 +237,27 @@ class GameDBrecord(Record):
         super().__init__(keyclass, valueclass)
 
     def get_keys(self, datasource=None, partial=None):
-        """Override, return [(key, value), ...] by partial key in datasource."""
+        """Override, return [(key, value)] for datasource or []."""
         try:
-            if partial != None:
+            if partial is not None:
                 return []
             srkey = datasource.dbhome.encode_record_number(self.key.pack())
             if datasource.primary:
                 return [(srkey, self.srvalue)]
-            else:
-                dbname = datasource.dbname
-                if dbname == filespec.GAME_DATE_FIELD_DEF:
-                    return [(self.value.date, srkey)]
-                elif dbname == filespec.GAME_NUMBER_FIELD_DEF:
-                    return [(repr((self.file, self.number)), srkey)]
-                elif dbname == filespec.GAME_TIMECONTROL_FIELD_DEF:
-                    return [(self.value.timecontrol, srkey)]
-                elif dbname == filespec.GAME_MODE_FIELD_DEF:
-                    return [(self.value.mode, srkey)]
-                else:
-                    return []
-        except:
+            dbname = datasource.dbname
+            if dbname == filespec.GAME_DATE_FIELD_DEF:
+                return [(self.value.date, srkey)]
+            if dbname == filespec.GAME_NUMBER_FIELD_DEF:
+                return [(repr((self.value.file, self.value.number)), srkey)]
+            if dbname == filespec.GAME_TIMECONTROL_FIELD_DEF:
+                return [(self.value.timecontrol, srkey)]
+            if dbname == filespec.GAME_MODE_FIELD_DEF:
+                return [(self.value.mode, srkey)]
             return []
+        except:  # pycodestyle E722: pylint is happy with following 'raise'.
+            if datasource is None:
+                return []
+            raise
 
 
 class GameDBImporter(GameDBrecord):
@@ -349,7 +350,7 @@ class GameDBImporter(GameDBrecord):
     def _process_pgn_headers_from_directory(
         self, database, pgnpath, reporter, quit_event
     ):
-        """pgnpath is root of directory tree searched for *.pgn files."""
+        """Extract PGN headers from directories and *.pgn files in pgnpath."""
         if reporter is not None:
             reporter.append_text_only("")
             reporter.append_text("Processing files in " + pgnpath)
@@ -372,7 +373,7 @@ class GameDBImporter(GameDBrecord):
     def _process_pgn_games_from_directory(
         self, database, pgnpath, reporter, quit_event
     ):
-        """pgnpath is root of directory tree searched for *.pgn files."""
+        """Count games in directories and *.pgn files in pgnpath."""
         if reporter is not None:
             reporter.append_text_only("")
             reporter.append_text("Processing files in " + pgnpath)
@@ -400,7 +401,7 @@ class GameDBImporter(GameDBrecord):
     def _extract_pgn_headers_from_directory(
         self, database, pgnpath, reporter, quit_event
     ):
-        """pgnpath is root of directory tree searched for *.pgn files."""
+        """Search directory pgnpath for *.pgn files and extract headers."""
         return self._process_pgn_headers_from_directory(
             database,
             pgnpath,
@@ -414,7 +415,7 @@ class GameDBImporter(GameDBrecord):
     def _count_pgn_games_in_directory(
         self, database, pgnpath, reporter, quit_event
     ):
-        """pgnpath is root of directory tree searched for *.pgn files."""
+        """Search directory tree pgnpath for *.pgn files and count games."""
         return self._process_pgn_games_from_directory(
             database,
             pgnpath,
@@ -445,6 +446,7 @@ class GameDBImporter(GameDBrecord):
         self, database, pgnpath, reporter, quit_event
     ):
         """Return True if import succeeds or pgnpath is not a PGN file."""
+        del quit_event
         if not self._is_file_pgn_ext(pgnpath, reporter):
             return True
         if reporter is not None:
@@ -457,15 +459,12 @@ class GameDBImporter(GameDBrecord):
         user = os.path.realpath(os.path.expanduser("~"))
 
         if pgnpath.startswith(user):
-            refbase = pgnpath[len(user) + 1 :]
+            refbase = pgnpath[len(user) + 1 :]  # black says '1 :'.
         else:
             refbase = pgnpath
         parser = tagpair_parser.PGNTagPair(
             game_class=tagpair_parser.TagPairGame
         )
-        GAME = constants.GAME
-        TAG_RESULT = constants.TAG_RESULT
-        WIN_DRAW_LOSS = constants.WIN_DRAW_LOSS
         self.set_database(database)
         reference = self.value.reference
         db_segment_size = SegmentSize.db_segment_size
@@ -525,12 +524,14 @@ class GameDBImporter(GameDBrecord):
             for collected_game in parser.read_games(pgntext):
                 game_offset = collected_game.game_offset
                 game_number += 1
-                reference[GAME] = str(game_number)
+                reference[constants.GAME] = str(game_number)
                 if file_count:
                     number_games = database.recordlist_key(
                         filespec.GAME_FILE_DEF,
                         filespec.GAME_NUMBER_FIELD_DEF,
-                        key=database.encode_record_selector(reference[GAME]),
+                        key=database.encode_record_selector(
+                            reference[constants.GAME]
+                        ),
                     )
                     number_count = number_games.count_records()
                     if number_count:
@@ -553,7 +554,10 @@ class GameDBImporter(GameDBrecord):
                 seen_number += 1
                 self.value.headers = collected_game.pgn_tags
                 headers = self.value.headers
-                if headers.get(TAG_RESULT) in WIN_DRAW_LOSS:
+                if (
+                    headers.get(constants.TAG_RESULT)
+                    in constants.WIN_DRAW_LOSS
+                ):
                     copy_number += 1
                     self.key.recno = None
                     self.put_record(self.database, filespec.GAME_FILE_DEF)
@@ -567,19 +571,19 @@ class GameDBImporter(GameDBrecord):
                                         "Record ",
                                         str(self.key.recno),
                                         " is from game ",
-                                        reference[GAME],
+                                        reference[constants.GAME],
                                         " in ",
                                         reference[constants.FILE],
                                     )
                                 )
                             )
                 elif reporter is not None:
-                    if headers.get(TAG_RESULT) is None:
+                    if headers.get(constants.TAG_RESULT) is None:
                         reporter.append_text_only(
                             "".join(
                                 (
                                     "No result tag in game ",
-                                    reference[GAME],
+                                    reference[constants.GAME],
                                     " in ",
                                     reference[constants.FILE],
                                 )
@@ -589,9 +593,9 @@ class GameDBImporter(GameDBrecord):
                         reporter.append_text_only(
                             "".join(
                                 (
-                                    headers.get(TAG_RESULT),
+                                    headers.get(constants.TAG_RESULT),
                                     " is result of game ",
-                                    reference[GAME],
+                                    reference[constants.GAME],
                                     " in ",
                                     reference[constants.FILE],
                                 )
@@ -643,6 +647,7 @@ class GameDBImporter(GameDBrecord):
         self, database, pgnpath, reporter, quit_event
     ):
         """Return True if import succeeds or pgnpath is not a PGN file."""
+        del database, quit_event
         if not self._is_file_pgn_ext(pgnpath, reporter):
             return True
         if reporter is not None:
@@ -655,7 +660,7 @@ class GameDBImporter(GameDBrecord):
         user = os.path.realpath(os.path.expanduser("~"))
 
         if pgnpath.startswith(user):
-            refbase = pgnpath[len(user) + 1 :]
+            refbase = pgnpath[len(user) + 1 :]  # black says '1 :'.
         else:
             refbase = pgnpath
         parser = tagpair_parser.PGNTagPair(game_class=tagpair_parser.GameCount)
@@ -759,6 +764,18 @@ class _PlayerDBvalue(ValueList):
             )
         )
 
+    def load_alias_index_key(self, value):
+        """Bind playeralias or personalias index attributes to value items."""
+        (
+            self.name,
+            self.event,
+            self.eventdate,
+            self.section,
+            self.stage,
+            self.team,
+            self.fideid,
+        ) = literal_eval(value)
+
 
 class PlayerDBvalue(_PlayerDBvalue):
     """Player data for record not yet identified with a person.
@@ -776,12 +793,12 @@ class PlayerDBvalue(_PlayerDBvalue):
         Set playeralias index value to [key] and personalias index to [].
 
         """
-        v = super().pack()
-        index = v[1]
+        val = super().pack()
+        index = val[1]
         index[filespec.PLAYER_ALIAS_FIELD_DEF] = [self.alias_index_key()]
         index[filespec.PLAYER_IDENTITY_FIELD_DEF] = []
         index[filespec.PERSON_ALIAS_FIELD_DEF] = []
-        return v
+        return val
 
 
 class PersonDBvalue(_PlayerDBvalue):
@@ -800,12 +817,12 @@ class PersonDBvalue(_PlayerDBvalue):
         Set personalias index value to [key] and playeralias index to [].
 
         """
-        v = super().pack()
-        index = v[1]
+        val = super().pack()
+        index = val[1]
         index[filespec.PLAYER_ALIAS_FIELD_DEF] = []
         index[filespec.PLAYER_IDENTITY_FIELD_DEF] = [self.alias]
         index[filespec.PERSON_ALIAS_FIELD_DEF] = [self.alias_index_key()]
-        return v
+        return val
 
 
 class PlayerDBrecord(Record):
@@ -816,23 +833,25 @@ class PlayerDBrecord(Record):
         super().__init__(keyclass, valueclass)
 
     def get_keys(self, datasource=None, partial=None):
-        """Override, return [(key, value), ...] by partial key in datasource."""
+        """Override, return [(key, value)] for datasource or []."""
         try:
-            if partial != None:
+            if partial is not None:
                 return []
             srkey = datasource.dbhome.encode_record_number(self.key.pack())
             if datasource.primary:
                 return [(srkey, self.srvalue)]
             dbname = datasource.dbname
             if dbname == filespec.PLAYER_ALIAS_FIELD_DEF:
-                return [(self.alias_index_key(), srkey)]
-            elif dbname == filespec.PLAYER_IDENTITY_FIELD_DEF:
+                return [(self.value.alias_index_key(), srkey)]
+            if dbname == filespec.PLAYER_IDENTITY_FIELD_DEF:
                 return [(self.value.alias, srkey)]
-            elif dbname == filespec.PERSON_ALIAS_FIELD_DEF:
-                return [(self.alias_index_key(), srkey)]
+            if dbname == filespec.PERSON_ALIAS_FIELD_DEF:
+                return [(self.value.alias_index_key(), srkey)]
             return []
-        except:
-            return []
+        except:  # pycodestyle E722: pylint is happy with following 'raise'.
+            if datasource is None:
+                return []
+            raise
 
 
 class PlayerDBImporter(PlayerDBrecord):
@@ -852,6 +871,7 @@ class PlayerDBImporter(PlayerDBrecord):
         kwargs soaks up arguments not used in this method.
 
         """
+        del kwargs
         if reporter is not None:
             reporter.append_text("Copy player names from games.")
         cursor = database.database_cursor(
@@ -910,7 +930,6 @@ class PlayerDBImporter(PlayerDBrecord):
             self.key.recno = None
             self.put_record(database, filespec.PLAYER_FILE_DEF)
             if int(pid) % db_segment_size == 0:
-
                 # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
                 # and lmdb too.
                 cursor.close()
@@ -975,6 +994,7 @@ class PlayerDBImporter(PlayerDBrecord):
         kwargs soaks up arguments not used in this method.
 
         """
+        del kwargs
         if reporter is not None:
             reporter.append_text("Count player names to be copied from games.")
         cursor = database.database_cursor(
@@ -1076,10 +1096,10 @@ class SelectorDBvalue(ValueList):
 
     def pack(self):
         """Generate game selector record and index data."""
-        v = super().pack()
-        index = v[1]
-        index[filespec.SELECTION_FIELD_DEF] = [self.name]
-        return v
+        val = super().pack()
+        index = val[1]
+        index[filespec.RULE_FIELD_DEF] = [self.name]
+        return val
 
 
 class SelectorDBrecord(Record):
@@ -1090,19 +1110,21 @@ class SelectorDBrecord(Record):
         super().__init__(keyclass, valueclass)
 
     def get_keys(self, datasource=None, partial=None):
-        """Override, return [(key, value), ...] by partial key in datasource."""
+        """Override, return [(key, value)] for datasource or []."""
         try:
-            if partial != None:
+            if partial is not None:
                 return []
             srkey = datasource.dbhome.encode_record_number(self.key.pack())
             if datasource.primary:
                 return [(srkey, self.srvalue)]
             dbname = datasource.dbname
-            if dbname == filespec.SELECTION_FIELD_DEF:
+            if dbname == filespec.RULE_FIELD_DEF:
                 return [(self.value.name, srkey)]
             return []
-        except:
-            return []
+        except:  # pycodestyle E722: pylint is happy with following 'raise'.
+            if datasource is None:
+                return []
+            raise
 
 
 class EventDBkey(KeyData):
@@ -1160,6 +1182,15 @@ class EventDBvalue(ValueList):
             )
         )
 
+    def load_alias_index_key(self, value):
+        """Bind attributes for the eventalias index to items in value."""
+        (
+            self.event,
+            self.eventdate,
+            self.section,
+            self.stage,
+        ) = literal_eval(value)
+
     def pack(self):
         """Delegate to generate player data then add index data.
 
@@ -1172,11 +1203,11 @@ class EventDBvalue(ValueList):
         (alias attribute).
 
         """
-        v = super().pack()
-        index = v[1]
+        val = super().pack()
+        index = val[1]
         index[filespec.EVENT_ALIAS_FIELD_DEF] = [self.alias_index_key()]
         index[filespec.EVENT_IDENTITY_FIELD_DEF] = [self.alias]
-        return v
+        return val
 
 
 class EventDBrecord(Record):
@@ -1187,21 +1218,23 @@ class EventDBrecord(Record):
         super().__init__(keyclass, valueclass)
 
     def get_keys(self, datasource=None, partial=None):
-        """Override, return [(key, value), ...] by partial key in datasource."""
+        """Override, return [(key, value)] for datasource or []."""
         try:
-            if partial != None:
+            if partial is not None:
                 return []
             srkey = datasource.dbhome.encode_record_number(self.key.pack())
             if datasource.primary:
                 return [(srkey, self.srvalue)]
             dbname = datasource.dbname
             if dbname == filespec.EVENT_ALIAS_FIELD_DEF:
-                return [(self.alias_index_key(), srkey)]
-            elif dbname == filespec.EVENT_IDENTITY_FIELD_DEF:
+                return [(self.value.alias_index_key(), srkey)]
+            if dbname == filespec.EVENT_IDENTITY_FIELD_DEF:
                 return [(self.value.alias, srkey)]
             return []
-        except:
-            return []
+        except:  # pycodestyle E722: pylint is happy with following 'raise'.
+            if datasource is None:
+                return []
+            raise
 
 
 class EventDBImporter(EventDBrecord):
@@ -1221,6 +1254,7 @@ class EventDBImporter(EventDBrecord):
         kwargs soaks up arguments not used in this method.
 
         """
+        del kwargs
         if reporter is not None:
             reporter.append_text("Copy event names from games.")
         cursor = database.database_cursor(
@@ -1269,7 +1303,6 @@ class EventDBImporter(EventDBrecord):
             self.key.recno = None
             self.put_record(database, filespec.EVENT_FILE_DEF)
             if int(pid) % db_segment_size == 0:
-
                 # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
                 # and lmdb too.
                 cursor.close()
@@ -1334,6 +1367,7 @@ class EventDBImporter(EventDBrecord):
         kwargs soaks up arguments not used in this method.
 
         """
+        del kwargs
         if reporter is not None:
             reporter.append_text("Count event names to be copied from games.")
         cursor = database.database_cursor(
@@ -1412,6 +1446,10 @@ class TimeControlDBvalue(ValueList):
         """Return the key for the timealias index."""
         return repr((self.timecontrol,))
 
+    def load_alias_index_key(self, value):
+        """Bind attributes for the timealias index to items in value."""
+        (self.timecontrol,) = literal_eval(value)
+
     def pack(self):
         """Delegate to generate time control data then add index data.
 
@@ -1424,11 +1462,11 @@ class TimeControlDBvalue(ValueList):
         (alias attribute).
 
         """
-        v = super().pack()
-        index = v[1]
+        val = super().pack()
+        index = val[1]
         index[filespec.TIME_ALIAS_FIELD_DEF] = [self.alias_index_key()]
         index[filespec.TIME_IDENTITY_FIELD_DEF] = [self.alias]
-        return v
+        return val
 
 
 class TimeControlDBrecord(Record):
@@ -1441,21 +1479,23 @@ class TimeControlDBrecord(Record):
         super().__init__(keyclass, valueclass)
 
     def get_keys(self, datasource=None, partial=None):
-        """Override, return [(key, value), ...] by partial key in datasource."""
+        """Override, return [(key, value)] for datasource or []."""
         try:
-            if partial != None:
+            if partial is not None:
                 return []
             srkey = datasource.dbhome.encode_record_number(self.key.pack())
             if datasource.primary:
                 return [(srkey, self.srvalue)]
             dbname = datasource.dbname
             if dbname == filespec.TIME_ALIAS_FIELD_DEF:
-                return [(self.alias_index_key(), srkey)]
-            elif dbname == filespec.TIME_IDENTITY_FIELD_DEF:
+                return [(self.value.alias_index_key(), srkey)]
+            if dbname == filespec.TIME_IDENTITY_FIELD_DEF:
                 return [(self.value.alias, srkey)]
             return []
-        except:
-            return []
+        except:  # pycodestyle E722: pylint is happy with following 'raise'.
+            if datasource is None:
+                return []
+            raise
 
 
 class TimeControlDBImporter(TimeControlDBrecord):
@@ -1475,6 +1515,7 @@ class TimeControlDBImporter(TimeControlDBrecord):
         kwargs soaks up arguments not used in this method.
 
         """
+        del kwargs
         if reporter is not None:
             reporter.append_text("Copy time control names from games.")
         cursor = database.database_cursor(
@@ -1518,7 +1559,6 @@ class TimeControlDBImporter(TimeControlDBrecord):
             self.key.recno = None
             self.put_record(database, filespec.TIME_FILE_DEF)
             if int(pid) % db_segment_size == 0:
-
                 # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
                 # and lmdb too.
                 cursor.close()
@@ -1583,6 +1623,7 @@ class TimeControlDBImporter(TimeControlDBrecord):
         kwargs soaks up arguments not used in this method.
 
         """
+        del kwargs
         if reporter is not None:
             reporter.append_text(
                 "Count time control names to be copied from games."
@@ -1658,6 +1699,10 @@ class ModeDBvalue(ValueList):
         """Return the key for the modealias index."""
         return repr((self.mode,))
 
+    def load_alias_index_key(self, value):
+        """Bind attributes for the modealias index to items in value."""
+        (self.mode,) = literal_eval(value)
+
     def pack(self):
         """Delegate to generate playing mode data then add index data.
 
@@ -1670,11 +1715,11 @@ class ModeDBvalue(ValueList):
         aliases (alias attribute).
 
         """
-        v = super().pack()
-        index = v[1]
+        val = super().pack()
+        index = val[1]
         index[filespec.MODE_ALIAS_FIELD_DEF] = [self.alias_index_key()]
         index[filespec.MODE_IDENTITY_FIELD_DEF] = [self.alias]
-        return v
+        return val
 
 
 class ModeDBrecord(Record):
@@ -1685,21 +1730,23 @@ class ModeDBrecord(Record):
         super().__init__(keyclass, valueclass)
 
     def get_keys(self, datasource=None, partial=None):
-        """Override, return [(key, value), ...] by partial key in datasource."""
+        """Override, return [(key, value)] for datasource or []."""
         try:
-            if partial != None:
+            if partial is not None:
                 return []
             srkey = datasource.dbhome.encode_record_number(self.key.pack())
             if datasource.primary:
                 return [(srkey, self.srvalue)]
             dbname = datasource.dbname
             if dbname == filespec.MODE_ALIAS_FIELD_DEF:
-                return [(self.alias_index_key(), srkey)]
-            elif dbname == filespec.MODE_IDENTITY_FIELD_DEF:
+                return [(self.value.alias_index_key(), srkey)]
+            if dbname == filespec.MODE_IDENTITY_FIELD_DEF:
                 return [(self.value.alias, srkey)]
             return []
-        except:
-            return []
+        except:  # pycodestyle E722: pylint is happy with following 'raise'.
+            if datasource is None:
+                return []
+            raise
 
 
 class ModeDBImporter(ModeDBrecord):
@@ -1719,6 +1766,7 @@ class ModeDBImporter(ModeDBrecord):
         kwargs soaks up arguments not used in this method.
 
         """
+        del kwargs
         if reporter is not None:
             reporter.append_text("Copy playing mode names from games.")
         cursor = database.database_cursor(
@@ -1762,7 +1810,6 @@ class ModeDBImporter(ModeDBrecord):
             self.key.recno = None
             self.put_record(database, filespec.MODE_FILE_DEF)
             if int(pid) % db_segment_size == 0:
-
                 # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
                 # and lmdb too.
                 cursor.close()
@@ -1827,6 +1874,7 @@ class ModeDBImporter(ModeDBrecord):
         kwargs soaks up arguments not used in this method.
 
         """
+        del kwargs
         if reporter is not None:
             reporter.append_text("Count mode names to be copied from games.")
         cursor = database.database_cursor(

@@ -5,10 +5,10 @@
 """Chess Performance Calculation database using Berkeley DB via berkeleydb."""
 
 from berkeleydb.db import (
-    DB_BTREE,
-    DB_HASH,
-    DB_RECNO,
-    DB_DUPSORT,
+    # DB_BTREE,
+    # DB_HASH,
+    # DB_RECNO,
+    # DB_DUPSORT,
     DB_CREATE,
     DB_RECOVER,
     DB_INIT_MPOOL,

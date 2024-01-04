@@ -66,10 +66,10 @@ class IdentityDBvalue(_IdentityDBvalue):
 
     def pack(self):
         """Generate identity record and index data."""
-        v = super().pack()
-        index = v[1]
+        val = super().pack()
+        index = val[1]
         index[filespec.IDENTITY_TYPE_FIELD_DEF] = [self.type_]
-        return v
+        return val
 
 
 class NextIdentityDBvalue(_IdentityDBvalue):
@@ -96,9 +96,9 @@ class IdentityDBrecord(Record):
         super().__init__(keyclass, valueclass)
 
     def get_keys(self, datasource=None, partial=None):
-        """Override, return [(key, value), ...] by partial key in datasource."""
+        """Override, return [(key, value)] for datasource or []."""
         try:
-            if partial != None:
+            if partial is not None:
                 return []
             srkey = datasource.dbhome.encode_record_number(self.key.pack())
             if datasource.primary:
@@ -107,8 +107,10 @@ class IdentityDBrecord(Record):
             if dbname == filespec.IDENTITY_TYPE_FIELD_DEF:
                 return [(self.value.type_, srkey)]
             return []
-        except:
-            return []
+        except:  # pycodestyle E722: pylint is happy with following 'raise'.
+            if datasource is None:
+                return []
+            raise
 
 
 def _create_identity_record_if_not_exists(database, key_type):

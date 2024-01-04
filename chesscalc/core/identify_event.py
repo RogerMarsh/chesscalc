@@ -8,15 +8,9 @@ The functions support identifying an event as an existing event on the
 database, or as separate event, and undoing these identifications too.
 
 """
-from ast import literal_eval
-
 from . import performancerecord
-from . import constants
 from . import filespec
-
-
-class EventIdentity(Exception):
-    """Raise if unable to change alias used as event identity."""
+from . import identify_item
 
 
 def identify(database, bookmarks, selection):
@@ -29,40 +23,18 @@ def identify(database, bookmarks, selection):
     The changes are applied to database.
 
     """
-    event_record = performancerecord.EventDBrecord()
-    selection_record = performancerecord.EventDBrecord()
-    database.start_transaction()
-    try:
-        selection_record.load_record(
-            database.get_primary_record(
-                filespec.EVENT_FILE_DEF, selection[0][1]
-            )
-        )
-        for event in bookmarks:
-            event_record.load_record(
-                database.get_primary_record(filespec.EVENT_FILE_DEF, event[1])
-            )
-            if event_record.value.alias != event_record.value.identity:
-                database.backout()
-                return "".join(
-                    (
-                        "One of the bookmarked events is already aliased ",
-                        "so no changes done",
-                    )
-                )
-            clone_record = event_record.clone()
-            clone_record.value.alias = selection_record.value.alias
-            event_record.edit_record(
-                database,
-                filespec.EVENT_FILE_DEF,
-                filespec.EVENT_IDENTITY_FIELD_DEF,
-                clone_record,
-            )
-    except:
-        database.backout()
-        raise
-    database.commit()
-    return None
+    return identify_item.identify(
+        database,
+        bookmarks,
+        selection,
+        performancerecord.EventDBvalue,
+        performancerecord.EventDBrecord,
+        filespec.EVENT_FILE_DEF,
+        filespec.EVENT_FIELD_DEF,
+        filespec.EVENT_ALIAS_FIELD_DEF,
+        filespec.EVENT_IDENTITY_FIELD_DEF,
+        "event",
+    )
 
 
 def break_bookmarked_aliases(database, bookmarks, selection):
@@ -73,41 +45,18 @@ def break_bookmarked_aliases(database, bookmarks, selection):
     The changes are applied to database.
 
     """
-    event_record = performancerecord.EventDBrecord()
-    selection_record = performancerecord.EventDBrecord()
-    database.start_transaction()
-    try:
-        selection_record.load_record(
-            database.get_primary_record(
-                filespec.EVENT_FILE_DEF, selection[0][1]
-            )
-        )
-        for event in bookmarks:
-            event_record.load_record(
-                database.get_primary_record(filespec.EVENT_FILE_DEF, event[1])
-            )
-            if event_record.value.alias != selection_record.value.alias:
-                database.backout()
-                return "".join(
-                    (
-                        "One of the bookmarked events is not aliased ",
-                        "to same event as selection event ",
-                        "so no changes done",
-                    )
-                )
-            clone_record = event_record.clone()
-            clone_record.value.alias = clone_record.value.identity
-            event_record.edit_record(
-                database,
-                filespec.EVENT_FILE_DEF,
-                filespec.EVENT_IDENTITY_FIELD_DEF,
-                clone_record,
-            )
-    except:
-        database.backout()
-        raise
-    database.commit()
-    return None
+    return identify_item.break_bookmarked_aliases(
+        database,
+        bookmarks,
+        selection,
+        performancerecord.EventDBvalue,
+        performancerecord.EventDBrecord,
+        filespec.EVENT_FILE_DEF,
+        filespec.EVENT_FIELD_DEF,
+        filespec.EVENT_ALIAS_FIELD_DEF,
+        filespec.EVENT_IDENTITY_FIELD_DEF,
+        "event",
+    )
 
 
 def split_aliases(database, selection):
@@ -116,42 +65,17 @@ def split_aliases(database, selection):
     The changes are applied to database.
 
     """
-    event_record = performancerecord.EventDBrecord()
-    selection_record = performancerecord.EventDBrecord()
-    database.start_transaction()
-    try:
-        selection_record.load_record(
-            database.get_primary_record(
-                filespec.EVENT_FILE_DEF, selection[0][1]
-            )
-        )
-        recordlist = database.recordlist_key(
-            filespec.EVENT_FILE_DEF,
-            filespec.EVENT_IDENTITY_FIELD_DEF,
-            key=selection_record.value.alias,
-        )
-        while True:
-            record = recordlist.next()
-            if not record:
-                break
-            event_record.load_record(
-                database.get_primary_record(filespec.EVENT_FILE_DEF, record[1])
-            )
-            if event_record.value.alias == event_record.value.identity:
-                continue
-            clone_record = event_record.clone()
-            clone_record.value.alias = clone_record.value.identity
-            event_record.edit_record(
-                database,
-                filespec.EVENT_FILE_DEF,
-                filespec.EVENT_IDENTITY_FIELD_DEF,
-                clone_record,
-            )
-    except:
-        database.backout()
-        raise
-    database.commit()
-    return None
+    return identify_item.split_aliases(
+        database,
+        selection,
+        performancerecord.EventDBvalue,
+        performancerecord.EventDBrecord,
+        filespec.EVENT_FILE_DEF,
+        filespec.EVENT_FIELD_DEF,
+        filespec.EVENT_ALIAS_FIELD_DEF,
+        filespec.EVENT_IDENTITY_FIELD_DEF,
+        "event",
+    )
 
 
 def change_aliases(database, selection):
@@ -163,51 +87,14 @@ def change_aliases(database, selection):
     The changes are applied to database.
 
     """
-    event_record = performancerecord.EventDBrecord()
-    selection_record = performancerecord.EventDBrecord()
-    database.start_transaction()
-    try:
-        selection_record.load_record(
-            database.get_primary_record(
-                filespec.EVENT_FILE_DEF, selection[0][1]
-            )
-        )
-        recordlist = database.recordlist_key(
-            filespec.EVENT_FILE_DEF,
-            filespec.EVENT_IDENTITY_FIELD_DEF,
-            key=selection_record.value.alias,
-        )
-        while True:
-            record = recordlist.next()
-            if not record:
-                break
-            event_record.load_record(
-                database.get_primary_record(filespec.EVENT_FILE_DEF, record[1])
-            )
-            clone_record = event_record.clone()
-            clone_record.value.alias = selection_record.value.identity
-            event_record.edit_record(
-                database,
-                filespec.EVENT_FILE_DEF,
-                filespec.EVENT_IDENTITY_FIELD_DEF,
-                clone_record,
-            )
-    except:
-        database.backout()
-        raise
-    database.commit()
-    return None
-
-
-def _set_value(value, alias):
-    """Populate value from alias.
-
-    value is expected to be a EventDBvalue instance.
-
-    """
-    (
-        value.event,
-        value.eventdate,
-        value.section,
-        value.stage,
-    ) = literal_eval(alias)
+    return identify_item.change_aliases(
+        database,
+        selection,
+        performancerecord.EventDBvalue,
+        performancerecord.EventDBrecord,
+        filespec.EVENT_FILE_DEF,
+        filespec.EVENT_FIELD_DEF,
+        filespec.EVENT_ALIAS_FIELD_DEF,
+        filespec.EVENT_IDENTITY_FIELD_DEF,
+        "event",
+    )

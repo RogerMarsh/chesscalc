@@ -16,7 +16,6 @@ from solentware_bind.gui.exceptionhandler import ExceptionHandler
 from solentware_base import modulequery
 
 from .. import APPLICATION_NAME
-from . import help_
 from .eventspec import EventSpec
 from ..core import configuration
 from ..core import constants
@@ -252,7 +251,6 @@ class Calculator(Bindings):
 
     def _initialize_database_interface(self):
         """Build tkinter notebook to display performance calculations."""
-
         # Notebook.
         notebook = tkinter.ttk.Notebook(master=self.widget)
         notebook.grid(column=0, row=0, sticky=tkinter.NSEW)
@@ -336,7 +334,7 @@ class Calculator(Bindings):
         rule_help.insert(tkinter.END, _HELP_TEXT)
 
     def database_quit(self):
-        """Placeholder."""
+        """Quit performance calculation application."""
         if not tkinter.messagebox.askyesno(
             parent=self.widget,
             message="Do you really want to quit?",
@@ -347,7 +345,7 @@ class Calculator(Bindings):
         self.widget.winfo_toplevel().destroy()
 
     def database_verify(self):
-        """Placeholder."""
+        """To be implemented or absorbed in database_import."""
 
     def database_close(self):
         """Close performance calculation database."""
@@ -378,6 +376,7 @@ class Calculator(Bindings):
                 # defined for that button.  The switch_context call above has
                 # done what is needed.
                 return False
+        return None
 
     def database_delete(self):
         """Delete performance calculation database."""
@@ -473,7 +472,7 @@ class Calculator(Bindings):
             modules = modulequery.modules_for_existing_databases(
                 database_folder, filespec.FileSpec()
             )
-            if modules is not None and len(modules):
+            if modules is not None and len(modules) > 0:
                 tkinter.messagebox.showinfo(
                     parent=self.widget,
                     message="".join(
@@ -525,11 +524,11 @@ class Calculator(Bindings):
             return
         _modulename = None
         _enginename = None
-        for e in modulequery.DATABASE_MODULES_IN_DEFAULT_PREFERENCE_ORDER:
-            if e in idm:
-                if e in APPLICATION_DATABASE_MODULE:
-                    _enginename = e
-                    _modulename = APPLICATION_DATABASE_MODULE[e]
+        for eng in modulequery.DATABASE_MODULES_IN_DEFAULT_PREFERENCE_ORDER:
+            if eng in idm:
+                if eng in APPLICATION_DATABASE_MODULE:
+                    _enginename = eng
+                    _modulename = APPLICATION_DATABASE_MODULE[eng]
                     break
         if _modulename is None:
             tkinter.messagebox.showinfo(
@@ -588,12 +587,12 @@ class Calculator(Bindings):
             conf.convert_home_directory_to_tilde(database_folder),
         )
 
-        ed = modulequery.modules_for_existing_databases(
+        exdb = modulequery.modules_for_existing_databases(
             database_folder, filespec.FileSpec()
         )
         # A database module is chosen when creating the database
         # so there should be either only one entry in edt or None
-        if not ed:
+        if not exdb:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 message="".join(
@@ -606,7 +605,7 @@ class Calculator(Bindings):
                 title="Open",
             )
             return
-        elif len(ed) > 1:
+        if len(exdb) > 1:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 message="".join(
@@ -625,8 +624,8 @@ class Calculator(Bindings):
 
         idm = modulequery.installed_database_modules()
         _enginename = None
-        for k, v in idm.items():
-            if v in ed[0]:
+        for key, value in idm.items():
+            if value in exdb[0]:
                 if _enginename:
                     tkinter.messagebox.showinfo(
                         parent=self.widget,
@@ -640,7 +639,7 @@ class Calculator(Bindings):
                         title="Open",
                     )
                     return
-                _enginename = k
+                _enginename = key
         if _enginename is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
@@ -853,7 +852,7 @@ class Calculator(Bindings):
         self._players.persons_grid.bind_on()
         self._persons.data_grid.bind_on()
         self._selectors.data_grid.bind_on()
-        self._games.games_grid.fill_view_from_top()
+        self._games.games_grid.fill_view_with_top()
 
     def player_identify(self):
         """Identify selected and bookmarked new players as selected person."""
@@ -892,7 +891,12 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._players.identify()
+        if self._players.identify():
+            self._players.players_grid.clear_selections()
+            self._players.players_grid.clear_bookmarks()
+            self._players.players_grid.fill_view_with_top()
+            self._players.persons_grid.fill_view_with_top()
+            self._persons.data_grid.fill_view_with_top()
 
     def player_break(self):
         """Break indentification of selected and bookmarked person aliases."""
@@ -929,7 +933,14 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._persons.break_selected()
+        if self._persons.break_selected():
+            self._players.persons_grid.clear_selections()
+            self._players.persons_grid.clear_bookmarks()
+            self._persons.data_grid.clear_selections()
+            self._persons.data_grid.clear_bookmarks()
+            self._players.players_grid.fill_view_with_top()
+            self._players.persons_grid.fill_view_with_top()
+            self._persons.data_grid.fill_view_with_top()
 
     def player_split(self):
         """Split indentification of all aliases of selected person alias."""
@@ -961,7 +972,14 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._persons.split_all()
+        if self._persons.split_all():
+            self._players.persons_grid.clear_selections()
+            self._players.persons_grid.clear_bookmarks()
+            self._persons.data_grid.clear_selections()
+            self._persons.data_grid.clear_bookmarks()
+            self._players.players_grid.fill_view_with_top()
+            self._players.persons_grid.fill_view_with_top()
+            self._persons.data_grid.fill_view_with_top()
 
     def player_change(self):
         """Change person alias used as person identity."""
@@ -993,12 +1011,18 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._persons.change_identity()
+        if self._persons.change_identity():
+            self._players.persons_grid.clear_selections()
+            self._players.persons_grid.clear_bookmarks()
+            self._persons.data_grid.clear_selections()
+            self._persons.data_grid.clear_bookmarks()
+            self._players.persons_grid.fill_view_with_top()
+            self._persons.data_grid.fill_view_with_top()
 
     def selectors_new(self):
         """Define new rule to select games for performance calculation."""
         if not self._selectors_availbable(EventSpec.menu_selectors_new):
-            return False
+            return
         persons_sel = self._persons.data_grid.selection
         events_sel = self._events.data_grid.selection
         modes_sel = self._modes.data_grid.selection
@@ -1013,6 +1037,9 @@ class Calculator(Bindings):
         tab_from_selection.get_events(tab, events_sel, self.database)
         self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
         self._notebook.add(frame, text="New Rule")
+        self._selectors.data_grid.clear_selections()
+        self._selectors.data_grid.clear_bookmarks()
+        self._selectors.data_grid.fill_view_with_top()
 
     def selectors_show(self):
         """Show selected rule to select games for performance calculation."""
@@ -1031,6 +1058,9 @@ class Calculator(Bindings):
         tab_from_selection.get_rule(tab, selectors_sel, self.database)
         self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
         self._notebook.add(frame, text="Show Rule")
+        self._selectors.data_grid.clear_selections()
+        self._selectors.data_grid.clear_bookmarks()
+        self._selectors.data_grid.fill_view_with_top()
 
     def selectors_edit(self):
         """Edit selected rule to select games for performance calculation."""
@@ -1049,6 +1079,9 @@ class Calculator(Bindings):
         tab_from_selection.get_rule(tab, selectors_sel, self.database)
         self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
         self._notebook.add(frame, text="Edit Rule")
+        self._selectors.data_grid.clear_selections()
+        self._selectors.data_grid.clear_bookmarks()
+        self._selectors.data_grid.fill_view_with_top()
 
     def _selectors_choose(self, menu_event_spec):
         """Return True if the selection rule list tab is visible."""
@@ -1096,19 +1129,30 @@ class Calculator(Bindings):
         tab = self._selectors_apply(EventSpec.menu_selectors_insert)
         if not tab:
             return
-        self._rule_tabs[tab].insert_rule()
+        if self._rule_tabs[tab].insert_rule():
+            self._selectors.data_grid.clear_selections()
+            self._selectors.data_grid.clear_bookmarks()
+            self._selectors.data_grid.fill_view_with_top()
 
     def selectors_update(self):
         """Update rule to select games for performance calculation."""
         tab = self._selectors_apply(EventSpec.menu_selectors_update)
         if not tab:
             return
+        if self._rule_tabs[tab].update_rule():
+            self._selectors.data_grid.clear_selections()
+            self._selectors.data_grid.clear_bookmarks()
+            self._selectors.data_grid.fill_view_with_top()
 
     def selectors_delete(self):
         """Delete rule to select games for performance calculation."""
         tab = self._selectors_apply(EventSpec.menu_selectors_delete)
         if not tab:
             return
+        if self._rule_tabs[tab].delete_rule():
+            self._selectors.data_grid.clear_selections()
+            self._selectors.data_grid.clear_bookmarks()
+            self._selectors.data_grid.fill_view_with_top()
 
     def _selectors_apply(self, menu_event_spec):
         """Return tab if a selection rule tab is visible, False otherwise."""
@@ -1142,7 +1186,9 @@ class Calculator(Bindings):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=menu_event_spec[1],
-                message="List of game selection rules not available at present",
+                message="".join(
+                    ("List of game selection rules not available at present",)
+                ),
             )
             return False
         return True
@@ -1177,7 +1223,10 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._events.identify()
+        if self._events.identify():
+            self._events.data_grid.clear_selections()
+            self._events.data_grid.clear_bookmarks()
+            self._events.data_grid.fill_view_with_top()
 
     def event_break(self):
         """Break indentification of selected and bookmarked event aliases."""
@@ -1214,7 +1263,10 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._events.break_selected()
+        if self._events.break_selected():
+            self._events.data_grid.clear_selections()
+            self._events.data_grid.clear_bookmarks()
+            self._events.data_grid.fill_view_with_top()
 
     def event_split(self):
         """Split indentification of all aliases of selected event alias."""
@@ -1246,7 +1298,10 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._events.split_all()
+        if self._events.split_all():
+            self._events.data_grid.clear_selections()
+            self._events.data_grid.clear_bookmarks()
+            self._events.data_grid.fill_view_with_top()
 
     def event_change(self):
         """Change event alias used as event identity."""
@@ -1278,7 +1333,10 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._events.change_identity()
+        if self._events.change_identity():
+            self._events.data_grid.clear_selections()
+            self._events.data_grid.clear_bookmarks()
+            self._events.data_grid.fill_view_with_top()
 
     def time_identify(self):
         """Identify bookmarked time controls as selected time control."""
@@ -1310,7 +1368,10 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._time_controls.identify()
+        if self._time_controls.identify():
+            self._time_controls.data_grid.clear_selections()
+            self._time_controls.data_grid.clear_bookmarks()
+            self._time_controls.data_grid.fill_view_with_top()
 
     def time_break(self):
         """Break indentity of selected and bookmarked time control aliases."""
@@ -1347,7 +1408,10 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._time_controls.break_selected()
+        if self._time_controls.break_selected():
+            self._time_controls.data_grid.clear_selections()
+            self._time_controls.data_grid.clear_bookmarks()
+            self._time_controls.data_grid.fill_view_with_top()
 
     def time_split(self):
         """Split identity of all aliases of selected time control."""
@@ -1379,7 +1443,10 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._time_controls.split_all()
+        if self._time_controls.split_all():
+            self._time_controls.data_grid.clear_selections()
+            self._time_controls.data_grid.clear_bookmarks()
+            self._time_controls.data_grid.fill_view_with_top()
 
     def time_change(self):
         """Change time control alias used as time control identity."""
@@ -1387,7 +1454,9 @@ class Calculator(Bindings):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_time_change[1],
-                message="Change time control identity not available at present",
+                message="".join(
+                    ("Change time control identity not available at present",)
+                ),
             )
             return
         if self._time_controls.data_grid is None:
@@ -1411,7 +1480,10 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._time_controls.change_identity()
+        if self._time_controls.change_identity():
+            self._time_controls.data_grid.clear_selections()
+            self._time_controls.data_grid.clear_bookmarks()
+            self._time_controls.data_grid.fill_view_with_top()
 
     def mode_identify(self):
         """Identify bookmarked playing modes as selected playing mode."""
@@ -1443,7 +1515,10 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._modes.identify()
+        if self._modes.identify():
+            self._modes.data_grid.clear_selections()
+            self._modes.data_grid.clear_bookmarks()
+            self._modes.data_grid.fill_view_with_top()
 
     def mode_break(self):
         """Break indentity of selected and bookmarked playing mode aliases."""
@@ -1480,7 +1555,10 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._modes.break_selected()
+        if self._modes.break_selected():
+            self._modes.data_grid.clear_selections()
+            self._modes.data_grid.clear_bookmarks()
+            self._modes.data_grid.fill_view_with_top()
 
     def mode_split(self):
         """Split indentity of playing modes of selected playing mode alias."""
@@ -1512,7 +1590,10 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._modes.split_all()
+        if self._modes.split_all():
+            self._modes.data_grid.clear_selections()
+            self._modes.data_grid.clear_bookmarks()
+            self._modes.data_grid.fill_view_with_top()
 
     def mode_change(self):
         """Change playing mode alias used as playing mode identity."""
@@ -1520,7 +1601,9 @@ class Calculator(Bindings):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_other_mode_change[1],
-                message="Change playing mode identity not available at present",
+                message="".join(
+                    ("Change playing mode identity not available at present",)
+                ),
             )
             return
         if self._modes.data_grid is None:
@@ -1544,4 +1627,7 @@ class Calculator(Bindings):
                 ),
             )
             return
-        self._modes.change_identity()
+        if self._modes.change_identity():
+            self._modes.data_grid.clear_selections()
+            self._modes.data_grid.clear_bookmarks()
+            self._modes.data_grid.fill_view_with_top()

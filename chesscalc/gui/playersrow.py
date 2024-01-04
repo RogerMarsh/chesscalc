@@ -14,7 +14,6 @@ import tkinter
 from solentware_grid.gui import datarow
 
 from ..core import performancerecord
-from ..core import filespec
 from ..core import constants
 
 
@@ -44,16 +43,12 @@ class PlayersRow(performancerecord.PlayerDBrecord, datarow.DataRow):
         """Extend, define the data displayed from the Person record."""
         super().__init__()
         self.set_database(database)
-        GRID_CONFIGURE = datarow.GRID_CONFIGURE
-        WIDGET_CONFIGURE = datarow.WIDGET_CONFIGURE
-        WIDGET = datarow.WIDGET
-        ROW = datarow.ROW
         self.row_specification = [
             {
-                WIDGET: tkinter.Label,
-                WIDGET_CONFIGURE: dict(anchor=anchor),
-                GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
-                ROW: 0,
+                datarow.WIDGET: tkinter.Label,
+                datarow.WIDGET_CONFIGURE: dict(anchor=anchor),
+                datarow.GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
+                datarow.ROW: 0,
             }
             for column, anchor in (
                 (0, tkinter.CENTER),

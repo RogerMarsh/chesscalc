@@ -4,8 +4,6 @@
 
 """Chess Performance Calculation database on Berkeley DB via tkinter API."""
 
-import os
-
 from solentware_base import db_tkinter_database
 
 from ..core.filespec import FileSpec

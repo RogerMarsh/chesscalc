@@ -23,7 +23,7 @@ class Database:
         return ""
 
     def delete_database(self, names):
-        """Delete results database and return message about items not deleted."""
+        """Delete database and return message about items not deleted."""
         listnames = set(n for n in os.listdir(self.home_directory))
         homenames = set(n for n in names if os.path.basename(n) in listnames)
         if ERROR_LOG in listnames:
@@ -42,13 +42,13 @@ class Database:
         else:
             message = None
         self.close_database()
-        for h in homenames:
-            if os.path.isdir(h):
-                shutil.rmtree(h, ignore_errors=True)
+        for hnm in homenames:
+            if os.path.isdir(hnm):
+                shutil.rmtree(hnm, ignore_errors=True)
             else:
-                os.remove(h)
+                os.remove(hnm)
         try:
             os.rmdir(self.home_directory)
-        except:
+        except FileNotFoundError:
             pass
         return message

@@ -56,11 +56,10 @@ class Players(Bindings):
         title = EventSpec.menu_player_identify[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         players_sel = self._players_grid.selection
         players_bmk = self._players_grid.bookmarks
         persons_sel = self._persons_grid.selection
-        persons_bmk = self._persons_grid.bookmarks
         if len(players_sel) == 0 and len(players_bmk) == 0:
             tkinter.messagebox.showinfo(
                 parent=self._players,
@@ -97,7 +96,7 @@ class Players(Bindings):
                     )
                 ),
             ):
-                return
+                return False
         elif len(players_sel) != 1:
             tkinter.messagebox.showinfo(
                 parent=self._players,
@@ -121,7 +120,7 @@ class Players(Bindings):
                 )
             ),
         ):
-            return
+            return False
         new = set(players_bmk)
         if len(persons_sel) == 1:
             identified = persons_sel
@@ -130,6 +129,7 @@ class Players(Bindings):
             identified = players_sel
             new.difference_update(set(players_sel))
         identify_person.identify_players_as_person(database, new, identified)
+        return True
 
     def get_database(self, title):
         """Return database if both player lists are from same database.
@@ -155,7 +155,7 @@ class Players(Bindings):
                 ),
             )
             return False
-        elif players_ds is None:
+        if players_ds is None:
             tkinter.messagebox.showinfo(
                 parent=self._players,
                 title=title,
@@ -167,7 +167,7 @@ class Players(Bindings):
                 ),
             )
             return False
-        elif persons_ds is None:
+        if persons_ds is None:
             tkinter.messagebox.showinfo(
                 parent=self._players,
                 title=title,
@@ -193,7 +193,7 @@ class Players(Bindings):
                 ),
             )
             return False
-        elif players_db is None:
+        if players_db is None:
             tkinter.messagebox.showinfo(
                 parent=self._players,
                 title=title,
@@ -205,7 +205,7 @@ class Players(Bindings):
                 ),
             )
             return False
-        elif persons_db is None:
+        if persons_db is None:
             tkinter.messagebox.showinfo(
                 parent=self._players,
                 title=title,
@@ -217,7 +217,7 @@ class Players(Bindings):
                 ),
             )
             return False
-        elif players_db is not persons_db:
+        if players_db is not persons_db:
             tkinter.messagebox.showinfo(
                 parent=self._players,
                 title=title,

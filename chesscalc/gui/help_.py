@@ -6,7 +6,6 @@
 
 import tkinter
 
-import solentware_misc.gui.textreadonly
 from solentware_misc.gui.help_ import help_widget
 
 import chesscalc.help_

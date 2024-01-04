@@ -33,6 +33,7 @@ readme = "README"
 dependencies = [
     "solentware-misc==1.6",
     "solentware-base==5.2.dev0",
+    "solentware-grid==2.2.dev0",
     "pgn-read==2.4.dev0",
 ]
 

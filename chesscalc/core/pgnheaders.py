@@ -75,7 +75,13 @@ def extract_pgn_headers(path, json_=False):
 
 
 def _extract_pgn_headers_from_directory(pgnpath, pgnhdrpath, json_):
-    """pgnpath is a ^/pgn/../ and pgnhdrpath a ^/pgnhdr/../ directory."""
+    """Extract PGN headers from pgnpath and write to pgnhdrpath.
+
+    pgnpath is a directory containing *.pgn files and subdirectories.
+    pgnhdrpath is a directory containing *,pgnhdr files and subdirectories.
+    json_ determines format: True means 'json' and False means 'repr'.
+
+    """
     for entry in os.listdir(pgnpath):
         path = os.path.join(pgnpath, entry)
         if os.path.isdir(path):
@@ -97,7 +103,13 @@ def _extract_pgn_headers_from_directory(pgnpath, pgnhdrpath, json_):
 
 
 def _extract_pgn_headers_from_file(pgnpath, pgnhdrpath, json_):
-    """pgnpath is a *.pgn file and pgnhdrpath is a *,pgnhdr file."""
+    """Extract PGN headers from pgnpath and write to pgnhdrpath.
+
+    pgnpath is a *.pgn file
+    pgnhdrpath is a *,pgnhdr file
+    json_ determines format: True means 'json' and False means 'repr'.
+
+    """
     if os.path.exists(pgnhdrpath):
         if not os.path.isfile(pgnhdrpath):
             return

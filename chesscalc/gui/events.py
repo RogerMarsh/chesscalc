@@ -42,7 +42,7 @@ class Events(Bindings):
         title = EventSpec.menu_other_event_identify[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         events_sel = self._events_grid.selection
         events_bmk = self._events_grid.bookmarks
         if len(events_sel) == 0:
@@ -87,14 +87,14 @@ class Events(Bindings):
                 message=message,
             )
             return False
-        self.data_grid.bookmarks[:] = []  # When was clear() method added?
+        return True
 
     def break_selected(self):
         """Undo identification of bookmarked events as selection event."""
         title = EventSpec.menu_other_event_break[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         events_sel = self._events_grid.selection
         events_bmk = self._events_grid.bookmarks
         if len(events_sel) == 0:
@@ -141,14 +141,14 @@ class Events(Bindings):
                 message=message,
             )
             return False
-        self.data_grid.bookmarks[:] = []  # When was clear() method added?
+        return True
 
     def split_all(self):
         """Undo identification of all aliases of selected event."""
         title = EventSpec.menu_other_event_split[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         events_sel = self._events_grid.selection
         events_bmk = self._events_grid.bookmarks
         if len(events_sel) == 0:
@@ -173,13 +173,14 @@ class Events(Bindings):
                 message=message,
             )
             return False
+        return True
 
     def change_identity(self):
         """Undo identification of all aliases of selected event."""
         title = EventSpec.menu_other_event_change[1]
         database = self.get_database(title)
         if not database:
-            return
+            return None
         events_sel = self._events_grid.selection
         events_bmk = self._events_grid.bookmarks
         if len(events_sel) == 0:
@@ -204,6 +205,7 @@ class Events(Bindings):
                 message=message,
             )
             return False
+        return True
 
     def get_database(self, title):
         """Return database if events list is attached to database.
