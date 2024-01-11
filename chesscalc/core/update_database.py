@@ -103,7 +103,7 @@ def update_record(
         value.person_identity = player_identity
         value.time_control_identity = time_control_identity
         value.mode_identity = mode_identity
-        value.event_identities.extend(event_list)
+        value.event_identities = event_list
         assert dbrecord.srkey == clone_record.srkey
         dbrecord.edit_record(
             database, filespec.SELECTION_FILE_DEF, None, clone_record

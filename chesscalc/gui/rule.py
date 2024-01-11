@@ -15,8 +15,20 @@ from ..core import update_database
 from ..core import name_lookup
 
 
-class RuleError(Exception):
-    """Raise exception in rule module."""
+class PopulatePerson(Exception):
+    """Raise exception if no record for person identity."""
+
+
+class PopulateTimeControl(Exception):
+    """Raise exception if no record for time control identity."""
+
+
+class PopulateMode(Exception):
+    """Raise exception if no record for mode identity."""
+
+
+class PopulateEvent(Exception):
+    """Raise exception if no record for event identity."""
 
 
 class RuleIdentityValuesDisplayed:
@@ -198,53 +210,6 @@ class Rule(Bindings):
         """Return the top frame of the rule widget."""
         return self._frame
 
-    def _split_events(self, identities, names):
-        """Return list of event identities or None."""
-        identity_list = identities.split()
-        for identity in identity_list:
-            if identity and not identity.isdigit():
-                tkinter.messagebox.showinfo(
-                    parent=self.frame,
-                    title=EventSpec.menu_selectors_insert[1],
-                    message=identity.join(
-                        (
-                            "Event identity '",
-                            "' must contain digits only",
-                        )
-                    ),
-                )
-                return None
-        identity_lines = identities.count("\n")
-        if identity_lines != len(identity_list):
-            tkinter.messagebox.showinfo(
-                parent=self.frame,
-                title=EventSpec.menu_selectors_insert[1],
-                message="".join(
-                    (
-                        "Event identities are not presented one ",
-                        "per line.  The identities will be ",
-                        "adjusted so each line has one identity.  ",
-                        "The names will be adjusted to fit.",
-                    )
-                ),
-            )
-            return None
-        name_lines = names.count("\n")
-        if identity_lines != name_lines:
-            tkinter.messagebox.showinfo(
-                parent=self.frame,
-                title=EventSpec.menu_selectors_insert[1],
-                message="".join(
-                    (
-                        "Number of event identities is not same ",
-                        "as number of event names.  The names will be ",
-                        "adjusted to fit the identities present.",
-                    )
-                ),
-            )
-            return None
-        return identity_list
-
     def populate_rule_from_record(self, record):
         """Populate rule widget with values from record."""
         assert self._rule_record is None
@@ -301,11 +266,26 @@ class Rule(Bindings):
                     tkinter.END, detail.value.alias_index_key()
                 )
                 self._mode_name.configure(state=tkinter.DISABLED)
+        if value.event_identities:
+            self._event_names.configure(state=tkinter.NORMAL)
+            self._event_names.delete("1.0", tkinter.END)
+            for event_identity in value.event_identities:
+                detail = name_lookup.get_event_record_from_identity(
+                    self._database, event_identity
+                )
+                if detail is not None:
+                    self._event_names.insert(
+                        tkinter.END, detail.value.alias_index_key()
+                    )
+                self._event_names.insert(tkinter.END, "\n")
+            self._event_names.configure(state=tkinter.DISABLED)
         self._disable_entry_widgets()
         self._rule_record = record
 
     def populate_rule_person_from_record(self, record):
         """Populate rule widget person with values from record."""
+        if record is None:
+            raise PopulatePerson("No person record")
         value = record.value
         self._player_identity.delete("0", tkinter.END)
         self._player_identity.insert(tkinter.END, value.identity)
@@ -314,8 +294,25 @@ class Rule(Bindings):
         self._player_name.insert(tkinter.END, value.alias_index_key())
         self._player_name.configure(state=tkinter.DISABLED)
 
+    def populate_rule_events_from_records(self, records):
+        """Populate rule widget events with values from records."""
+        self._event_identities.delete("1.0", tkinter.END)
+        self._event_names.configure(state=tkinter.NORMAL)
+        self._event_names.delete("1.0", tkinter.END)
+        for record in records:
+            if record is None:
+                raise PopulateEvent("No event record for one of events")
+            value = record.value
+            self._event_identities.insert(tkinter.END, value.identity)
+            self._event_identities.insert(tkinter.END, "\n")
+            self._event_names.insert(tkinter.END, value.alias_index_key())
+            self._event_names.insert(tkinter.END, "\n")
+        self._event_names.configure(state=tkinter.DISABLED)
+
     def populate_rule_time_control_from_record(self, record):
         """Populate rule widget time control with values from record."""
+        if record is None:
+            raise PopulateTimeControl("No time control record")
         value = record.value
         self._time_control_identity.delete("0", tkinter.END)
         self._time_control_identity.insert(tkinter.END, value.identity)
@@ -326,6 +323,8 @@ class Rule(Bindings):
 
     def populate_rule_mode_from_record(self, record):
         """Populate rule widget mode with values from record."""
+        if record is None:
+            raise PopulateMode("No mode record")
         value = record.value
         self._mode_identity.delete("0", tkinter.END)
         self._mode_identity.insert(tkinter.END, value.identity)
@@ -654,22 +653,40 @@ class Rule(Bindings):
             if mode_name:
                 messages.append("No mode identity for name")
                 validate = False
+        event_identity_list = []
         if event_identities:
-            messages.append("Populate event names")
-            if not event_names:
-                validate = False
+            event_name_list = []
+            for identity in event_identities.split():
+                name = name_lookup.get_event_name_from_identity(
+                    self._database, identity
+                )
+                if name is None:
+                    messages.append(
+                        identity.join(
+                            (
+                                "Name not found for identity '",
+                                "', perhaps it is not the alias too",
+                            )
+                        )
+                    )
+                    validate = False
+                event_identity_list.append(identity)
+                event_name_list.append(name)
+            self._event_names.configure(state=tkinter.NORMAL)
+            self._event_names.delete("1.0", tkinter.END)
+            if event_name_list:
+                if event_name_list != event_names.strip("\n").split("\n"):
+                    messages.append("At least one event name changed")
+                self._event_names.insert(
+                    tkinter.END, "\n".join(event_name_list)
+                )
+            self._event_names.configure(state=tkinter.DISABLED)
         else:
             self._event_names.configure(state=tkinter.NORMAL)
             self._event_names.delete("1.0", tkinter.END)
             self._event_names.configure(state=tkinter.DISABLED)
             if event_names:
                 messages.append("No event identities for names")
-                validate = False
-        event_list = []
-        if event_identities:
-            messages.append("Events not yet implemented")
-            event_list = self._split_events(event_identities, event_names)
-            if not event_list:
                 validate = False
         if not validate:
             if len(messages) > 1:
@@ -689,7 +706,7 @@ class Rule(Bindings):
             to_date,
             time_control_identity,
             mode_identity,
-            event_list,
+            event_identity_list,
             self._player_name.get().strip(),
             self._time_control_name.get().strip(),
             self._mode_name.get().strip(),
@@ -702,7 +719,7 @@ class Rule(Bindings):
             to_date,
             time_control_identity,
             mode_identity,
-            event_list,
+            event_identity_list,
             self._player_name.get().strip(),
             self._time_control_name.get().strip(),
             self._mode_name.get().strip(),
@@ -735,5 +752,8 @@ class Rule(Bindings):
             to_date,
             time_control_identity,
             mode_identity,
-            event_list,
+            [
+                item[-1]
+                for item in sorted(zip(event_name_list, event_identity_list))
+            ],
         )

@@ -118,3 +118,33 @@ def get_mode_record_from_identity(database, identity):
 
 def get_event_name_from_identity(database, identity):
     """Return event name for identity or None."""
+    event_record = None
+    database.start_read_only_transaction()
+    try:
+        event_record = get_event_record_from_identity(database, identity)
+    finally:
+        database.end_read_only_transaction()
+    if event_record is None:
+        return None
+    return event_record.value.alias_index_key()
+
+
+def get_event_record_from_identity(database, identity):
+    """Return event record for identity or None."""
+    recordlist = database.recordlist_key(
+        filespec.EVENT_FILE_DEF,
+        filespec.EVENT_IDENTITY_FIELD_DEF,
+        key=database.encode_record_selector(identity),
+    )
+    primary_record = identify_item.get_identity_item_on_recordlist(
+        performancerecord.EventDBvalue,
+        database,
+        recordlist,
+        filespec.EVENT_FILE_DEF,
+        filespec.EVENT_FIELD_DEF,
+    )
+    if primary_record is None:
+        return None
+    event_record = performancerecord.EventDBrecord()
+    event_record.load_record(primary_record)
+    return event_record

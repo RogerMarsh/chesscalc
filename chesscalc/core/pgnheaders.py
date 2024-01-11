@@ -119,7 +119,7 @@ def _extract_pgn_headers_from_file(pgnpath, pgnhdrpath, json_):
         return
     refbase = pgnpath.lstrip(os.path.expanduser("~") + os.path.sep)
     with open(pgnpath, mode="rb") as pgn:
-        with open(pgnhdrpath, "w") as pgnhdr:
+        with open(pgnhdrpath, "w", encoding="utf-8") as pgnhdr:
             headers = {}
             reference = {FILE: refbase, GAME: 0}
             format_ = json.dumps if json_ else repr

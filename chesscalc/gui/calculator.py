@@ -15,6 +15,8 @@ from solentware_bind.gui.exceptionhandler import ExceptionHandler
 
 from solentware_base import modulequery
 
+from solentware_misc.workarounds import workarounds
+
 from .. import APPLICATION_NAME
 from .eventspec import EventSpec
 from ..core import configuration
@@ -29,12 +31,12 @@ from . import events
 from . import timecontrols
 from . import modes
 from . import selectors
+from . import rule
 from . import ruleedit
 from . import ruleinsert
 from . import ruleshow
 from ..core import identity
 from ..core import tab_from_selection
-
 
 ExceptionHandler.set_application_name(APPLICATION_NAME)
 
@@ -1025,21 +1027,72 @@ class Calculator(Bindings):
             return
         persons_sel = self._persons.data_grid.selection
         events_sel = self._events.data_grid.selection
-        modes_sel = self._modes.data_grid.selection
+        events_bmk = self._events.data_grid.bookmarks
         time_controls_sel = self._time_controls.data_grid.selection
+        modes_sel = self._modes.data_grid.selection
         frame = tkinter.ttk.Frame(master=self._notebook)
         tab = ruleinsert.RuleInsert(frame, self.database)
-        tab_from_selection.get_person(tab, persons_sel, self.database)
-        tab_from_selection.get_time_control(
-            tab, time_controls_sel, self.database
-        )
-        tab_from_selection.get_mode(tab, modes_sel, self.database)
-        tab_from_selection.get_events(tab, events_sel, self.database)
-        self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        try:
+            tab_from_selection.get_person(tab, persons_sel, self.database)
+        except rule.PopulatePerson as exc:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=EventSpec.menu_selectors_new[1],
+                message=str(exc),
+            )
+            return
+        try:
+            tab_from_selection.get_time_control(
+                tab, time_controls_sel, self.database
+            )
+        except rule.PopulateTimeControl as exc:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=EventSpec.menu_selectors_new[1],
+                message=str(exc),
+            )
+            return
+        try:
+            tab_from_selection.get_mode(tab, modes_sel, self.database)
+        except rule.PopulateMode as exc:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=EventSpec.menu_selectors_new[1],
+                message=str(exc),
+            )
+            return
+        try:
+            tab_from_selection.get_events(
+                tab, events_sel, events_bmk, self.database
+            )
+        except rule.PopulateEvent as exc:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=EventSpec.menu_selectors_new[1],
+                message=str(exc),
+            )
+            return
+        try:
+            self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        except tkinter.TclError as exc:
+            self._rule_tabs[workarounds.winfo_pathname(frame, exc)] = tab
         self._notebook.add(frame, text="New Rule")
-        self._selectors.data_grid.clear_selections()
-        self._selectors.data_grid.clear_bookmarks()
-        self._selectors.data_grid.fill_view_with_top()
+        if persons_sel or self._persons.data_grid.bookmarks:
+            self._persons.data_grid.clear_selections()
+            self._persons.data_grid.clear_bookmarks()
+            self._persons.data_grid.fill_view_with_top()
+        if events_sel or events_bmk:
+            self._events.data_grid.clear_selections()
+            self._events.data_grid.clear_bookmarks()
+            self._events.data_grid.fill_view_with_top()
+        if time_controls_sel or self._time_controls.data_grid.bookmarks:
+            self._time_controls.data_grid.clear_selections()
+            self._time_controls.data_grid.clear_bookmarks()
+            self._time_controls.data_grid.fill_view_with_top()
+        if modes_sel or self._modes.data_grid.bookmarks:
+            self._modes.data_grid.clear_selections()
+            self._modes.data_grid.clear_bookmarks()
+            self._modes.data_grid.fill_view_with_top()
 
     def selectors_show(self):
         """Show selected rule to select games for performance calculation."""
@@ -1056,7 +1109,10 @@ class Calculator(Bindings):
         frame = tkinter.ttk.Frame(master=self._notebook)
         tab = ruleshow.RuleShow(frame, self.database)
         tab_from_selection.get_rule(tab, selectors_sel, self.database)
-        self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        try:
+            self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        except tkinter.TclError as exc:
+            self._rule_tabs[workarounds.winfo_pathname(frame, exc)] = tab
         self._notebook.add(frame, text="Show Rule")
         self._selectors.data_grid.clear_selections()
         self._selectors.data_grid.clear_bookmarks()
@@ -1077,7 +1133,10 @@ class Calculator(Bindings):
         frame = tkinter.ttk.Frame(master=self._notebook)
         tab = ruleedit.RuleEdit(frame, self.database)
         tab_from_selection.get_rule(tab, selectors_sel, self.database)
-        self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        try:
+            self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        except tkinter.TclError as exc:
+            self._rule_tabs[workarounds.winfo_pathname(frame, exc)] = tab
         self._notebook.add(frame, text="Edit Rule")
         self._selectors.data_grid.clear_selections()
         self._selectors.data_grid.clear_bookmarks()

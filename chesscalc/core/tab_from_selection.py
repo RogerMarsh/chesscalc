@@ -13,9 +13,13 @@ def get_rule(tab, selection, database):
     if not tab or not selection or not database:
         return
     record = performancerecord.SelectorDBrecord()
-    record.load_record(selection[0])
     database.start_read_only_transaction()
     try:
+        record.load_record(
+            database.get_primary_record(
+                filespec.SELECTION_FILE_DEF, selection[0][1]
+            )
+        )
         tab.populate_rule_from_record(record)
     finally:
         database.end_read_only_transaction()
@@ -45,6 +49,35 @@ def get_person_detail(key, database):
         database.get_primary_record(filespec.PLAYER_FILE_DEF, key)
     )
     return record
+
+
+def get_events(tab, selection, bookmarks, database):
+    """Populate tab from selected and bookmarked events in database."""
+    if not tab or (not selection and not bookmarks) or not database:
+        return
+    eventset = set(bookmarks)
+    if selection:
+        eventset.add(selection[0])
+    database.start_read_only_transaction()
+    try:
+        tab.populate_rule_events_from_records(
+            get_event_details([bmk[1] for bmk in sorted(eventset)], database)
+        )
+    finally:
+        database.end_read_only_transaction()
+    return
+
+
+def get_event_details(keys, database):
+    """Return records for events referenced by keys in database."""
+    records = []
+    for key in keys:
+        record = performancerecord.EventDBrecord()
+        record.load_record(
+            database.get_primary_record(filespec.EVENT_FILE_DEF, key)
+        )
+        records.append(record)
+    return records
 
 
 def get_time_control(tab, selection, database):
@@ -91,9 +124,3 @@ def get_mode_detail(key, database):
         database.get_primary_record(filespec.MODE_FILE_DEF, key)
     )
     return record
-
-
-def get_events(tab, selection, database):
-    """Populate tab with database values from events in selection."""
-    if not tab or not selection or not database:
-        return
