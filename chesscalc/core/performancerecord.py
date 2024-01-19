@@ -126,28 +126,8 @@ class GameDBvalue(ValueList):
             else:
                 index[defn] = []
         index[filespec.GAME_PLAYER_FIELD_DEF] = [
-            repr(
-                (
-                    headers.get(constants.TAG_BLACK),
-                    headers.get(constants.TAG_EVENT),
-                    headers.get(constants.TAG_EVENTDATE),
-                    headers.get(constants.TAG_SECTION),
-                    headers.get(constants.TAG_STAGE),
-                    headers.get(constants.TAG_BLACKTEAM),
-                    headers.get(constants.TAG_BLACKFIDEID),
-                )
-            ),
-            repr(
-                (
-                    headers.get(constants.TAG_WHITE),
-                    headers.get(constants.TAG_EVENT),
-                    headers.get(constants.TAG_EVENTDATE),
-                    headers.get(constants.TAG_SECTION),
-                    headers.get(constants.TAG_STAGE),
-                    headers.get(constants.TAG_WHITETEAM),
-                    headers.get(constants.TAG_WHITEFIDEID),
-                )
-            ),
+            self.black_key(),
+            self.white_key(),
         ]
         index[filespec.GAME_EVENT_FIELD_DEF] = [
             repr(
@@ -162,6 +142,36 @@ class GameDBvalue(ValueList):
         # index[filespec.GAME_STATUS_FIELD_DEF] = list(
         #    _FILE_NAMES_TO_BE_POPULATED
         # )
+
+    def black_key(self):
+        """Return the black key for the gameplayer index."""
+        headers = self.headers
+        return repr(
+            (
+                headers.get(constants.TAG_BLACK),
+                headers.get(constants.TAG_EVENT),
+                headers.get(constants.TAG_EVENTDATE),
+                headers.get(constants.TAG_SECTION),
+                headers.get(constants.TAG_STAGE),
+                headers.get(constants.TAG_BLACKTEAM),
+                headers.get(constants.TAG_BLACKFIDEID),
+            )
+        )
+
+    def white_key(self):
+        """Return the white key for the gameplayer index."""
+        headers = self.headers
+        return repr(
+            (
+                headers.get(constants.TAG_WHITE),
+                headers.get(constants.TAG_EVENT),
+                headers.get(constants.TAG_EVENTDATE),
+                headers.get(constants.TAG_SECTION),
+                headers.get(constants.TAG_STAGE),
+                headers.get(constants.TAG_WHITETEAM),
+                headers.get(constants.TAG_WHITEFIDEID),
+            )
+        )
 
     def __eq__(self, other):
         """Return True if attributes of self and other are same."""
@@ -796,6 +806,7 @@ class PlayerDBvalue(_PlayerDBvalue):
         val = super().pack()
         index = val[1]
         index[filespec.PLAYER_ALIAS_FIELD_DEF] = [self.alias_index_key()]
+        index[filespec.PLAYER_UNIQUE_FIELD_DEF] = []
         index[filespec.PLAYER_IDENTITY_FIELD_DEF] = []
         index[filespec.PERSON_ALIAS_FIELD_DEF] = []
         return val
@@ -820,6 +831,10 @@ class PersonDBvalue(_PlayerDBvalue):
         val = super().pack()
         index = val[1]
         index[filespec.PLAYER_ALIAS_FIELD_DEF] = []
+        if self.identity != self.alias:
+            index[filespec.PLAYER_UNIQUE_FIELD_DEF] = []
+        else:
+            index[filespec.PLAYER_UNIQUE_FIELD_DEF] = [self.alias]
         index[filespec.PLAYER_IDENTITY_FIELD_DEF] = [self.alias]
         index[filespec.PERSON_ALIAS_FIELD_DEF] = [self.alias_index_key()]
         return val
@@ -1444,7 +1459,7 @@ class TimeControlDBvalue(ValueList):
 
     def alias_index_key(self):
         """Return the key for the timealias index."""
-        return repr((self.timecontrol,))
+        return repr(self.timecontrol)
 
     def load_alias_index_key(self, value):
         """Bind attributes for the timealias index to items in value."""
@@ -1697,7 +1712,7 @@ class ModeDBvalue(ValueList):
 
     def alias_index_key(self):
         """Return the key for the modealias index."""
-        return repr((self.mode,))
+        return repr(self.mode)
 
     def load_alias_index_key(self, value):
         """Bind attributes for the modealias index to items in value."""

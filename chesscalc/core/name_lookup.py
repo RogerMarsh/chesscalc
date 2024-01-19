@@ -37,7 +37,6 @@ def get_player_record_from_identity(database, identity):
         database,
         recordlist,
         filespec.PLAYER_FILE_DEF,
-        filespec.PLAYER_FIELD_DEF,
     )
     if primary_record is None:
         return None
@@ -73,7 +72,6 @@ def get_time_control_record_from_identity(database, identity):
         database,
         recordlist,
         filespec.TIME_FILE_DEF,
-        filespec.TIME_FIELD_DEF,
     )
     if primary_record is None:
         return None
@@ -107,7 +105,6 @@ def get_mode_record_from_identity(database, identity):
         database,
         recordlist,
         filespec.MODE_FILE_DEF,
-        filespec.MODE_FIELD_DEF,
     )
     if primary_record is None:
         return None
@@ -141,7 +138,6 @@ def get_event_record_from_identity(database, identity):
         database,
         recordlist,
         filespec.EVENT_FILE_DEF,
-        filespec.EVENT_FIELD_DEF,
     )
     if primary_record is None:
         return None

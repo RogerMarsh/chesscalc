@@ -41,6 +41,7 @@ def identify_players_as_person(database, players, person):
     selector = database.encode_record_selector(value.alias_index_key())
     database.start_transaction()
     try:
+        gamelist = database.recordlist_nil(filespec.GAME_FILE_DEF)
         recordlist = database.recordlist_key(
             filespec.PLAYER_FILE_DEF,
             filespec.PERSON_ALIAS_FIELD_DEF,
@@ -58,7 +59,6 @@ def identify_players_as_person(database, players, person):
                     database,
                     recordlist,
                     filespec.PLAYER_FILE_DEF,
-                    filespec.PLAYER_FIELD_DEF,
                 )
             )
         else:
@@ -76,7 +76,6 @@ def identify_players_as_person(database, players, person):
                 database,
                 recordlist,
                 filespec.PLAYER_FILE_DEF,
-                filespec.PLAYER_FIELD_DEF,
             )
             player_record = performancerecord.PlayerDBrecord()
             player_record.load_record(primary_record)
@@ -91,6 +90,20 @@ def identify_players_as_person(database, players, person):
             player_record.edit_record(
                 database, filespec.PLAYER_FILE_DEF, None, person_record
             )
+        # May be adding aliases to an existing known player.
+        current_gamelist = database.recordlist_key(
+            filespec.GAME_FILE_DEF,
+            filespec.GAME_PLAYER_FIELD_DEF,
+            key=database.encode_record_selector(person_record.value.alias),
+        )
+        if current_gamelist is not None:
+            gamelist |= current_gamelist
+        current_gamelist.close()
+        gamelist |= database.recordlist_key(
+            filespec.GAME_FILE_DEF,
+            filespec.GAME_PLAYER_FIELD_DEF,
+            key=selector,
+        )
 
         alias = person_record.value.alias
         for player in players:
@@ -112,7 +125,6 @@ def identify_players_as_person(database, players, person):
                 database,
                 recordlist,
                 filespec.PLAYER_FILE_DEF,
-                filespec.PLAYER_FIELD_DEF,
             )
             player_record = performancerecord.PlayerDBrecord()
             player_record.load_record(primary_record)
@@ -128,6 +140,18 @@ def identify_players_as_person(database, players, person):
             player_record.edit_record(
                 database, filespec.PLAYER_FILE_DEF, None, person_record
             )
+
+            gamelist |= database.recordlist_key(
+                filespec.GAME_FILE_DEF,
+                filespec.GAME_PLAYER_FIELD_DEF,
+                key=selector,
+            )
+        database.file_records_under(
+            filespec.GAME_FILE_DEF,
+            filespec.GAME_PERSON_FIELD_DEF,
+            gamelist,
+            database.encode_record_selector(alias),
+        )
 
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
@@ -162,7 +186,6 @@ def split_person_into_all_players(database, person):
             database,
             recordlist,
             filespec.PLAYER_FILE_DEF,
-            filespec.PLAYER_FIELD_DEF,
         )
         person_record = performancerecord.PlayerDBrecord(
             valueclass=performancerecord.PersonDBvalue
@@ -182,7 +205,7 @@ def split_person_into_all_players(database, person):
             raise PlayerToPerson("Cannot split: no players with this identity")
         cursor = database.database_cursor(
             filespec.PLAYER_FILE_DEF,
-            filespec.PLAYER_FIELD_DEF,
+            None,
             recordset=recordlist,
         )
         try:
@@ -212,6 +235,12 @@ def split_person_into_all_players(database, person):
                 )
         finally:
             cursor.close()
+
+        database.unfile_records_under(
+            filespec.GAME_FILE_DEF,
+            filespec.GAME_PERSON_FIELD_DEF,
+            database.encode_record_selector(identity),
+        )
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise
@@ -245,7 +274,6 @@ def break_person_into_picked_players(database, person, aliases):
             database,
             recordlist,
             filespec.PLAYER_FILE_DEF,
-            filespec.PLAYER_FIELD_DEF,
         )
         person_record = performancerecord.PlayerDBrecord(
             valueclass=performancerecord.PersonDBvalue
@@ -255,6 +283,11 @@ def break_person_into_picked_players(database, person, aliases):
             database.backout()
             return "Cannot break: selection is not the identified person"
         identity = person_record.value.identity
+        gamelist = database.recordlist_key(
+            filespec.GAME_FILE_DEF,
+            filespec.GAME_PERSON_FIELD_DEF,
+            key=database.encode_record_selector(identity),
+        )
         for alias in aliases:
             value.load_alias_index_key(alias[0])
             selector = database.encode_record_selector(value.alias_index_key())
@@ -276,7 +309,6 @@ def break_person_into_picked_players(database, person, aliases):
                 database,
                 recordlist,
                 filespec.PLAYER_FILE_DEF,
-                filespec.PLAYER_FIELD_DEF,
             )
             player_record = performancerecord.PlayerDBrecord()
             player_record.load_record(primary_record)
@@ -289,6 +321,13 @@ def break_person_into_picked_players(database, person, aliases):
                         "so no changes done",
                     )
                 )
+            gamelist.remove_recordset(
+                database.recordlist_key(
+                    filespec.GAME_FILE_DEF,
+                    filespec.GAME_PLAYER_FIELD_DEF,
+                    key=selector,
+                )
+            )
             alias_record = performancerecord.PlayerDBrecord(
                 valueclass=performancerecord.PersonDBvalue
             )
@@ -301,6 +340,12 @@ def break_person_into_picked_players(database, person, aliases):
             alias_record.edit_record(
                 database, filespec.PLAYER_FILE_DEF, None, player_record
             )
+        database.file_records_under(
+            filespec.GAME_FILE_DEF,
+            filespec.GAME_PERSON_FIELD_DEF,
+            gamelist,
+            database.encode_record_selector(identity),
+        )
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise
@@ -335,7 +380,6 @@ def change_identified_person(database, player):
             database,
             recordlist,
             filespec.PLAYER_FILE_DEF,
-            filespec.PLAYER_FIELD_DEF,
         )
         selection_record = performancerecord.PlayerDBrecord(
             valueclass=performancerecord.PersonDBvalue
@@ -355,9 +399,14 @@ def change_identified_person(database, player):
             raise PlayerToPerson(
                 "Cannot change: no players with this identity"
             )
+        gamelist = database.recordlist_key(
+            filespec.GAME_FILE_DEF,
+            filespec.GAME_PERSON_FIELD_DEF,
+            key=database.encode_record_selector(selection_record.value.alias),
+        )
         cursor = database.database_cursor(
             filespec.PLAYER_FILE_DEF,
-            filespec.PLAYER_FIELD_DEF,
+            None,
             recordset=recordlist,
         )
         try:
@@ -384,6 +433,17 @@ def change_identified_person(database, player):
                 )
         finally:
             cursor.close()
+        database.unfile_records_under(
+            filespec.GAME_FILE_DEF,
+            filespec.GAME_PERSON_FIELD_DEF,
+            database.encode_record_selector(selection_record.value.alias),
+        )
+        database.file_records_under(
+            filespec.GAME_FILE_DEF,
+            filespec.GAME_PERSON_FIELD_DEF,
+            gamelist,
+            database.encode_record_selector(selection_record.value.identity),
+        )
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise

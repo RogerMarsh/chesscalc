@@ -28,3 +28,11 @@ class RuleInsert(rule.Rule):
             title=EventSpec.menu_selectors_new[1],
             message="Cannot delete rule from New",
         )
+
+    def calulate_performances_for_rule(self):
+        """Calculate performances for selection rule on database."""
+        tkinter.messagebox.showinfo(
+            parent=self.frame,
+            title=EventSpec.menu_selectors_new[1],
+            message="Cannot calculate performance from New",
+        )

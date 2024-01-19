@@ -52,4 +52,6 @@ class EventSpec:
     menu_selectors_update = ("", "Update Rule", "", 0)
     menu_selectors_delete = ("", "Delete Rule", "", 0)
     menu_selectors_close = ("", "Close Rule", "", 0)
+    menu_calculate_calculate = ("", "Calculate", "", 0)
+    menu_calculate_save = ("", "Save", "", 0)
     menu_help_widget = ("", "Help", "", 0)

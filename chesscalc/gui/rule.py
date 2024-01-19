@@ -13,6 +13,7 @@ from ..core.utilities import AppSysDate
 from .eventspec import EventSpec
 from ..core import update_database
 from ..core import name_lookup
+from ..core import calculate
 
 
 class PopulatePerson(Exception):
@@ -441,6 +442,34 @@ class Rule(Bindings):
         )
         return False
 
+    def calulate_performances_for_rule(self):
+        """Calculate performances for selection rule on database."""
+        if self._rule_record is None:
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=EventSpec.menu_calculate_calculate[1],
+                message="Record not known, perhaps it has been deleted",
+            )
+            return False
+        valid_values = self._extract_rule(
+            *self.get_selection_values_from_widget()
+        )
+        if not valid_values:
+            return False
+        if calculate.calculate(self._database, self._perfcalc, *valid_values):
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=EventSpec.menu_calculate_calculate[1],
+                message="Performances calculated",
+            )
+            return True
+        tkinter.messagebox.showinfo(
+            parent=self.frame,
+            title=EventSpec.menu_selectors_update[1],
+            message="Performances not calculated",
+        )
+        return False
+
     def _validate_rule(
         self,
         rule,
@@ -654,8 +683,8 @@ class Rule(Bindings):
                 messages.append("No mode identity for name")
                 validate = False
         event_identity_list = []
+        event_name_list = []
         if event_identities:
-            event_name_list = []
             for identity in event_identities.split():
                 name = name_lookup.get_event_name_from_identity(
                     self._database, identity
@@ -739,6 +768,297 @@ class Rule(Bindings):
                 )
             else:
                 messages.append("Do you want to" + message_stub)
+            if not tkinter.messagebox.askyesno(
+                parent=self.frame,
+                title=title,
+                message="\n".join(messages),
+            ):
+                return False
+        return (
+            rule,
+            player_identity,
+            from_date,
+            to_date,
+            time_control_identity,
+            mode_identity,
+            [
+                item[-1]
+                for item in sorted(zip(event_name_list, event_identity_list))
+            ],
+        )
+
+    def _extract_rule(
+        self,
+        rule,
+        player_identity,
+        from_date,
+        to_date,
+        time_control_identity,
+        mode_identity,
+        event_identities,
+        player_name,
+        time_control_name,
+        mode_name,
+        event_names,
+    ):
+        """Return valid values for insert or update, or False."""
+        title = EventSpec.menu_calculate_calculate[1]
+        if (not player_identity and not event_identities) or (
+            player_identity and event_identities
+        ):
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="".join(
+                    (
+                        "Performance calculation needs either a player ",
+                        "identity, or list of event names, but not both.",
+                    )
+                ),
+            )
+            return False
+        if player_identity and not player_identity.isdigit():
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="Player identity must contain digits only",
+            )
+            return False
+        if (from_date and not to_date) or (not from_date and to_date):
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="".join(
+                    (
+                        "Please give either both from date and to date, ",
+                        "or neither, for selector",
+                    )
+                ),
+            )
+            return False
+        iso_from_date = ""
+        iso_to_date = ""
+        if from_date and to_date:
+            appsysdate = AppSysDate()
+            if appsysdate.parse_date(from_date) != len(from_date):
+                tkinter.messagebox.showinfo(
+                    parent=self.frame,
+                    title=title,
+                    message="Please give a date as 'From Date'",
+                )
+                return False
+            iso_from_date = appsysdate.iso_format_date()
+            if appsysdate.parse_date(to_date) != len(to_date):
+                tkinter.messagebox.showinfo(
+                    parent=self.frame,
+                    title=title,
+                    message="Please give a date as 'To Date'",
+                )
+                return False
+            iso_to_date = appsysdate.iso_format_date()
+            if len(from_date) < 11:
+                tkinter.messagebox.showinfo(
+                    parent=self.frame,
+                    title=title,
+                    message="".join(
+                        (
+                            "'From Date' is less than 11 characters and ",
+                            "has been interpreted as '",
+                            iso_from_date,
+                            "' in 'yyyy-mm-dd' format",
+                        )
+                    ),
+                )
+            if len(to_date) < 11:
+                tkinter.messagebox.showinfo(
+                    parent=self.frame,
+                    title=title,
+                    message="".join(
+                        (
+                            "'To Date' is less than 11 characters and ",
+                            "has been interpreted as '",
+                            iso_to_date,
+                            "' in 'yyyy-mm-dd' format",
+                        )
+                    ),
+                )
+        if time_control_identity and not time_control_identity.isdigit():
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="Time control identity must contain digits only",
+            )
+            return False
+        if mode_identity and not mode_identity.isdigit():
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="Mode identity must contain digits only",
+            )
+            return False
+        for event_identity in event_identities.split():
+            if event_identity and not event_identity.isdigit():
+                tkinter.messagebox.showinfo(
+                    parent=self.frame,
+                    title=title,
+                    message=event_identity.join(
+                        (
+                            "Event identity '",
+                            "' must contain digits only",
+                        )
+                    ),
+                )
+                return False
+        validate = True
+        messages = []
+        # Assume rule name is unchanged if widget state is 'disabled'.
+        if self._rule.cget("state") == tkinter.NORMAL:
+            if rule != self._identity_values.rule:
+                messages.append("Rule name changed")
+        if player_identity:
+            name = name_lookup.get_player_name_from_identity(
+                self._database, player_identity
+            )
+            self._player_name.configure(state=tkinter.NORMAL)
+            self._player_name.delete("0", tkinter.END)
+            if name:
+                if name != player_name:
+                    messages.append("Player name changed")
+                self._player_name.insert(tkinter.END, name)
+            self._player_name.configure(state=tkinter.DISABLED)
+            if not name:
+                messages.append("Player name not found")
+                validate = False
+            elif not player_name:
+                messages.append("Player name added")
+        else:
+            self._player_name.configure(state=tkinter.NORMAL)
+            self._player_name.delete("0", tkinter.END)
+            self._player_name.configure(state=tkinter.DISABLED)
+            if player_name:
+                messages.append("No player identity for name")
+                validate = False
+        if time_control_identity:
+            name = name_lookup.get_time_control_name_from_identity(
+                self._database, time_control_identity
+            )
+            self._time_control_name.configure(state=tkinter.NORMAL)
+            self._time_control_name.delete("0", tkinter.END)
+            if name:
+                if name != time_control_name:
+                    messages.append("Time control name changed")
+                self._time_control_name.insert(tkinter.END, name)
+            self._time_control_name.configure(state=tkinter.DISABLED)
+            if not name:
+                messages.append("Time control name not found")
+                validate = False
+            elif not time_control_name:
+                messages.append("Time control name added")
+        else:
+            self._time_control_name.configure(state=tkinter.NORMAL)
+            self._time_control_name.delete("0", tkinter.END)
+            self._time_control_name.configure(state=tkinter.DISABLED)
+            if time_control_name:
+                messages.append("No time control identity for name")
+                validate = False
+        if mode_identity:
+            name = name_lookup.get_mode_name_from_identity(
+                self._database, mode_identity
+            )
+            self._mode_name.configure(state=tkinter.NORMAL)
+            self._mode_name.delete("0", tkinter.END)
+            if name:
+                if name != mode_name:
+                    messages.append("Mode name changed")
+                self._mode_name.insert(tkinter.END, name)
+            self._mode_name.configure(state=tkinter.DISABLED)
+            if not name:
+                messages.append("Mode name not found")
+                validate = False
+            elif not mode_name:
+                messages.append("Mode name added")
+        else:
+            self._mode_name.configure(state=tkinter.NORMAL)
+            self._mode_name.delete("0", tkinter.END)
+            self._mode_name.configure(state=tkinter.DISABLED)
+            if mode_name:
+                messages.append("No mode identity for name")
+                validate = False
+        event_identity_list = []
+        event_name_list = []
+        if event_identities:
+            for identity in event_identities.split():
+                name = name_lookup.get_event_name_from_identity(
+                    self._database, identity
+                )
+                if name is None:
+                    messages.append(
+                        identity.join(
+                            (
+                                "Name not found for identity '",
+                                "', perhaps it is not the alias too",
+                            )
+                        )
+                    )
+                    validate = False
+                event_identity_list.append(identity)
+                event_name_list.append(name)
+            self._event_names.configure(state=tkinter.NORMAL)
+            self._event_names.delete("1.0", tkinter.END)
+            if event_name_list:
+                if event_name_list != event_names.strip("\n").split("\n"):
+                    messages.append("At least one event name changed")
+                self._event_names.insert(
+                    tkinter.END, "\n".join(event_name_list)
+                )
+            self._event_names.configure(state=tkinter.DISABLED)
+        else:
+            self._event_names.configure(state=tkinter.NORMAL)
+            self._event_names.delete("1.0", tkinter.END)
+            self._event_names.configure(state=tkinter.DISABLED)
+            if event_names:
+                messages.append("No event identities for names")
+                validate = False
+        if not validate:
+            if len(messages) > 1:
+                messages.insert(
+                    0, "At least one of the following indicates an error:\n"
+                )
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="\n".join(messages),
+            )
+            return False
+        changed = self._identity_values.is_changed(
+            rule,
+            player_identity,
+            from_date,
+            to_date,
+            time_control_identity,
+            mode_identity,
+            event_identity_list,
+            self._player_name.get().strip(),
+            self._time_control_name.get().strip(),
+            self._mode_name.get().strip(),
+            self._event_names.get("1.0", tkinter.END).strip(),
+        )
+        self._identity_values.set_values(
+            rule,
+            player_identity,
+            from_date,
+            to_date,
+            time_control_identity,
+            mode_identity,
+            event_identity_list,
+            self._player_name.get().strip(),
+            self._time_control_name.get().strip(),
+            self._mode_name.get().strip(),
+            self._event_names.get("1.0", tkinter.END).strip(),
+        )
+        if messages or changed:
+            message_stub = " calculate performances "
+            messages.append("Do you want to" + message_stub)
             if not tkinter.messagebox.askyesno(
                 parent=self.frame,
                 title=title,

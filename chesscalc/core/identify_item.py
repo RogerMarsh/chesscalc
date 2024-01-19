@@ -54,7 +54,7 @@ def identify(
                 item_name.join(("Cannot identify: ", " record duplicated"))
             )
         primary_record = get_first_item_on_recordlist(
-            database, recordlist, file, primary_field
+            database, recordlist, file
         )
         selection_record = recordclass()
         selection_record.load_record(primary_record)
@@ -78,7 +78,7 @@ def identify(
                     )
                 )
             primary_record = get_first_item_on_recordlist(
-                database, recordlist, file, primary_field
+                database, recordlist, file
             )
             item_record = recordclass()
             item_record.load_record(primary_record)
@@ -137,7 +137,7 @@ def break_bookmarked_aliases(
                 item_name.join(("Cannot break: ", " record duplicated"))
             )
         primary_record = get_first_item_on_recordlist(
-            database, recordlist, file, primary_field
+            database, recordlist, file
         )
         selection_record = recordclass()
         selection_record.load_record(primary_record)
@@ -167,7 +167,7 @@ def break_bookmarked_aliases(
                     )
                 )
             primary_record = get_first_item_on_recordlist(
-                database, recordlist, file, primary_field
+                database, recordlist, file
             )
             item_record = recordclass()
             item_record.load_record(primary_record)
@@ -227,7 +227,7 @@ def split_aliases(
                 item_name.join(("Cannot split: ", " record duplicated"))
             )
         primary_record = get_first_item_on_recordlist(
-            database, recordlist, file, primary_field
+            database, recordlist, file
         )
         selection_record = recordclass()
         selection_record.load_record(primary_record)
@@ -246,9 +246,7 @@ def split_aliases(
             raise ItemIdentity(
                 item_name.join(("Cannot split: no ", "s with this identity"))
             )
-        cursor = database.database_cursor(
-            file, primary_field, recordset=recordlist
-        )
+        cursor = database.database_cursor(file, None, recordset=recordlist)
         try:
             while True:
                 record = cursor.next()
@@ -308,7 +306,7 @@ def change_aliases(
                 item_name.join(("Cannot change: ", " record duplicated"))
             )
         primary_record = get_first_item_on_recordlist(
-            database, recordlist, file, primary_field
+            database, recordlist, file
         )
         selection_record = recordclass()
         selection_record.load_record(primary_record)
@@ -332,7 +330,7 @@ def change_aliases(
             )
         cursor = database.database_cursor(
             file,
-            primary_field,
+            None,
             recordset=recordlist,
         )
         try:
@@ -365,7 +363,7 @@ def change_aliases(
     return None
 
 
-def get_first_item_on_recordlist(database, recordlist, file, primary_field):
+def get_first_item_on_recordlist(database, recordlist, file):
     """Return item record on recordlist.
 
     Normally there will be only one record on recordlist: if more there
@@ -374,21 +372,14 @@ def get_first_item_on_recordlist(database, recordlist, file, primary_field):
     function is likely inappropriate in these cases.
 
     """
-    cursor = database.database_cursor(
-        file, primary_field, recordset=recordlist
-    )
-    try:
-        record = cursor.first()
-        if record is None:
-            return None
-        return database.get_primary_record(file, record[0])
-    finally:
-        cursor.close()
+    cursor = database.database_cursor(file, None, recordset=recordlist)
+    record = cursor.first()
+    if record is None:
+        return None
+    return database.get_primary_record(file, record[0])
 
 
-def get_identity_item_on_recordlist(
-    valueclass, database, recordlist, file, primary_field
-):
+def get_identity_item_on_recordlist(valueclass, database, recordlist, file):
     """Return item record on recordlist where identity is also alias.
 
     Normally there will be only one record on recordlist fitting this
@@ -398,19 +389,14 @@ def get_identity_item_on_recordlist(
 
     """
     value = valueclass()
-    cursor = database.database_cursor(
-        file, primary_field, recordset=recordlist
-    )
-    try:
-        while True:
-            record = cursor.next()
-            if record is None:
-                return None
-            primary_record = database.get_primary_record(file, record[0])
-            if primary_record is None:
-                continue
-            value.load(primary_record[1])
-            if value.alias == value.identity:
-                return primary_record
-    finally:
-        cursor.close()
+    cursor = database.database_cursor(file, None, recordset=recordlist)
+    while True:
+        record = cursor.next()
+        if record is None:
+            return None
+        primary_record = database.get_primary_record(file, record[0])
+        if primary_record is None:
+            continue
+        value.load(primary_record[1])
+        if value.alias == value.identity:
+            return primary_record

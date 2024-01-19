@@ -76,9 +76,11 @@ GAME_MODE_FIELD_DEF = "gamemode"
 GAME_PLAYER_FIELD_DEF = "gameplayer"
 GAME_EVENT_FIELD_DEF = "gameevent"
 GAME_STATUS_FIELD_DEF = "gamestatus"
+GAME_PERSON_FIELD_DEF = "gameperson"
 
 # player file fields.
 PLAYER_FIELD_DEF = PLAYER_FILE_DEF
+PLAYER_UNIQUE_FIELD_DEF = "playerunique"
 PLAYER_IDENTITY_FIELD_DEF = "playeridentity"
 PLAYER_ALIAS_FIELD_DEF = "playeralias"
 PERSON_ALIAS_FIELD_DEF = "personalias"
@@ -142,6 +144,7 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         GAME_PLAYER_FIELD_DEF: None,
                         GAME_EVENT_FIELD_DEF: None,
                         GAME_STATUS_FIELD_DEF: None,
+                        GAME_PERSON_FIELD_DEF: None,
                     },
                     FIELDS: {
                         fld(GAME_FIELD_DEF): None,
@@ -156,6 +159,7 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         fld(GAME_PLAYER_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_EVENT_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_STATUS_FIELD_DEF): {INV: True, ORD: True},
+                        fld(GAME_PERSON_FIELD_DEF): {INV: True, ORD: True},
                     },
                 },
                 PLAYER_FILE_DEF: {
@@ -171,12 +175,14 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                     DEFAULT_INCREASE_FACTOR: 0.01,
                     PRIMARY: fld(PLAYER_FIELD_DEF),
                     SECONDARY: {
+                        PLAYER_UNIQUE_FIELD_DEF: None,
                         PLAYER_IDENTITY_FIELD_DEF: None,
                         PLAYER_ALIAS_FIELD_DEF: None,
                         PERSON_ALIAS_FIELD_DEF: None,
                     },
                     FIELDS: {
                         fld(PLAYER_FIELD_DEF): None,
+                        fld(PLAYER_UNIQUE_FIELD_DEF): {INV: True, ORD: True},
                         fld(PLAYER_IDENTITY_FIELD_DEF): {INV: True, ORD: True},
                         fld(PLAYER_ALIAS_FIELD_DEF): {INV: True, ORD: True},
                         fld(PERSON_ALIAS_FIELD_DEF): {INV: True, ORD: True},

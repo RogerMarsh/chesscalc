@@ -180,6 +180,8 @@ class Calculator(Bindings):
         menu32 = tkinter.Menu(menu3, tearoff=False)
         menu4 = tkinter.Menu(menubar, tearoff=False)
         menubar.add_cascade(label="Selectors", menu=menu4, underline=0)
+        menu5 = tkinter.Menu(menubar, tearoff=False)
+        menubar.add_cascade(label="Calculate", menu=menu5, underline=0)
         menuh = tkinter.Menu(menubar, tearoff=False)
         menubar.add_cascade(label="Help", menu=menuh, underline=0)
         for menu, accelerator, function in (
@@ -234,6 +236,11 @@ class Calculator(Bindings):
             (menu4,) + _MENU_SEPARATOR,
             (menu4, EventSpec.menu_selectors_close, self.selectors_close),
             (menu4,) + _MENU_SEPARATOR,
+            (menu5,) + _MENU_SEPARATOR,
+            (menu5, EventSpec.menu_calculate_calculate, self.calculate),
+            (menu5,) + _MENU_SEPARATOR,
+            (menu5, EventSpec.menu_calculate_save, self.save),
+            (menu5,) + _MENU_SEPARATOR,
             (menuh,) + _MENU_SEPARATOR,
             (menuh, EventSpec.menu_help_widget, self.help_widget),
             (menuh,) + _MENU_SEPARATOR,
@@ -1219,7 +1226,7 @@ class Calculator(Bindings):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=menu_event_spec[1],
-                message="Close game selector rule not available at present",
+                message="Game selector rule not available at present",
             )
             return False
         if not self._selectors_grid_available(menu_event_spec):
@@ -1690,3 +1697,23 @@ class Calculator(Bindings):
             self._modes.data_grid.clear_selections()
             self._modes.data_grid.clear_bookmarks()
             self._modes.data_grid.fill_view_with_top()
+
+    def calculate(self):
+        """Calulate player performances from games selected by rule."""
+        tab = self._selectors_apply(EventSpec.menu_calculate_calculate)
+        if not tab:
+            return
+        self._rule_tabs[tab].calulate_performances_for_rule()
+        return
+
+    def save(self):
+        """Save calculted player performances from games selected by rule."""
+        tab = self._selectors_apply(EventSpec.menu_calculate_save)
+        if not tab:
+            return
+        tkinter.messagebox.showinfo(
+            parent=self.widget,
+            title=EventSpec.menu_calculate_save[1],
+            message="Save not implemented yet",
+        )
+        return

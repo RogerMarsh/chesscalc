@@ -178,7 +178,7 @@ def _get_next_identity_value_after_allocation(database, keytype, exception):
         raise exception("Duplicate identity codes available")
     cursor = database.database_cursor(
         filespec.IDENTITY_FILE_DEF,
-        filespec.IDENTITY_FIELD_DEF,
+        None,
         recordset=recordlist,
     )
     record = IdentityDBrecord(valueclass=NextIdentityDBvalue)

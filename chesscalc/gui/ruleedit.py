@@ -45,3 +45,11 @@ class RuleEdit(rule.Rule):
         ):
             return False
         return super().delete_rule()
+
+    def calulate_performances_for_rule(self):
+        """Calculate performances for selection rule on database."""
+        tkinter.messagebox.showinfo(
+            parent=self.frame,
+            title=EventSpec.menu_selectors_edit[1],
+            message="Cannot calculate performance from Edit",
+        )
