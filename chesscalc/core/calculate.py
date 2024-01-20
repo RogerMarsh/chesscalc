@@ -7,6 +7,7 @@
 from . import performancerecord
 from . import filespec
 from . import utilities
+from . import population
 
 
 def calculate(
@@ -80,9 +81,40 @@ def calculate(
         print(
             "convergent", len(calculation.convergent), calculation.convergent
         )
-        print("populations", len(calculation.populations))
+        print("playersets", len(calculation.playersets))
         print("games", calculation.selected_games.count_records())
         print("players", calculation.selected_players.count_records())
+        for convergent, playerset in zip(
+            calculation.convergent, calculation.playersets
+        ):
+            if not convergent:
+                continue
+            calculation.populations.append(
+                population.Population(playerset, calculation.selected_games)
+            )
+            print(
+                "population persons", len(calculation.populations[-1].persons)
+            )
+        print("populations", len(calculation.populations))
+        for player in calculation.populations:
+            player.do_iterations_until_stable()
+            player.set_high_performance()
+            total = 0
+            for value in player.persons.values():
+                total += value.performance * value.game_count
+                print(
+                    value.code,
+                    value.name,
+                    "\t",
+                    value.normal_performance(player.high_performance),
+                    "\t",
+                    value.reward,
+                    value.score,
+                    value.game_count,
+                    value.opponents,
+                )
+            print("sum performance points", round(total), "(", total, ")")
+            print("iterations", player.iterations)
     except CalculateError:
         database.backout()
         return False
@@ -127,8 +159,9 @@ class Calculate:
         self._event_list = event_list
         self.selected_games = None
         self.selected_players = None
-        self.populations = []
+        self.playersets = []
         self.convergent = []
+        self.populations = []
 
     def __del__(self):
         """Tidy up on deletion of object."""
@@ -141,7 +174,7 @@ class Calculate:
 
     @property
     def deduce_player_population(self):
-        """Return True if player population expands to include opponents.
+        """Return True if playerset expands to include opponents.
 
         Return True if a known player identity is in the calculation rule.
 
@@ -328,7 +361,7 @@ class Calculate:
         graphs.
 
         If the games from these additional players do not allow production
-        of a single connected graph the existence of several populations of
+        of a single connected graph the existence of several playersets of
         players is accepted.
 
         """
@@ -338,7 +371,7 @@ class Calculate:
         recordlist_key = database.recordlist_key
         recordlist_nil = database.recordlist_nil
         if self.selected_games is None and self.selected_players is None:
-            self.populations = None
+            self.playersets = None
             return
         selected_games = self.selected_games
         person_record = performancerecord.PlayerDBrecord()
@@ -439,7 +472,7 @@ class Calculate:
         person_record.load_record(cursor.first())
 
         # Create list again based on alias, which is sometimes same as
-        # identity, to fit loop that builds the population.
+        # identity, to fit loop that builds the playerset.
         cursor.close()
         person_list = recordlist_key(
             filespec.PLAYER_FILE_DEF,
@@ -447,11 +480,11 @@ class Calculate:
             key=encode_record_selector(person_record.value.alias),
         )
 
-        population = recordlist_nil(filespec.PLAYER_FILE_DEF)
+        playerset = recordlist_nil(filespec.PLAYER_FILE_DEF)
         while True:
             if not person_list.count_records():
                 break
-            population |= person_list
+            playerset |= person_list
             person_connected = recordlist_nil(filespec.PLAYER_FILE_DEF)
             person_cursor = database_cursor(
                 filespec.PLAYER_FILE_DEF, None, recordset=person_list
@@ -514,16 +547,16 @@ class Calculate:
             person_cursor.close()
             person_list = recordlist_nil(filespec.PLAYER_FILE_DEF)
             person_list |= person_connected
-            person_list.remove_recordset(population)
+            person_list.remove_recordset(playerset)
             person_connected.close()
-        self.populations = [population]
+        self.playersets = [playerset]
         self.selected_players = self._database.recordlist_nil(
             filespec.PLAYER_FILE_DEF
         )
-        self.selected_players |= population
+        self.selected_players |= playerset
 
     def add_player_and_opponents_to_population(self, player_and_opponents):
-        """Merge player_and_opponents into self.populations.
+        """Merge player_and_opponents into self.playersets.
 
         The player_and_opponents recordlist is expected to contain one
         player and some, usually all, of the player's opponenents.
@@ -539,36 +572,36 @@ class Calculate:
         """
         merged = []
         not_merged = []
-        populations = self.populations
-        while populations:
-            population = populations.pop()
-            if (population & player_and_opponents).count_records():
-                population |= player_and_opponents
-                merged.append(population)
+        playersets = self.playersets
+        while playersets:
+            playerset = playersets.pop()
+            if (playerset & player_and_opponents).count_records():
+                playerset |= player_and_opponents
+                merged.append(playerset)
             else:
-                not_merged.append(population)
+                not_merged.append(playerset)
         if merged:
-            population = merged.pop()
+            playerset = merged.pop()
             while merged:
-                population |= merged.pop()
-            populations.append(population)
+                playerset |= merged.pop()
+            playersets.append(playerset)
         else:
             clone = self._database.recordlist_nil(filespec.PLAYER_FILE_DEF)
             clone |= player_and_opponents
             not_merged.append(clone)
-        populations.extend(not_merged)
-        if not populations:
-            populations.append(
+        playersets.extend(not_merged)
+        if not playersets:
+            playersets.append(
                 self._database.recordlist_nil(filespec.PLAYER_FILE_DEF)
             )
-            populations[0] |= player_and_opponents
+            playersets[0] |= player_and_opponents
 
     def check_convergent_calculation_possible(self):
-        """Note state of player populations for performance calculation.
+        """Note state of playersets for performance calculation.
 
-        Each population is assumed to be a connected graph.
+        Each playerset is assumed to be a connected graph.
 
-        It is assumed the iteration on each population will cause each
+        It is assumed the iteration on each playerset will cause each
         player's performance number to converge on some value which is a
         function of the player's results if and only if at least one set
         of games, represented by edges in the graph, exist such that three
@@ -593,10 +626,10 @@ class Calculate:
         database_cursor = database.database_cursor
         recordlist_key = database.recordlist_key
         recordlist_nil = database.recordlist_nil
-        for population in self.populations:
+        for playerset in self.playersets:
             convergent = False
             person_cursor = database_cursor(
-                filespec.PLAYER_FILE_DEF, None, recordset=population
+                filespec.PLAYER_FILE_DEF, None, recordset=playerset
             )
             person_cursor.recordset.reset_current_segment()
             while True:
