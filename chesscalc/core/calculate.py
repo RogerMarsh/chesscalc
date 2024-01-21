@@ -90,7 +90,9 @@ def calculate(
             if not convergent:
                 continue
             calculation.populations.append(
-                population.Population(playerset, calculation.selected_games)
+                population.Population(
+                    database, playerset, calculation.selected_games
+                )
             )
             print(
                 "population persons", len(calculation.populations[-1].persons)

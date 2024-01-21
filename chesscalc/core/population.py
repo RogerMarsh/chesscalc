@@ -25,6 +25,7 @@ class Population:
 
     def __init__(
         self,
+        database,
         playerset,
         games,
         measure=50,
@@ -35,8 +36,6 @@ class Population:
         self.persons = {}
         self.measure = measure
         persons = self.persons
-        assert playerset.recordset.dbhome == games.recordset.dbhome
-        database = playerset.recordset.dbhome
         encode_record_selector = database.encode_record_selector
         database_cursor = database.database_cursor
         recordlist_key = database.recordlist_key
