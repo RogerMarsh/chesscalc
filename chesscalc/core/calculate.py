@@ -8,11 +8,11 @@ from . import performancerecord
 from . import filespec
 from . import utilities
 from . import population
+from . import person
 
 
 def calculate(
     database,
-    report_widget,
     rule,
     player_identity,
     from_date,
@@ -27,28 +27,27 @@ def calculate(
 
     """
     if not database:
-        return False
+        return None
     if not rule:
-        return False
+        return None
     if (player_identity and event_list) or (
         not player_identity and not event_list
     ):
-        return False
+        return None
     if (from_date and not to_date) or (not from_date and to_date):
-        return False
+        return None
     appsysdate = utilities.AppSysDate()
     if from_date:
         if appsysdate.parse_date(from_date) != len(from_date):
-            return False
+            return None
         from_date = appsysdate.iso_format_date().replace("-", ".")
     if to_date:
         if appsysdate.parse_date(to_date) != len(to_date):
-            return False
+            return None
         to_date = appsysdate.iso_format_date().replace("-", ".")
     del appsysdate
     calculation = Calculate(
         database,
-        report_widget,
         rule,
         player_identity,
         from_date,
@@ -70,61 +69,37 @@ def calculate(
         time_control_games.close()
         mode_games.close()
         event_games.close()
-        print()
-        print(rule)
         if calculation.deduce_player_population:
             calculation.set_player_population_from_selected_player()
         else:
             calculation.set_players_from_selected_games()
             calculation.set_player_populations_from_selected_games()
         calculation.check_convergent_calculation_possible()
-        print(
-            "convergent", len(calculation.convergent), calculation.convergent
-        )
-        print("playersets", len(calculation.playersets))
-        print("games", calculation.selected_games.count_records())
-        print("players", calculation.selected_players.count_records())
         for convergent, playerset in zip(
             calculation.convergent, calculation.playersets
         ):
             if not convergent:
+                calculation.set_non_convergent_population_player_names(
+                    playerset
+                )
                 continue
             calculation.populations.append(
                 population.Population(
                     database, playerset, calculation.selected_games
                 )
             )
-            print(
-                "population persons", len(calculation.populations[-1].persons)
-            )
-        print("populations", len(calculation.populations))
+        calculation.playersets.clear()
         for player in calculation.populations:
             player.do_iterations_until_stable()
             player.set_high_performance()
-            total = 0
-            for value in player.persons.values():
-                total += value.performance * value.game_count
-                print(
-                    value.code,
-                    value.name,
-                    "\t",
-                    value.normal_performance(player.high_performance),
-                    "\t",
-                    value.reward,
-                    value.score,
-                    value.game_count,
-                    value.opponents,
-                )
-            print("sum performance points", round(total), "(", total, ")")
-            print("iterations", player.iterations)
     except CalculateError:
         database.backout()
-        return False
+        return None
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise
     database.commit()
-    return True
+    return calculation
 
 
 class CalculateError(Exception):
@@ -140,7 +115,6 @@ class Calculate:
     def __init__(
         self,
         database,
-        report_widget,
         rule,
         player_identity,
         from_date,
@@ -151,7 +125,6 @@ class Calculate:
     ):
         """Set initial state."""
         self._database = database
-        self._report_widget = report_widget
         self._rule = rule
         self._player_identity = player_identity
         self._from_date = from_date
@@ -164,6 +137,7 @@ class Calculate:
         self.playersets = []
         self.convergent = []
         self.populations = []
+        self.non_convergent_players = []
 
     def __del__(self):
         """Tidy up on deletion of object."""
@@ -758,6 +732,28 @@ class Calculate:
                         convergent = True
                         break
             self.convergent.append(convergent)
+
+    def set_non_convergent_population_player_names(self, playerset):
+        """Append playerset player name list to non_convergent_players."""
+        players = []
+        person_record = performancerecord.PlayerDBrecord()
+        database = self._database
+        database_cursor = database.database_cursor
+        person_cursor = database_cursor(
+            filespec.PLAYER_FILE_DEF, None, recordset=playerset
+        )
+        person_cursor.recordset.reset_current_segment()
+        while True:
+            record = person_cursor.next()
+            if record is None:
+                break
+            person_record.load_record(record)
+            players.append(
+                person.Person(
+                    person_record.value.identity, person_record.value.name
+                )
+            )
+        self.non_convergent_players.append(players)
 
 
 def _get_games_for_identity(

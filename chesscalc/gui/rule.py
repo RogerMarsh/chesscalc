@@ -6,6 +6,7 @@
 
 import tkinter
 import tkinter.ttk
+import ast
 
 from solentware_bind.gui.bindings import Bindings
 
@@ -14,6 +15,8 @@ from .eventspec import EventSpec
 from ..core import update_database
 from ..core import name_lookup
 from ..core import calculate
+from ..core import filespec
+from ..core import performancerecord
 
 
 class PopulatePerson(Exception):
@@ -456,19 +459,21 @@ class Rule(Bindings):
         )
         if not valid_values:
             return False
-        if calculate.calculate(self._database, self._perfcalc, *valid_values):
+        calculation = calculate.calculate(self._database, *valid_values)
+        if calculation is None:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
-                title=EventSpec.menu_calculate_calculate[1],
-                message="Performances calculated",
+                title=EventSpec.menu_selectors_update[1],
+                message="Performances not calculated",
             )
-            return True
+            return False
+        generate_report(calculation, self._perfcalc, self._database)
         tkinter.messagebox.showinfo(
             parent=self.frame,
-            title=EventSpec.menu_selectors_update[1],
-            message="Performances not calculated",
+            title=EventSpec.menu_calculate_calculate[1],
+            message="Performances calculated",
         )
-        return False
+        return True
 
     def _validate_rule(
         self,
@@ -1077,3 +1082,181 @@ class Rule(Bindings):
                 for item in sorted(zip(event_name_list, event_identity_list))
             ],
         )
+
+
+def generate_report(calulation, report_widget, database):
+    """Generate calculation report from database in report_widget."""
+    populations = calulation.populations
+    non_convergent_players = calulation.non_convergent_players
+    report_widget.configure(state=tkinter.NORMAL)
+    report_widget.delete("1.0", tkinter.END)
+    if len(populations) == 0:
+        report_widget.insert(
+            tkinter.END,
+            "There are no populations with calculated performances.\n\n",
+        )
+    elif len(populations) == 1:
+        report_widget.insert(
+            tkinter.END,
+            "There is one population with calculated performances.\n\n",
+        )
+    else:
+        report_widget.insert(
+            tkinter.END,
+            "".join(
+                (
+                    "There are ",
+                    str(len(populations)),
+                    " populations with calculated performances.\n\n",
+                )
+            ),
+        )
+    if len(non_convergent_players) == 0:
+        report_widget.insert(
+            tkinter.END,
+            "".join(
+                (
+                    "There are no populations without calculated ",
+                    "performances.\n\n",
+                )
+            ),
+        )
+    elif len(non_convergent_players) == 1:
+        report_widget.insert(
+            tkinter.END,
+            "".join(
+                (
+                    "There is one population without calculated ",
+                    "performances.\n\n",
+                )
+            ),
+        )
+    else:
+        report_widget.insert(
+            tkinter.END,
+            "".join(
+                (
+                    "There are ",
+                    str(len(non_convergent_players)),
+                    " populations without calculated performances.\n\n",
+                )
+            ),
+        )
+    for count, performance_population in enumerate(populations):
+        high_performance = performance_population.high_performance
+        report_widget.insert(
+            tkinter.END,
+            "".join(
+                (
+                    "Performances (0 is best) in population ",
+                    str(count + 1),
+                    " sorted by player name:\n\n",
+                )
+            ),
+        )
+        for player in sorted(
+            performance_population.persons.values(),
+            key=lambda person: person.name.lower(),
+        ):
+            report_widget.insert(
+                tkinter.END,
+                "".join(
+                    (
+                        player.name,
+                        "\t\t\t",
+                        str(player.normal_performance(high_performance)),
+                        "\n",
+                    )
+                ),
+            )
+        report_widget.insert(tkinter.END, "\n")
+        report_widget.insert(
+            tkinter.END,
+            "".join(
+                (
+                    "Performances in population ",
+                    str(count + 1),
+                    " sorted by performance (0 is best):\n\n",
+                )
+            ),
+        )
+        for player in sorted(
+            performance_population.persons.values(),
+            key=lambda person: (-person.performance, person.name.lower()),
+        ):
+            report_widget.insert(
+                tkinter.END,
+                "".join(
+                    (
+                        str(player.normal_performance(high_performance)),
+                        "\t",
+                        player.name,
+                        "\n",
+                    )
+                ),
+            )
+        report_widget.insert(tkinter.END, "\n")
+    for count, non_convergent in enumerate(non_convergent_players):
+        report_widget.insert(
+            tkinter.END,
+            "".join(
+                (
+                    "Players in population ",
+                    str(count + 1),
+                    " where performance calculation not done:\n\n",
+                )
+            ),
+        )
+        lookup = {}
+        for player in sorted(
+            non_convergent,
+            key=lambda person: _non_convergent_sort_key(
+                person, database, lookup
+            ),
+        ):
+            fields = lookup[player.code]
+            report_widget.insert(
+                tkinter.END,
+                "".join(
+                    (
+                        fields[0],
+                        "\t\t\t\t",
+                        fields[1],
+                        "\t\t\t\t",
+                        fields[2],
+                        "\n",
+                    )
+                ),
+            )
+        report_widget.insert(tkinter.END, "\n")
+    report_widget.configure(state=tkinter.DISABLED)
+
+
+def _non_convergent_sort_key(player, database, lookup):
+    """Return sort key for non-converging performance population reports.
+
+    The value for player from database, from which sort key is derived,
+    is stored in lookup.  The sort key is the lower-case version of this
+    value.
+
+    The value in lookup is put in the report (by the caller).
+
+    """
+    person_record = performancerecord.PlayerDBrecord()
+    playerset = database.recordlist_key(
+        filespec.PLAYER_FILE_DEF,
+        filespec.PLAYER_UNIQUE_FIELD_DEF,
+        key=database.encode_record_selector(player.code),
+    )
+    person_cursor = database.database_cursor(
+        filespec.PLAYER_FILE_DEF, None, recordset=playerset
+    )
+    record = person_cursor.first()
+    if record is None:
+        return None  # raise something.
+    person_record.load_record(record)
+    value = person_record.value
+    lookup[value.identity] = tuple(
+        field for field in ast.literal_eval(value.alias_index_key())[:3]
+    )
+    return tuple(field.lower() for field in lookup[value.identity])
