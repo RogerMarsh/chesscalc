@@ -47,6 +47,9 @@ packages = [
     "chesscalc",
     "chesscalc.core",
     "chesscalc.gui",
+    "chesscalc.legacy",
+    "chesscalc.legacy.gui",
+    "chesscalc.legacy.core",
     "chesscalc.help_",
 ]
 
