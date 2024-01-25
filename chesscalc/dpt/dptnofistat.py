@@ -63,5 +63,3 @@ class Database(database.Database, dpt_database.Database):
             if __name__ == "__main__":
                 raise
             raise DptNoFistatError("DPT description invalid") from error
-
-        self._broken_sizes = {}

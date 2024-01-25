@@ -5,7 +5,6 @@
 """Record definition classes for Chess Performance Calculation data."""
 
 import os
-import re
 from ast import literal_eval
 
 from solentware_base.core.record import KeyData
@@ -18,7 +17,6 @@ from . import filespec
 from . import constants
 from . import identity
 
-re_pgn_tag_pair = re.compile(constants.PGN_TAG_PAIR)
 # The sets of values reserved for processing status in GAME_STATUS_FIELD_DEF
 # index.
 _FILE_NAMES_TO_BE_POPULATED = (

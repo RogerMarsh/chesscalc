@@ -4,6 +4,8 @@
 
 """This module provides functions to calculate player performances."""
 
+import copy
+
 from . import performancerecord
 from . import filespec
 from . import utilities
@@ -78,20 +80,33 @@ def calculate(
         for convergent, playerset in zip(
             calculation.convergent, calculation.playersets
         ):
-            if not convergent:
-                calculation.set_non_convergent_population_player_names(
-                    playerset
-                )
-                continue
-            calculation.populations.append(
-                population.Population(
-                    database, playerset, calculation.selected_games
-                )
+            player_population = population.Population(
+                database, playerset, calculation.selected_games
             )
+            if convergent:
+                calculation.populations.append(player_population)
+            elif _all_cycle_patches_are_equivalent(player_population):
+                calculation.non_convergent_populations.append(
+                    player_population
+                )
+            else:
+                calculation.non_calculable_populations.append(
+                    player_population
+                )
         calculation.playersets.clear()
-        for player in calculation.populations:
-            player.do_iterations_until_stable()
-            player.set_high_performance()
+        for player_population in calculation.populations:
+            player_population.do_iterations_until_stable()
+            player_population.set_high_performance()
+        for player_population in calculation.non_convergent_populations:
+            arbitrary_player = next(iter(player_population.persons.values()))
+            apply_cycle_patch_for_calculation(
+                player_population, arbitrary_player
+            )
+            player_population.do_iterations_until_stable()
+            player_population.set_high_performance()
+            remove_cycle_patch_for_calculation(
+                player_population, arbitrary_player
+            )
     except CalculateError:
         database.backout()
         return None
@@ -137,7 +152,8 @@ class Calculate:
         self.playersets = []
         self.convergent = []
         self.populations = []
-        self.non_convergent_players = []
+        self.non_convergent_populations = []
+        self.non_calculable_populations = []
 
     def __del__(self):
         """Tidy up on deletion of object."""
@@ -733,28 +749,6 @@ class Calculate:
                         break
             self.convergent.append(convergent)
 
-    def set_non_convergent_population_player_names(self, playerset):
-        """Append playerset player name list to non_convergent_players."""
-        players = []
-        person_record = performancerecord.PlayerDBrecord()
-        database = self._database
-        database_cursor = database.database_cursor
-        person_cursor = database_cursor(
-            filespec.PLAYER_FILE_DEF, None, recordset=playerset
-        )
-        person_cursor.recordset.reset_current_segment()
-        while True:
-            record = person_cursor.next()
-            if record is None:
-                break
-            person_record.load_record(record)
-            players.append(
-                person.Person(
-                    person_record.value.identity, person_record.value.name
-                )
-            )
-        self.non_convergent_players.append(players)
-
 
 def _get_games_for_identity(
     database,
@@ -799,3 +793,92 @@ def _get_games_for_identity(
     finally:
         cursor.close()
     return games
+
+
+def _all_cycle_patches_are_equivalent(player_population):
+    """Return True if cycle patch to each node gives equivalent answer.
+
+    The cycle patch assumes a set of three drawn games between imaginary
+    players: 'a-b', 'b-c', and 'c-a'.  The patch is applied to each node
+    in player_population in turn by a single drawn game 'node-a' and the
+    performances are calculated.
+
+    The calculations are equivalent if the normalized performances of the
+    non-imaginary players are the same in all calculations, and the
+    normalized performances of the imaginary players are the same as the
+    normalized performance of the node in the game 'node-a' in each
+    calculation.
+
+    This author is not aware of a proof that True will be returned in
+    all cases.  The existence of such a proof would make this method
+    redundant.
+
+    """
+    cycle = []
+    for player in player_population.persons.values():
+        cycle_population = copy.deepcopy(player_population, {})
+        apply_cycle_patch_for_calculation(cycle_population, player)
+        cycle_population.do_iterations_until_stable()
+        cycle_population.set_high_performance()
+        high = cycle_population.high_performance
+        normal = {
+            alias.code: alias.normal_performance(high)
+            for alias in cycle_population.persons.values()
+        }
+        if not normal["a"] == normal["b"] == normal["c"]:
+            return False
+        if normal["a"] != normal[player.code]:
+            return False
+        del normal["a"]
+        del normal["b"]
+        del normal["c"]
+        cycle.append(normal)
+    base = cycle.pop()
+    while cycle:
+        item = cycle.pop()
+        if base != item:
+            return False
+    return True
+
+
+def apply_cycle_patch_for_calculation(player_population, player):
+    """Apply cycle patch to player in player_population.
+
+    The cycle patch assumes a set of three drawn games between imaginary
+    players: 'a-b', 'b-c', and 'c-a'.  The patch is applied to player in
+    player_population by a single drawn game 'player-a'.
+
+    This author is not aware of a proof the calculation will converge in
+    all cases, but no contrary case has yet been seen.  Converge means
+    each player performance number orbits a single limit, rather than
+    two limits without the patch, and the orbit never expands.
+
+    """
+    persons = player_population.persons
+    persons["a"] = person.Person("a", "")
+    persons["a"].score = 1.5
+    persons["a"].opponents = ["b", "c", player.code]
+    persons["b"] = person.Person("b", "")
+    persons["b"].score = 1
+    persons["b"].opponents = ["c", "a"]
+    persons["c"] = person.Person("c", "")
+    persons["c"].score = 1
+    persons["c"].opponents = ["a", "b"]
+    persons[player.code].opponents.append("a")
+    persons[player.code].score += 0.5
+
+
+def remove_cycle_patch_for_calculation(player_population, player):
+    """Remove cycle patch to player in player_population.
+
+    Do nothing if the patch is not present.
+
+    """
+    persons = player_population.persons
+    for code in "abc":
+        if code in persons:
+            del persons[code]
+    if player.code in persons:
+        if "a" in persons[player.code].opponents:
+            persons[player.code].score -= 0.5
+            persons[player.code].opponents.remove("a")

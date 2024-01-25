@@ -56,7 +56,11 @@ PGN_TAG_PAIR = rb"".join(
 PGNEXT = ".pgn"
 FILE = "file"
 GAME = "game"
+PGNDIR = "pgn"
+PGNHDRDIR = "pgnhdr"
+PGNHDREXT = ".pgnhdr"
 WIN_DRAW_LOSS = ("1-0", "1/2-1/2", "0-1")
+UNKNOWN_RESULT = "*"
 
 # Berkeley DB environment.
 DB_ENVIRONMENT_GIGABYTES = 0

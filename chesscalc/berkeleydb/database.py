@@ -66,5 +66,9 @@ class Database(database.Database, berkeleydb_database.Database):
     def delete_database(self):
         """Close and delete the open chess results database."""
         return super().delete_database(
-            (self.database_file, self.dbenv.get_lg_dir().decode())
+            (
+                self.database_file,
+                "-".join((self.database_file, "lock")),
+                self.dbenv.get_lg_dir().decode(),
+            )
         )

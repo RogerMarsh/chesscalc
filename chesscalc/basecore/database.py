@@ -27,7 +27,7 @@ class Database:
         listnames = set(n for n in os.listdir(self.home_directory))
         homenames = set(n for n in names if os.path.basename(n) in listnames)
         if ERROR_LOG in listnames:
-            homenames.add(os.path.join(self.home_directory, ERROR_LOG))
+            homenames.add(ERROR_LOG)
         if len(listnames - set(os.path.basename(h) for h in homenames)):
             message = "".join(
                 (
@@ -43,12 +43,13 @@ class Database:
             message = None
         self.close_database()
         for hnm in homenames:
+            hnm = os.path.join(self.home_directory, hnm)
             if os.path.isdir(hnm):
                 shutil.rmtree(hnm, ignore_errors=True)
             else:
                 os.remove(hnm)
         try:
             os.rmdir(self.home_directory)
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError):
             pass
         return message

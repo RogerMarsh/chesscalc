@@ -35,6 +35,10 @@ class PopulateEvent(Exception):
     """Raise exception if no record for event identity."""
 
 
+class NonCalculableSortKey(Exception):
+    """Raise exception if no record for person identity for sort key."""
+
+
 class RuleIdentityValuesDisplayed:
     """Identity values set by previous validation of Rule instance.
 
@@ -121,36 +125,15 @@ class Rule(Bindings):
         self._rule_record = None
         self._identity_values = RuleIdentityValuesDisplayed()
         self._frame = master
-        entry_widgets = []
-        for columnspan, column, row in (
-            (4, 1, 0),
-            (1, 1, 1),
-            (2, 3, 1),
-            (1, 1, 2),
-            (1, 1, 3),
-            (1, 1, 4),
-            (2, 3, 4),
-            (1, 1, 5),
-            (2, 3, 5),
-        ):
-            entry_widgets.append(tkinter.ttk.Entry(master=master))
-            entry_widgets[-1].grid_configure(
-                column=column,
-                columnspan=columnspan,
-                row=row,
-                sticky=tkinter.NSEW,
-            )
-        (
-            self._rule,
-            self._player_identity,
-            self._player_name,
-            self._from_date,
-            self._to_date,
-            self._time_control_identity,
-            self._time_control_name,
-            self._mode_identity,
-            self._mode_name,
-        ) = entry_widgets
+        self._rule = _create_entry_widget(4, 1, 0, master)
+        self._player_identity = _create_entry_widget(1, 1, 1, master)
+        self._player_name = _create_entry_widget(2, 3, 1, master)
+        self._from_date = _create_entry_widget(1, 1, 2, master)
+        self._to_date = _create_entry_widget(1, 1, 3, master)
+        self._time_control_identity = _create_entry_widget(1, 1, 4, master)
+        self._time_control_name = _create_entry_widget(2, 3, 4, master)
+        self._mode_identity = _create_entry_widget(1, 1, 5, master)
+        self._mode_name = _create_entry_widget(2, 3, 5, master)
         self._player_name.configure(state=tkinter.DISABLED)
         self._time_control_name.configure(state=tkinter.DISABLED)
         self._mode_name.configure(state=tkinter.DISABLED)
@@ -1086,16 +1069,17 @@ class Rule(Bindings):
 
 def generate_report(calulation, report_widget, database):
     """Generate calculation report from database in report_widget."""
-    populations = calulation.populations
-    non_convergent_players = calulation.non_convergent_players
+    convergent_populations = calulation.populations
+    non_convergent_populations = calulation.non_convergent_populations
+    non_calculable_populations = calulation.non_calculable_populations
     report_widget.configure(state=tkinter.NORMAL)
     report_widget.delete("1.0", tkinter.END)
-    if len(populations) == 0:
+    if len(convergent_populations) + len(non_convergent_populations) == 0:
         report_widget.insert(
             tkinter.END,
             "There are no populations with calculated performances.\n\n",
         )
-    elif len(populations) == 1:
+    elif len(convergent_populations) + len(non_convergent_populations) == 1:
         report_widget.insert(
             tkinter.END,
             "There is one population with calculated performances.\n\n",
@@ -1106,12 +1090,46 @@ def generate_report(calulation, report_widget, database):
             "".join(
                 (
                     "There are ",
-                    str(len(populations)),
+                    str(
+                        len(convergent_populations)
+                        + len(non_convergent_populations)
+                    ),
                     " populations with calculated performances.\n\n",
                 )
             ),
         )
-    if len(non_convergent_players) == 0:
+    if len(non_convergent_populations) == 0:
+        report_widget.insert(
+            tkinter.END,
+            "".join(
+                (
+                    "No populations need 'three dummy players' to ",
+                    "enable performance calculation.\n\n",
+                )
+            ),
+        )
+    elif len(non_convergent_populations) == 1:
+        report_widget.insert(
+            tkinter.END,
+            "".join(
+                (
+                    "One population needs 'three dummy players' to ",
+                    "enable performance calculation.\n\n",
+                )
+            ),
+        )
+    else:
+        report_widget.insert(
+            tkinter.END,
+            "".join(
+                (
+                    str(len(non_convergent_populations)),
+                    " populations need 'three dummy players' to ",
+                    "enable performance calculation.\n\n",
+                )
+            ),
+        )
+    if len(non_calculable_populations) == 0:
         report_widget.insert(
             tkinter.END,
             "".join(
@@ -1121,7 +1139,7 @@ def generate_report(calulation, report_widget, database):
                 )
             ),
         )
-    elif len(non_convergent_players) == 1:
+    elif len(non_calculable_populations) == 1:
         report_widget.insert(
             tkinter.END,
             "".join(
@@ -1137,66 +1155,69 @@ def generate_report(calulation, report_widget, database):
             "".join(
                 (
                     "There are ",
-                    str(len(non_convergent_players)),
+                    str(len(non_calculable_populations)),
                     " populations without calculated performances.\n\n",
                 )
             ),
         )
-    for count, performance_population in enumerate(populations):
-        high_performance = performance_population.high_performance
-        report_widget.insert(
-            tkinter.END,
-            "".join(
-                (
-                    "Performances (0 is best) in population ",
-                    str(count + 1),
-                    " sorted by player name:\n\n",
-                )
-            ),
-        )
-        for player in sorted(
-            performance_population.persons.values(),
-            key=lambda person: person.name.lower(),
-        ):
+    count = 0
+    for populations in (convergent_populations, non_convergent_populations):
+        for performance_population in populations:
+            count += 1
+            high_performance = performance_population.high_performance
             report_widget.insert(
                 tkinter.END,
                 "".join(
                     (
-                        player.name,
-                        "\t\t\t",
-                        str(player.normal_performance(high_performance)),
-                        "\n",
+                        "Performances (0 is best) in population ",
+                        str(count),
+                        " sorted by player name:\n\n",
                     )
                 ),
             )
-        report_widget.insert(tkinter.END, "\n")
-        report_widget.insert(
-            tkinter.END,
-            "".join(
-                (
-                    "Performances in population ",
-                    str(count + 1),
-                    " sorted by performance (0 is best):\n\n",
+            for player in sorted(
+                performance_population.persons.values(),
+                key=lambda person: person.name.lower(),
+            ):
+                report_widget.insert(
+                    tkinter.END,
+                    "".join(
+                        (
+                            player.name,
+                            "\t\t\t",
+                            str(player.normal_performance(high_performance)),
+                            "\n",
+                        )
+                    ),
                 )
-            ),
-        )
-        for player in sorted(
-            performance_population.persons.values(),
-            key=lambda person: (-person.performance, person.name.lower()),
-        ):
+            report_widget.insert(tkinter.END, "\n")
             report_widget.insert(
                 tkinter.END,
                 "".join(
                     (
-                        str(player.normal_performance(high_performance)),
-                        "\t",
-                        player.name,
-                        "\n",
+                        "Performances in population ",
+                        str(count),
+                        " sorted by performance (0 is best):\n\n",
                     )
                 ),
             )
-        report_widget.insert(tkinter.END, "\n")
-    for count, non_convergent in enumerate(non_convergent_players):
+            for player in sorted(
+                performance_population.persons.values(),
+                key=lambda person: (-person.performance, person.name.lower()),
+            ):
+                report_widget.insert(
+                    tkinter.END,
+                    "".join(
+                        (
+                            str(player.normal_performance(high_performance)),
+                            "\t",
+                            player.name,
+                            "\n",
+                        )
+                    ),
+                )
+            report_widget.insert(tkinter.END, "\n")
+    for count, non_calculable in enumerate(non_calculable_populations):
         report_widget.insert(
             tkinter.END,
             "".join(
@@ -1209,8 +1230,8 @@ def generate_report(calulation, report_widget, database):
         )
         lookup = {}
         for player in sorted(
-            non_convergent,
-            key=lambda person: _non_convergent_sort_key(
+            non_calculable.persons.values(),
+            key=lambda person: _non_calculable_sort_key(
                 person, database, lookup
             ),
         ):
@@ -1232,8 +1253,20 @@ def generate_report(calulation, report_widget, database):
     report_widget.configure(state=tkinter.DISABLED)
 
 
-def _non_convergent_sort_key(player, database, lookup):
-    """Return sort key for non-converging performance population reports.
+def _create_entry_widget(columnspan, column, row, master):
+    """Return Entry in master over columnspan columns at column row."""
+    widget = tkinter.ttk.Entry(master=master)
+    widget.grid_configure(
+        column=column,
+        columnspan=columnspan,
+        row=row,
+        sticky=tkinter.NSEW,
+    )
+    return widget
+
+
+def _non_calculable_sort_key(player, database, lookup):
+    """Return sort key for non-calculable performance population reports.
 
     The value for player from database, from which sort key is derived,
     is stored in lookup.  The sort key is the lower-case version of this
@@ -1253,7 +1286,9 @@ def _non_convergent_sort_key(player, database, lookup):
     )
     record = person_cursor.first()
     if record is None:
-        return None  # raise something.
+        raise NonCalculableSortKey(
+            "No record found for player code " + str(player.code)
+        )
     person_record.load_record(record)
     value = person_record.value
     lookup[value.identity] = tuple(

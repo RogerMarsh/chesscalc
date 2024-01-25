@@ -42,7 +42,9 @@ class Database(database.Database, lmdb_database.Database):
 
     def delete_database(self):
         """Close and delete the open chess results database."""
-        return super().delete_database((self.database_file,))
+        return super().delete_database(
+            (self.database_file, "-".join((self.database_file, "lock")))
+        )
 
     # Not doing this at all may make no difference (not necessary).
     def checkpoint_before_close_dbenv(self):

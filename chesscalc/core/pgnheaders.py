@@ -16,23 +16,9 @@ import os
 import re
 import json
 
-PGN_TAG_PAIR = rb"".join(
-    (
-        rb"(?#Start Tag)\[\s*",
-        rb"(?#Tag Name)([A-Za-z0-9_]+)\s*",
-        rb'(?#Tag Value)"((?:[^\\"]|\\.)*)"\s*',
-        rb"(?#End Tag)\]",
-    )
-)
-re_pgn_tag_pair = re.compile(PGN_TAG_PAIR)
-PGNDIR = "pgn"
-PGNHDRDIR = "pgnhdr"
-PGNEXT = ".pgn"
-PGNHDREXT = ".pgnhdr"
-FILE = "file"
-GAME = "game"
-RESULT = "Result"
-STAR = "*"
+from . import constants
+
+re_pgn_tag_pair = re.compile(constants.PGN_TAG_PAIR)
 
 
 def extract_pgn_headers(path, json_=False):
@@ -61,12 +47,12 @@ def extract_pgn_headers(path, json_=False):
         return
     if not os.path.isdir(path):
         return
-    pgnpath = os.path.join(path, PGNDIR)
+    pgnpath = os.path.join(path, constants.PGNDIR)
     if not os.path.exists(pgnpath):
         return
     if not os.path.isdir(pgnpath):
         return
-    pgnhdrpath = os.path.join(path, PGNHDRDIR)
+    pgnhdrpath = os.path.join(path, constants.PGNHDRDIR)
     try:
         os.mkdir(pgnhdrpath)
     except FileExistsError:
@@ -96,7 +82,7 @@ def _extract_pgn_headers_from_directory(pgnpath, pgnhdrpath, json_):
                 path,
                 os.path.join(
                     pgnhdrpath,
-                    os.path.splitext(entry)[0] + PGNHDREXT,
+                    os.path.splitext(entry)[0] + constants.PGNHDREXT,
                 ),
                 json_,
             )
@@ -115,13 +101,13 @@ def _extract_pgn_headers_from_file(pgnpath, pgnhdrpath, json_):
             return
     if not os.path.isfile(pgnpath):
         return
-    if not os.path.splitext(pgnpath)[1].lower() == PGNEXT:
+    if not os.path.splitext(pgnpath)[1].lower() == constants.PGNEXT:
         return
     refbase = pgnpath.lstrip(os.path.expanduser("~") + os.path.sep)
     with open(pgnpath, mode="rb") as pgn:
         with open(pgnhdrpath, "w", encoding="utf-8") as pgnhdr:
             headers = {}
-            reference = {FILE: refbase, GAME: 0}
+            reference = {constants.FILE: refbase, constants.GAME: 0}
             format_ = json.dumps if json_ else repr
             for line in pgn:
                 line = line.strip()
@@ -139,8 +125,13 @@ def _extract_pgn_headers_from_file(pgnpath, pgnhdrpath, json_):
                     headers[tag] = value
                     continue
                 if not line and headers:
-                    reference[GAME] += 1
-                    if headers.get(RESULT, STAR) != STAR:
+                    reference[constants.GAME] += 1
+                    if (
+                        headers.get(
+                            constants.TAG_RESULT, constants.UNKNOWN_RESULT
+                        )
+                        != constants.UNKNOWN_RESULT
+                    ):
                         pgnhdr.write(
                             format_((reference, headers)) + os.linesep
                         )

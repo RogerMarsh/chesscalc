@@ -38,4 +38,10 @@ class Database(database.Database, vedis_database.Database):
 
     def delete_database(self):
         """Close and delete the open chess results database."""
-        return super().delete_database((self.database_file,))
+        return super().delete_database(
+            (
+                self.database_file,
+                "-".join((self.database_file, "lock")),
+                "_".join((self.database_file, "vedis", "journal")),
+            )
+        )

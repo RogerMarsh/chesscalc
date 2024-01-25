@@ -38,6 +38,7 @@ def identify(
     The changes are applied to database.
 
     """
+    del primary_field, identity_field
     value = valueclass()
     value.load_alias_index_key(selection[0][0])
     selector = database.encode_record_selector(value.alias_index_key())
@@ -121,6 +122,7 @@ def break_bookmarked_aliases(
     The changes are applied to database.
 
     """
+    del primary_field, identity_field
     value = valueclass()
     value.load_alias_index_key(selection[0][0])
     selector = database.encode_record_selector(value.alias_index_key())
@@ -211,6 +213,7 @@ def split_aliases(
     The changes are applied to database.
 
     """
+    del primary_field
     value = valueclass()
     value.load_alias_index_key(selection[0][0])
     selector = database.encode_record_selector(value.alias_index_key())
@@ -290,6 +293,7 @@ def change_aliases(
     The changes are applied to database.
 
     """
+    del primary_field
     value = valueclass()
     value.load_alias_index_key(selection[0][0])
     selector = database.encode_record_selector(value.alias_index_key())

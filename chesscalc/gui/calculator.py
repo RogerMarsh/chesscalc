@@ -433,6 +433,7 @@ class Calculator(Bindings):
             )
             self.database = None
             self.set_error_file_name(None)
+            self._notebook.destroy()
             tkinter.messagebox.showinfo(
                 parent=self.widget, title="Delete", message=message
             )

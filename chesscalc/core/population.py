@@ -7,6 +7,7 @@
 Derived from performances.py in version 1.3.4 of chesscalc.
 
 """
+import copy
 
 from . import performancerecord
 from . import filespec
@@ -123,6 +124,15 @@ class Population:
                     )
                     opponents.append(value.identity)
 
+    def __deepcopy__(self, memo):
+        """Return deep copy of self."""
+        newcopy = empty_copy(self)
+        newcopy.iterations = 0
+        newcopy.high_performance = None
+        newcopy.persons = copy.deepcopy(self.persons, memo)
+        newcopy.measure = self.measure
+        return newcopy
+
     def do_iterations_until_stable(self, delta=0.000000000001):
         """Iterate until all performances vary by less tham delta.
 
@@ -154,3 +164,17 @@ class Population:
         for player in self.persons.values():
             high_performance = max(high_performance, player.performance)
         self.high_performance = high_performance
+
+
+def empty_copy(obj):
+    """Return an empty instance of obj."""
+
+    class EmptyCopy(obj.__class__):
+        """Empty subclass which does not invoke superclass __init__()."""
+
+        def __init__(self):
+            pass
+
+    newcopy = EmptyCopy()
+    newcopy.__class__ = obj.__class__
+    return newcopy

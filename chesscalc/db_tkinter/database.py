@@ -50,5 +50,9 @@ class Database(database.Database, db_tkinter_database.Database):
     def delete_database(self):
         """Close and delete the open chess results database."""
         return super().delete_database(
-            (self.database_file, self._get_log_dir_name())
+            (
+                self.database_file,
+                "-".join((self.database_file, "lock")),
+                self._get_log_dir_name(),
+            )
         )
