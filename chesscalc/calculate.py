@@ -38,7 +38,9 @@ if __name__ == "__main__":
             )
         except tkinter.TclError:
             pass
-        raise SystemExit("Unable to import start application utilities")
+        raise SystemExit(
+            "Unable to import start application utilities"
+        ) from error
     try:
         from .gui.calculator import Calculator
     except Exception as error:

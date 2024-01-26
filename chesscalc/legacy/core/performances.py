@@ -52,12 +52,12 @@ SUM_HALF_GAMES = "Sum Half-Games"
 SUM_SCORE = "Sum Score"
 
 
-class Performances(object):
+class Performances:
     """Player performances in a set of events."""
 
     def __init__(self):
         """Initialise calculation data from database records for events."""
-        super(Performances, self).__init__()
+        super().__init__()
         self.games = None
         self.players = None
         self.game_opponent = None
@@ -69,7 +69,7 @@ class Performances(object):
         self.discarded_populations = None
         self.discarded_players = None
 
-    def _find_distinct_populations(self, allplayers):
+    def split_players_into_populations(self, allplayers):
         """Return players split into distinct populations.
 
         Each player in a population is connected to all other players in the
@@ -78,18 +78,18 @@ class Performances(object):
         """
         players = set(allplayers)
         populations = []
-        while len(players):
+        while len(players) > 0:
             populations.append([])
             subpop = [[players.pop()]]
             populations[-1].extend(subpop[-1])
-            while len(subpop[-1]):
+            while len(subpop[-1]) > 0:
                 opps = []
-                for p in subpop[-1]:
-                    for g in self.players[p]:
-                        op = self.game_opponent[g][p]
-                        if op in players:
-                            opps.append(op)
-                            players.remove(op)
+                for person in subpop[-1]:
+                    for game in self.players[person]:
+                        opponent = self.game_opponent[game][person]
+                        if opponent in players:
+                            opps.append(opponent)
+                            players.remove(opponent)
                 subpop.append(opps)
                 populations[-1].extend(opps)
         return populations
@@ -98,7 +98,7 @@ class Performances(object):
         """Set self.populations as the distinct populations."""
         if self.players is None:
             return
-        self.populations = self._find_distinct_populations(self.players)
+        self.populations = self.split_players_into_populations(self.players)
 
     def _find_population_fracture_point(self, population):
         """Return pre-fracture sub-population and post-fracture populations.
@@ -114,11 +114,11 @@ class Performances(object):
 
         """
         if self.opponents is None:
-            return
+            return None
         subpopulations = [[list(population)]]
         players = set(population)
         removed = []
-        while len(players):
+        while len(players) > 0:
             removed.append(
                 [
                     p
@@ -126,9 +126,9 @@ class Performances(object):
                     if len(self.opponents[p]) == len(subpopulations)
                 ]
             )
-            for p in removed[-1]:
-                players.remove(p)
-            subpopulations.append(self._find_distinct_populations(players))
+            for person in removed[-1]:
+                players.remove(person)
+            subpopulations.append(self.split_players_into_populations(players))
             if len(subpopulations[-1]) > 1:
                 break
         return subpopulations, removed
@@ -139,11 +139,11 @@ class Performances(object):
             return
         self.subpopulations = []
         self.removed = []
-        for p in self.populations:
-            sp = self._find_population_fracture_point(p)
-            if sp is not None:
-                self.subpopulations.append(sp[0])
-                self.removed.append(sp[1])
+        for population in self.populations:
+            item = self._find_population_fracture_point(population)
+            if item is not None:
+                self.subpopulations.append(item[0])
+                self.removed.append(item[1])
 
     def get_events(self, games, players, game_opponent, opponents):
         """Initialise calculation data from database records for events."""
@@ -162,22 +162,22 @@ class Performances(object):
         self.discarded_populations = [p[-1] for p in pops[:-1]]
         self.populations = pops[-1][-1]
         pops = set()
-        for dp in self.discarded_populations:
-            pops.update(dp)
+        for item in self.discarded_populations:
+            pops.update(item)
         self.discarded_players = set()
-        for p in pops:
-            for gn in self.players[p]:
-                if gn in self.games:
-                    del self.games[gn]
-                if gn in self.game_opponent:
-                    del self.game_opponent[gn]
-            self.discarded_players.add(p)
-            del self.players[p]
-            del self.opponents[p]
+        for population in pops:
+            for item in self.players[population]:
+                if item in self.games:
+                    del self.games[item]
+                if item in self.game_opponent:
+                    del self.game_opponent[item]
+            self.discarded_players.add(population)
+            del self.players[population]
+            del self.opponents[population]
 
     def is_connected_graph_of_opponents_a_tree(self):
         """Return True if the graph, assumed to be connected, is a tree."""
-        edges = sum([len(opp) for opp in self.opponents.values()]) // 2
+        edges = sum(len(opp) for opp in self.opponents.values()) // 2
         return bool(edges == len(self.opponents) - 1)
 
     def cycle_state_connected_graph_of_opponents(self):
@@ -206,20 +206,20 @@ class Performances(object):
             return True
         sopps = self.opponents
         for player, opponents in sopps.items():
-            for o in opponents:
-                for opp in sopps[o]:
+            for person in opponents:
+                for opp in sopps[person]:
                     if player != opp:
                         if player in sopps[opp]:
                             return False
         return None
 
 
-class Gap(object):
+class Gap:
     """Actual and expected results for a performance differences."""
 
     def __init__(self, actual, expected):
         """Initialise gap data for actual and expected scores."""
-        super(Gap, self).__init__()
+        super().__init__()
         self.count = 1
         self.actual = actual
         self.expected = expected
@@ -231,7 +231,7 @@ class Gap(object):
         self.expected += expected
 
 
-class Person(object):
+class Person:
     """Player details and calculation answers."""
 
     def __init__(self, initialperformance):
@@ -242,7 +242,7 @@ class Person(object):
         still the result of the most recent performance calculation.
 
         """
-        super(Person, self).__init__()
+        super().__init__()
         self.reward = 0
         self.game_count = 0
         self.initial_performance = initialperformance
@@ -299,8 +299,7 @@ class Person(object):
         """Return player's grade."""
         if self.initial_performance is None:
             return self.grade
-        else:
-            return self.initial_performance
+        return self.initial_performance
 
     def get_calculated_performance(self):
         """Return player's calculated performance."""
@@ -310,15 +309,13 @@ class Person(object):
         """Return player's initial performance."""
         if self.initial_performance is None:
             return 0
-        else:
-            return self.initial_performance
+        return self.initial_performance
 
     def get_performance(self):
         """Return player's performance for use in next ieration."""
         if self.initial_performance is None:
             return self.iteration[0]
-        else:
-            return self.initial_performance
+        return self.initial_performance
 
     def get_score(self):
         """Return player's actual total score."""
@@ -332,8 +329,8 @@ class Person(object):
         """Return True if performance is fixed for iteration calculations."""
         if self.initial_performance is not None:
             return True
-        for e, i in enumerate(self.iteration[1:]):
-            if abs(i - self.iteration[e]) > delta:
+        for count, number in enumerate(self.iteration[1:]):
+            if abs(number - self.iteration[count]) > delta:
                 break
         else:
             return True
@@ -344,7 +341,7 @@ class Person(object):
         self.points = points
 
 
-class Calculation(object):
+class Calculation:
     """Player performances calculated from a collection of results."""
 
     def __init__(
@@ -358,17 +355,17 @@ class Calculation(object):
         measure=50,
     ):
         """Initialise calculation data."""
-        super(Calculation, self).__init__()
+        super().__init__()
         if initialperformance is None:
             initialperformance = {}
         self.iterations = iterations
         self.opponents = opponents
         self.games = games
         self.popgames = set()
-        self.persons = dict()
-        self.gap = dict()
-        self.gap_grade = dict()
-        self.gap_initial = dict()
+        self.persons = {}
+        self.gap = {}
+        self.gap_grade = {}
+        self.gap_initial = {}
         self.statistics = None
         self.limit = limit
         self.measure = measure
@@ -391,178 +388,182 @@ class Calculation(object):
         """Do iterations with calculation and final_calculation functions."""
         if self.games is None:
             return
-        for i in range(self.iterations):
+        for _ in range(self.iterations):
             self.iterate_performance(calculation)
         if isinstance(finalcalculation, collections.abc.Callable):
             self.iterate_performance(finalcalculation)
         self.process_all_results(self.grade_difference)
-        for p in self.persons.values():
-            p.calculate_grade()
+        for player in self.persons.values():
+            player.calculate_grade()
         self.process_all_results(self.performance_prediction)
-        for g in self.popgames:
-            self.result_prediction(self.games[g])
+        for key in self.popgames:
+            self.result_prediction(self.games[key])
 
     def get_statistics(self):
         """Return dict of performance statistics."""
         if self.statistics is not None:
             return self.statistics.copy()
 
-        s = dict()
-        s[MAX_GRADE] = max([p.get_grade() for p in self.persons.values()])
-        s[MAX_INITIAL_PERF] = max(
-            [p.get_initial_performance() for p in self.persons.values()]
+        stat = {}
+        stat[MAX_GRADE] = max(p.get_grade() for p in self.persons.values())
+        stat[MAX_INITIAL_PERF] = max(
+            p.get_initial_performance() for p in self.persons.values()
         )
-        s[MAX_PERF] = max([p.get_performance() for p in self.persons.values()])
-        s[MAX_PERF_CALC] = max(
-            [p.get_calculated_performance() for p in self.persons.values()]
+        stat[MAX_PERF] = max(
+            p.get_performance() for p in self.persons.values()
         )
-        s[MEAN_DIFF_GAP_SCORE_PREDICTION] = mean(
+        stat[MAX_PERF_CALC] = max(
+            p.get_calculated_performance() for p in self.persons.values()
+        )
+        stat[MEAN_DIFF_GAP_SCORE_PREDICTION] = mean(
             [
                 abs(g.actual - g.expected)
                 for g in self.gap.values()
                 if g.count > 0
             ]
         )
-        s[MEAN_DIFF_SCORE_PREDICTION] = mean(
+        stat[MEAN_DIFF_SCORE_PREDICTION] = mean(
             [
                 abs(p.get_score() - p.predicted_score)
                 for p in self.persons.values()
             ]
         )
-        s[MEAN_GRADE] = mean([p.get_grade() for p in self.persons.values()])
-        s[MEAN_INITIAL_PERF] = mean(
+        stat[MEAN_GRADE] = mean([p.get_grade() for p in self.persons.values()])
+        stat[MEAN_INITIAL_PERF] = mean(
             [p.get_initial_performance() for p in self.persons.values()]
         )
-        s[MEAN_PERF] = mean(
+        stat[MEAN_PERF] = mean(
             [p.get_performance() for p in self.persons.values()]
         )
-        s[MEAN_PERF_CALC] = mean(
+        stat[MEAN_PERF_CALC] = mean(
             [p.get_calculated_performance() for p in self.persons.values()]
         )
-        s[MEDIAN_GRADE] = median(
+        stat[MEDIAN_GRADE] = median(
             [p.get_grade() for p in self.persons.values()]
         )
-        s[MEDIAN_INITIAL_PERF] = mean(
+        stat[MEDIAN_INITIAL_PERF] = mean(
             [p.get_initial_performance() for p in self.persons.values()]
         )
-        s[MEDIAN_PERF] = median(
+        stat[MEDIAN_PERF] = median(
             [p.get_performance() for p in self.persons.values()]
         )
-        s[MEDIAN_PERF_CALC] = median(
+        stat[MEDIAN_PERF_CALC] = median(
             [p.get_calculated_performance() for p in self.persons.values()]
         )
-        s[MIN_GRADE] = min([p.get_grade() for p in self.persons.values()])
-        s[MIN_INITIAL_PERF] = min(
-            [p.get_initial_performance() for p in self.persons.values()]
+        stat[MIN_GRADE] = min(p.get_grade() for p in self.persons.values())
+        stat[MIN_INITIAL_PERF] = min(
+            p.get_initial_performance() for p in self.persons.values()
         )
-        s[MIN_PERF] = min([p.get_performance() for p in self.persons.values()])
-        s[MIN_PERF_CALC] = min(
-            [p.get_calculated_performance() for p in self.persons.values()]
+        stat[MIN_PERF] = min(
+            p.get_performance() for p in self.persons.values()
         )
-        s[STDEV_SCORE_PREDICTION] = stdev(
+        stat[MIN_PERF_CALC] = min(
+            p.get_calculated_performance() for p in self.persons.values()
+        )
+        stat[STDEV_SCORE_PREDICTION] = stdev(
             [
                 abs(p.get_score() - p.predicted_score)
                 for p in self.persons.values()
             ]
         )
-        s[STDEV_GAP_SCORE_PREDICTION] = stdev(
+        stat[STDEV_GAP_SCORE_PREDICTION] = stdev(
             [
                 abs(g.actual - g.expected)
                 for g in self.gap.values()
                 if g.count > 0
             ]
         )
-        s[SUM_GAP_PREDICTION] = sum(
-            [g.expected for g in self.gap_initial.values()]
+        stat[SUM_GAP_PREDICTION] = sum(
+            g.expected for g in self.gap_initial.values()
         )
-        s[SUM_GAP_GAMES] = sum([g.count for g in self.gap_initial.values()])
-        s[SUM_GAP_SCORE] = sum([g.actual for g in self.gap_initial.values()])
-        s[SUM_GAP_PREDICTION_GRADE] = sum(
-            [g.expected for g in self.gap_grade.values()]
+        stat[SUM_GAP_GAMES] = sum(g.count for g in self.gap_initial.values())
+        stat[SUM_GAP_SCORE] = sum(g.actual for g in self.gap_initial.values())
+        stat[SUM_GAP_PREDICTION_GRADE] = sum(
+            g.expected for g in self.gap_grade.values()
         )
-        s[SUM_GAP_GAMES_GRADE] = sum(
-            [g.count for g in self.gap_grade.values()]
+        stat[SUM_GAP_GAMES_GRADE] = sum(
+            g.count for g in self.gap_grade.values()
         )
-        s[SUM_GAP_SCORE_GRADE] = sum(
-            [g.actual for g in self.gap_grade.values()]
+        stat[SUM_GAP_SCORE_GRADE] = sum(
+            g.actual for g in self.gap_grade.values()
         )
-        s[SUM_GAP_PREDICTION_CALC] = sum(
-            [g.expected for g in self.gap.values()]
+        stat[SUM_GAP_PREDICTION_CALC] = sum(
+            g.expected for g in self.gap.values()
         )
-        s[SUM_GAP_GAMES_CALC] = sum([g.count for g in self.gap.values()])
-        s[SUM_GAP_SCORE_CALC] = sum([g.actual for g in self.gap.values()])
-        s[SUM_GRADE] = sum([p.get_grade() for p in self.persons.values()])
-        s[SUM_PERF] = sum([p.get_performance() for p in self.persons.values()])
-        s[SUM_PERF_CALC] = sum(
-            [p.get_calculated_performance() for p in self.persons.values()]
+        stat[SUM_GAP_GAMES_CALC] = sum(g.count for g in self.gap.values())
+        stat[SUM_GAP_SCORE_CALC] = sum(g.actual for g in self.gap.values())
+        stat[SUM_GRADE] = sum(p.get_grade() for p in self.persons.values())
+        stat[SUM_PERF] = sum(
+            p.get_performance() for p in self.persons.values()
         )
-        s[WEIGHTED_SUM_GRADE] = sum(
-            [p.game_count * p.get_grade() for p in self.persons.values()]
+        stat[SUM_PERF_CALC] = sum(
+            p.get_calculated_performance() for p in self.persons.values()
         )
-        s[SUM_INITIAL_PERF] = sum(
-            [p.get_initial_performance() for p in self.persons.values()]
+        stat[WEIGHTED_SUM_GRADE] = sum(
+            p.game_count * p.get_grade() for p in self.persons.values()
         )
-        s[WEIGHTED_SUM_INITIAL_PERF] = sum(
-            [
-                p.game_count * p.get_initial_performance()
-                for p in self.persons.values()
-            ]
+        stat[SUM_INITIAL_PERF] = sum(
+            p.get_initial_performance() for p in self.persons.values()
         )
-        s[WEIGHTED_SUM_PERF] = sum(
-            [p.game_count * p.get_performance() for p in self.persons.values()]
+        stat[WEIGHTED_SUM_INITIAL_PERF] = sum(
+            p.game_count * p.get_initial_performance()
+            for p in self.persons.values()
         )
-        s[WEIGHTED_SUM_PERF_CALC] = sum(
-            [
-                p.game_count * p.get_calculated_performance()
-                for p in self.persons.values()
-            ]
+        stat[WEIGHTED_SUM_PERF] = sum(
+            p.game_count * p.get_performance() for p in self.persons.values()
         )
-        s[SUM_PREDICTION] = sum(
-            [p.predicted_score for p in self.persons.values()]
+        stat[WEIGHTED_SUM_PERF_CALC] = sum(
+            p.game_count * p.get_calculated_performance()
+            for p in self.persons.values()
         )
-        s[SUM_HALF_GAMES] = sum([p.game_count for p in self.persons.values()])
-        s[SUM_SCORE] = sum([p.get_score() for p in self.persons.values()])
-        self.statistics = s
+        stat[SUM_PREDICTION] = sum(
+            p.predicted_score for p in self.persons.values()
+        )
+        stat[SUM_HALF_GAMES] = sum(p.game_count for p in self.persons.values())
+        stat[SUM_SCORE] = sum(p.get_score() for p in self.persons.values())
+        self.statistics = stat
         return self.statistics.copy()
 
     def grade_difference(self, game):
         """Calculate grade: self.limit on difference is implied."""
-        for p, o in game.items():
-            op = self.persons[o].get_performance()
-            pp = self.persons[p].get_performance()
-            if pp - op > self.limit:
-                self.persons[p].add_grade_points(pp - self.limit)
-            elif op - pp > self.limit:
-                self.persons[p].add_grade_points(pp + self.limit)
+        for key, value in game.items():
+            operf = self.persons[value].get_performance()
+            pperf = self.persons[key].get_performance()
+            if pperf - operf > self.limit:
+                self.persons[key].add_grade_points(pperf - self.limit)
+            elif operf - pperf > self.limit:
+                self.persons[key].add_grade_points(pperf + self.limit)
             else:
-                self.persons[p].add_grade_points(op)
+                self.persons[key].add_grade_points(operf)
 
     def iterate_performance(self, calculation=None):
         """Do one iteration of the performance calculation."""
         if not isinstance(calculation, collections.abc.Callable):
             calculation = self.performance_difference
-        for p in self.persons.values():
-            p.set_points()
+        for player in self.persons.values():
+            player.set_points()
         self.process_all_results(calculation)
-        for p in self.persons.values():
-            p.calculate_performance()
+        for player in self.persons.values():
+            player.calculate_performance()
 
     def performance_difference(self, game):
         """Calculate game performances without a limit on difference."""
-        for p, o in game.items():
-            self.persons[p].add_points(self.persons[o].get_performance())
+        for player, opponent in game.items():
+            self.persons[player].add_points(
+                self.persons[opponent].get_performance()
+            )
 
     def performance_difference_limited(self, game):
         """Calculate game performances with self.limit on difference."""
-        for p, o in game.items():
-            op = self.persons[o].get_performance()
-            pp = self.persons[p].get_performance()
-            if pp - op > self.limit:
-                self.persons[p].add_points(pp - self.limit)
-            elif op - pp > self.limit:
-                self.persons[p].add_points(pp + self.limit)
+        for key, value in game.items():
+            operf = self.persons[value].get_performance()
+            pperf = self.persons[key].get_performance()
+            if pperf - operf > self.limit:
+                self.persons[key].add_points(pperf - self.limit)
+            elif operf - pperf > self.limit:
+                self.persons[key].add_points(pperf + self.limit)
             else:
-                self.persons[p].add_points(op)
+                self.persons[key].add_points(operf)
 
     def process_all_results(self, process):
         """Do process on games where both players are in population."""
@@ -629,6 +630,7 @@ class Calculation(object):
         (player, reward), (opponent, gash) = [
             (self.persons[p], game[p]) for p in game.keys()
         ]
+        del gash
         actual = _REWARD_TO_RESULT[reward]
         # self.gap and self.gap_initial will have different values if
         # initial_performance is not None for some persons
@@ -660,14 +662,14 @@ class Calculation(object):
 
         """
         if self.games is None:
-            return
+            return None
         cycle_iterations = self.iterations * 2
         iterations = 0
         while True:
             iterations += 1
             self.iterate_performance()
-            for p in self.persons.values():
-                if not p.is_performance_stable(delta):
+            for person in self.persons.values():
+                if not person.is_performance_stable(delta):
                     break
             else:
                 return iterations, delta, True
@@ -676,7 +678,7 @@ class Calculation(object):
                     return iterations, delta, False
 
 
-class Distribution(object):
+class Distribution:
     """Game results partitioned by performance difference between players.
 
     Partition a set of games against the performance calculation for a set of
@@ -690,7 +692,7 @@ class Distribution(object):
 
     def __init__(self, players, games):
         """Initialise distribution data."""
-        super(Distribution, self).__init__()
+        super().__init__()
         if isinstance(players, Calculation):
             players = players.persons
         players = {
@@ -704,8 +706,8 @@ class Distribution(object):
                 if len({p for p in v if p in players}) == 2
             }
         gameplayers = set()
-        for g in games.values():
-            gameplayers.update(g)
+        for key in games.values():
+            gameplayers.update(key)
         players = {k: v for k, v in players.items() if k in gameplayers}
         self.players = players
         self.games = games
@@ -728,7 +730,7 @@ class Distribution(object):
         self.distributions[interval] = distribution
 
 
-class Interval(object):
+class Interval:
     """Accumulate results for a performance difference.
 
     Results are recorded from the point of view of the player with the higher
@@ -738,7 +740,7 @@ class Interval(object):
 
     def __init__(self, bucket, width):
         """Initialise interval description."""
-        super(Interval, self).__init__()
+        super().__init__()
         self.base = bucket * width
         self.width = width
         self.wins = 0
@@ -747,15 +749,15 @@ class Interval(object):
 
     def add_result(self, game, reference):
         """Increment the appropriate win, draw, loss counter for result."""
-        p1, p2 = ((k, v) for k, v in game[-1].items())
-        if p1[1] == 0:
+        item1, item2 = ((k, v) for k, v in game[-1].items())
+        if item1[1] == 0:
             self.draws += 1
-        elif reference[p1[0]] >= reference[p2[0]]:
-            if p1[1] > 0:
+        elif reference[item1[0]] >= reference[item2[0]]:
+            if item1[1] > 0:
                 self.wins += 1
             else:
                 self.losses += 1
-        elif p1[1] > 0:
+        elif item1[1] > 0:
             self.losses += 1
         else:
             self.wins += 1
@@ -767,7 +769,7 @@ class Interval(object):
 # within reasonable resource constraints (time and/or memory).
 
 
-class PopulationMap(object):
+class PopulationMap:
     """Partition a population into core, link, and remainder populations.
 
     Partitioning is done using the number of edges attached to a node.
@@ -783,7 +785,7 @@ class PopulationMap(object):
 
     def __init__(self, performances, partitioning_edge_count=None):
         """Initialise population map."""
-        super(PopulationMap, self).__init__()
+        super().__init__()
         if not isinstance(partitioning_edge_count, int):
             self.edges = min(
                 max(0, len(performances.subpopulations[-1]) - 1),
@@ -839,36 +841,40 @@ class PopulationMap(object):
             # are in population.
             # Repeat until a pass is done without restoring any players.
             recombine = [set() for r in range(len(core_populations))]
-            for lp in link_players:
-                for p in list(lp):
-                    for e, s in enumerate(core_populations):
-                        if len(self._opponents[p] - s) == 0:
-                            recombine[e].add(p)
-                            lp.remove(p)
+            for item in link_players:
+                for element in list(item):
+                    for index, value in enumerate(core_populations):
+                        if len(self._opponents[element] - value) == 0:
+                            recombine[index].add(element)
+                            item.remove(element)
                             break
-            for e, rc in enumerate(recombine):
-                core_populations[e].update(rc)
-            if not sum([len(rc) for rc in recombine]):
+            for index, value in enumerate(recombine):
+                core_populations[index].update(value)
+            if not sum(len(rc) for rc in recombine):
                 break
         # Remove players who do not have an opponent in core_populations
         # from link_players and repartition these players into subpopulations.
         # But no need to find fracture point (if not already fractured).
         repartition = set()
-        for lp in link_players:
-            for p in list(lp):
-                for s in core_populations:
-                    if len(s - self._opponents[p]) != len(s):
+        for item in link_players:
+            for element in list(item):
+                for value in core_populations:
+                    if len(value - self._opponents[element]) != len(value):
                         break
                 else:
-                    repartition.add(p)
-                    lp.remove(p)
-        remainder_populations = perf._find_distinct_populations(repartition)
+                    repartition.add(element)
+                    item.remove(element)
+        remainder_populations = perf.split_players_into_populations(
+            repartition
+        )
         # Repartition remaining players in link_players into subpopulations.
         # But no need to find fracture point (if not already fractured).
         link_repartition = set()
-        for lp in link_players:
-            link_repartition.update(lp)
-        link_populations = perf._find_distinct_populations(link_repartition)
+        for item in link_players:
+            link_repartition.update(item)
+        link_populations = perf.split_players_into_populations(
+            link_repartition
+        )
         # Save state
         self._core_populations = core_populations
         self._link_populations = link_populations
@@ -900,23 +906,25 @@ class PopulationMap(object):
     def _calculate_population_information(self):
         """Calculate core, link, and remainder population information."""
 
-        def calc_inf(players, opps_all, opps_own, s, src_pop):
+        def calc_inf(players, opps_all, opps_own, key, src_pop):
             opps = self._opponents
-            players[s] = len(src_pop)
-            opps_all[s] = sum([len(opps[p]) for p in src_pop])
+            players[key] = len(src_pop)
+            opps_all[key] = sum(len(opps[p]) for p in src_pop)
             total = sum(
-                [len([o for o in opps[p] if o in src_pop]) for p in src_pop]
+                len([o for o in opps[p] if o in src_pop]) for p in src_pop
             )
             if total:
-                opps_own[s] = total
+                opps_own[key] = total
 
-        def calc_xref(inf, s, sp, xref):
+        def calc_xref(inf, key, ppop, xref):
             opps = self._opponents
-            inf[s] = {}
-            for x, xp in enumerate(xref):
-                total = sum([len([o for o in opps[p] if o in sp]) for p in xp])
+            inf[key] = {}
+            for index, item in enumerate(xref):
+                total = sum(
+                    len([o for o in opps[p] if o in ppop]) for p in item
+                )
                 if total:
-                    inf[s][x] = total
+                    inf[key][index] = total
 
         core_players = {}
         core_opps_all = {}
@@ -931,16 +939,16 @@ class PopulationMap(object):
         rest_opps_all = {}
         rest_opps_rest = {}
         rest_opps_link = {}
-        for e, cp in enumerate(self._core_populations):
-            calc_inf(core_players, core_opps_all, core_opps_core, e, cp)
-            calc_xref(core_opps_link, e, cp, self._link_populations)
-        for e, lp in enumerate(self._link_populations):
-            calc_inf(link_players, link_opps_all, link_opps_link, e, lp)
-            calc_xref(link_opps_rest, e, lp, self._remainder_populations)
-            calc_xref(link_opps_core, e, lp, self._core_populations)
-        for e, rp in enumerate(self._remainder_populations):
-            calc_inf(rest_players, rest_opps_all, rest_opps_rest, e, rp)
-            calc_xref(rest_opps_link, e, rp, self._link_populations)
+        for index, item in enumerate(self._core_populations):
+            calc_inf(core_players, core_opps_all, core_opps_core, index, item)
+            calc_xref(core_opps_link, index, item, self._link_populations)
+        for index, item in enumerate(self._link_populations):
+            calc_inf(link_players, link_opps_all, link_opps_link, index, item)
+            calc_xref(link_opps_rest, index, item, self._remainder_populations)
+            calc_xref(link_opps_core, index, item, self._core_populations)
+        for index, item in enumerate(self._remainder_populations):
+            calc_inf(rest_players, rest_opps_all, rest_opps_rest, index, item)
+            calc_xref(rest_opps_link, index, item, self._link_populations)
         self._core_players = core_players
         self._core_opps_all = core_opps_all
         self._core_opps_core = core_opps_core
@@ -967,12 +975,11 @@ def mean(nums):
 def median(nums):
     """Return median of a list of numbers."""
     numscopy = sorted(nums)
-    n = len(numscopy)
-    mid = n // 2
-    if (n % 2) == 0:
+    size = len(numscopy)
+    mid = size // 2
+    if (size % 2) == 0:
         return (numscopy[mid] + numscopy[mid - 1]) / 2.0
-    else:
-        return float(numscopy[mid])
+    return float(numscopy[mid])
 
 
 def stdev(nums):
@@ -985,10 +992,9 @@ def stdev(nums):
     except Exception:
         if avg is None:
             return None
-        else:
-            raise
+        raise
 
 
 def sumsq(nums):
     """Return sum of squares of a list of numbers."""
-    return sum([x * x for x in nums])
+    return sum(x * x for x in nums)

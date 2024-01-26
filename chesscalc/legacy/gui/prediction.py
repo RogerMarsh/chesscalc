@@ -10,7 +10,7 @@ from solentware_misc.gui.reports import AppSysReport
 from ..core import performances
 
 
-class Prediction(object):
+class Prediction:
     """Chess performance calculation report."""
 
     def __init__(
@@ -27,19 +27,19 @@ class Prediction(object):
         show_report=AppSysReport,
     ):
         """Create widget to display performance calculations for games."""
-        super(Prediction, self).__init__()
+        super().__init__()
         self.seasons = seasons
         self.games = games
         self.players = players
         self.game_opponent = game_opponent
         self.opponents = opponents
         if names is None:
-            self.names = dict()
+            self.names = {}
         else:
             self.names = names
-        for p in self.players.keys():
-            if p not in self.names:
-                self.names[p] = str(p)
+        for key in self.players.keys():
+            if key not in self.names:
+                self.names[key] = str(key)
         self.predictions = None
         self.calculations = None
 
@@ -71,39 +71,37 @@ class Prediction(object):
 
         # Output is buffered for, in practical terms, an infinite improvement
         # in time taken to display answer on OpenBSD.
-        pc = []
+        output = []
 
         self.predictions = {}
         self.calculations = {}
-        s_seasons = self.seasons
         s_games = self.games
-        s_players = self.players
         s_game_opponent = self.game_opponent
         s_opponents = self.opponents
         s_names = self.names
-        for s in sorted(self.seasons):
-            sv = self.seasons[s]
-            season_start = "-".join((s.split("-")[0], "07", "01"))
+        for seasonkey in sorted(self.seasons):
+            svalue = self.seasons[seasonkey]
+            season_start = "-".join((seasonkey.split("-")[0], "07", "01"))
             games = {}
             game_opponent = {}
             players = {}
             game_opponent = {}
             opponents = {}
             names = {}
-            for g in sv:
-                games[g] = s_games[g]
-                game_opponent[g] = s_game_opponent[g]
-                for p in games[g]:
-                    players.setdefault(p, set()).add(g)
-            for p in players:
-                opponents[p] = {o for o in s_opponents[p] if o in players}
-                names[p] = s_names[p]
+            for skey in svalue:
+                games[skey] = s_games[skey]
+                game_opponent[skey] = s_game_opponent[skey]
+                for key in games[skey]:
+                    players.setdefault(key, set()).add(skey)
+            for key in players:
+                opponents[key] = {o for o in s_opponents[key] if o in players}
+                names[key] = s_names[key]
             # Now do the base performance calculation for each season
             s_performance = performances.Performances()
             s_performance.get_events(games, players, game_opponent, opponents)
             s_performance.find_distinct_populations()
             if s_performance.populations is None:
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\n\nNo players in season starting ",
@@ -114,7 +112,7 @@ class Prediction(object):
                 )
                 continue
             if len(s_performance.populations) == 0:
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\n\nNo players in season starting ",
@@ -126,7 +124,7 @@ class Prediction(object):
                 continue
             pops = [len(p) for p in s_performance.populations]
             if len(s_performance.populations) > 1:
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\n\nPlayers do not form a connected population ",
@@ -136,7 +134,7 @@ class Prediction(object):
                         )
                     )
                 )
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\tPlayers in populations are: ",
@@ -148,7 +146,7 @@ class Prediction(object):
                 if (max(pops) * 100) / sum(pops) > 95:
                     s_performance.get_largest_population()
                     s_performance.find_distinct_populations()
-                    pc.append(
+                    output.append(
                         "".join(
                             (
                                 "\tLargest population is over 95% of total ",
@@ -160,7 +158,7 @@ class Prediction(object):
                         )
                     )
                 else:
-                    pc.append(
+                    output.append(
                         "".join(
                             (
                                 "\tLargest population is less than 95% of ",
@@ -172,7 +170,7 @@ class Prediction(object):
                     )
                     continue
             else:
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\n\nAll players used in calculation for season ",
@@ -182,7 +180,7 @@ class Prediction(object):
                         )
                     )
                 )
-            pc.append(
+            output.append(
                 "".join(
                     (
                         "Number of players is: ",
@@ -191,16 +189,14 @@ class Prediction(object):
                     )
                 )
             )
-            pc.append(
+            output.append(
                 "".join(
                     (
                         "Number of half-games is: ",
                         repr(
                             sum(
-                                [
-                                    len(players[p])
-                                    for p in s_performance.populations[0]
-                                ]
+                                len(players[p])
+                                for p in s_performance.populations[0]
                             )
                         ),
                         "\n",
@@ -209,7 +205,7 @@ class Prediction(object):
             )
             cscgoo = s_performance.cycle_state_connected_graph_of_opponents()
             if cscgoo is True:
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\n\nNo opponent cycles in season starting ",
@@ -237,7 +233,7 @@ class Prediction(object):
                 stable,
             ) = s_calculation.do_iterations_until_stable(cycles=cscgoo)
             if not stable:
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\n\nNo opponent cycles in season ",
@@ -258,8 +254,8 @@ class Prediction(object):
                     )
                 )
                 continue
-            self.calculations[s] = s_calculation
-            pc.append(
+            self.calculations[seasonkey] = s_calculation
+            output.append(
                 "".join(
                     (
                         "Iterations used: ",
@@ -277,7 +273,7 @@ class Prediction(object):
             self.predictions[ref][ref] = performances.Distribution(
                 self.calculations[ref], self.calculations[ref]
             )
-            pc.append(
+            output.append(
                 "".join(
                     (
                         "\nSeason starting ",
@@ -297,7 +293,7 @@ class Prediction(object):
                 self.predictions[ref][target] = performances.Distribution(
                     self.calculations[ref], self.calculations[target]
                 )
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "Players: ",
@@ -310,18 +306,18 @@ class Prediction(object):
                         )
                     )
                 )
-        self.perfcalc.append("".join(pc))
+        self.perfcalc.append("".join(output))
 
-        for bs in (5, 1, 10):
-            self.report_prediction(bs)
+        for slot_size in (5, 1, 10):
+            self.report_prediction(slot_size)
 
     def report_prediction(self, bucket_size):
         """Report prediction for performance difference bucket size."""
         # Output is buffered for, in practical terms, an infinite improvement
         # in time taken to display answer on OpenBSD.
-        pc = []
+        output = []
 
-        pc.append(
+        output.append(
             "".join(
                 (
                     "\n\nReports with buckets of width ",
@@ -337,7 +333,7 @@ class Prediction(object):
             distribution = self.predictions[ref][ref].distributions[
                 bucket_size
             ]
-            pc.append(
+            output.append(
                 "".join(
                     (
                         "\nDistribution calculated from results for season ",
@@ -348,23 +344,23 @@ class Prediction(object):
                 )
             )
             for bucket in sorted(distribution):
-                b = distribution[bucket]
+                slot = distribution[bucket]
                 percent = round(
-                    ((b.wins * 2 + b.draws) * 50)
-                    / (b.wins + b.draws + b.losses),
+                    ((slot.wins * 2 + slot.draws) * 50)
+                    / (slot.wins + slot.draws + slot.losses),
                     1,
                 )
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "< ",
-                            str(b.base + b.width),
+                            str(slot.base + slot.width),
                             "\t\t+",
-                            str(b.wins),
+                            str(slot.wins),
                             "\t=",
-                            str(b.draws),
+                            str(slot.draws),
                             "\t-",
-                            str(b.losses),
+                            str(slot.losses),
                             "\t\t",
                             str(percent),
                             "\n",
@@ -384,7 +380,7 @@ class Prediction(object):
                 distribution = self.predictions[ref][target].distributions[
                     bucket_size
                 ]
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\n",
@@ -397,27 +393,27 @@ class Prediction(object):
                     )
                 )
                 for bucket in sorted(distribution):
-                    b = distribution[bucket]
+                    slot = distribution[bucket]
                     percent = round(
-                        ((b.wins * 2 + b.draws) * 50)
-                        / (b.wins + b.draws + b.losses),
+                        ((slot.wins * 2 + slot.draws) * 50)
+                        / (slot.wins + slot.draws + slot.losses),
                         1,
                     )
-                    pc.append(
+                    output.append(
                         "".join(
                             (
                                 "< ",
-                                str(b.base + b.width),
+                                str(slot.base + slot.width),
                                 "\t\t+",
-                                str(b.wins),
+                                str(slot.wins),
                                 "\t=",
-                                str(b.draws),
+                                str(slot.draws),
                                 "\t-",
-                                str(b.losses),
+                                str(slot.losses),
                                 "\t\t",
                                 str(percent),
                                 "\n",
                             )
                         )
                     )
-        self.perfcalc.append("".join(pc))
+        self.perfcalc.append("".join(output))

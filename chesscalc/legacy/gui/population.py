@@ -10,7 +10,7 @@ from solentware_misc.gui.reports import AppSysReport
 from ..core import performances
 
 
-class Population(object):
+class Population:
     """Chess population map analysis."""
 
     def __init__(
@@ -32,12 +32,12 @@ class Population(object):
         self.game_opponent = game_opponent
         self.opponents = opponents
         if names is None:
-            self.names = dict()
+            self.names = {}
         else:
             self.names = names
-        for p in self.players.keys():
-            if p not in self.names:
-                self.names[p] = str(p)
+        for key in self.players.keys():
+            if key not in self.names:
+                self.names[key] = str(key)
         self.performance = None
         self.population_maps = None
 
@@ -76,7 +76,7 @@ class Population(object):
 
         # Output is buffered for, in practical terms, an infinite improvement
         # in time taken to display answer on OpenBSD.
-        pc = []
+        output = []
 
         self.performance = performances.Performances()
         self.performance.get_events(
@@ -84,18 +84,18 @@ class Population(object):
         )
         self.performance.find_distinct_populations()
         if self.performance.populations is None:
-            pc.append(
+            output.append(
                 "\n\nNo players in selected events",
             )
             return
         if len(self.performance.populations) == 0:
-            pc.append(
+            output.append(
                 "\n\nNo players in selected events",
             )
             return
         pops = [len(p) for p in self.performance.populations]
         if len(self.performance.populations) > 1:
-            pc.append(
+            output.append(
                 "".join(
                     (
                         "\n\nPlayers in selected events ",
@@ -103,7 +103,7 @@ class Population(object):
                     )
                 )
             )
-            pc.append(
+            output.append(
                 "".join(
                     (
                         "\tPlayers in populations are: ",
@@ -115,7 +115,7 @@ class Population(object):
             if (max(pops) * 100) / sum(pops) > 95:
                 self.performance.get_largest_population()
                 self.performance.find_distinct_populations()
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\tLargest population is over 95% of total ",
@@ -126,7 +126,7 @@ class Population(object):
                     )
                 )
             else:
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\tLargest population is less than 95% of total ",
@@ -136,7 +136,7 @@ class Population(object):
                 )
                 return
         else:
-            pc.append(
+            output.append(
                 "".join(
                     (
                         "\n\nAll players for selected events ",
@@ -145,7 +145,7 @@ class Population(object):
                 )
             )
         if self.performance.is_connected_graph_of_opponents_a_tree():
-            pc.append(
+            output.append(
                 "".join(
                     (
                         "\n\nNo opponent cycles in selected events.",
@@ -159,7 +159,7 @@ class Population(object):
                 )
             )
             return
-        pc.append(
+        output.append(
             "".join(
                 (
                     "\nNumber of players in population map analysis is: ",
@@ -175,10 +175,10 @@ class Population(object):
             )
             for count in range(len(self.performance.subpopulations[-1]))
         ]
-        for p in population_maps:
-            p.rebuild_populations()
+        for item in population_maps:
+            item.rebuild_populations()
         self.population_maps = population_maps
-        for e, p in enumerate(population_maps):
+        for index, item in enumerate(population_maps):
             (
                 core_players,
                 core_opps_all,
@@ -193,13 +193,13 @@ class Population(object):
                 rest_opps_all,
                 rest_opps_rest,
                 rest_opps_link,
-            ) = p.population_information
+            ) = item.population_information
             if len(core_players) == 1:
                 msg = "".join(
                     (
                         "\n\n\n",
                         "Each player in the core population played at least ",
-                        str(e + 1),
+                        str(index + 1),
                         " opponents from the whole population.\n",
                         "The number of players in the core population is: ",
                     )
@@ -221,7 +221,7 @@ class Population(object):
                     (
                         "\n\n\n",
                         "Each player in a core population played at least ",
-                        str(e + 1),
+                        str(index + 1),
                         " opponents from the whole population.\n",
                         "The numbers of players in the core populations are: ",
                     )
@@ -238,28 +238,28 @@ class Population(object):
                         "core populations are: ",
                     )
                 )
-            pc.append(msg)
+            output.append(msg)
             rep = [
                 "".join(("\n\t", str(k), ": ", str(v)))
                 for k, v in sorted(core_players.items())
             ]
-            pc.append("".join(rep))
-            pc.append(allmsg)
+            output.append("".join(rep))
+            output.append(allmsg)
             rep = [
                 "".join(("\n\t", str(k), ": ", str(v)))
                 for k, v in sorted(core_opps_all.items())
             ]
-            pc.append("".join(rep))
-            pc.append(coremsg)
+            output.append("".join(rep))
+            output.append(coremsg)
             rep = [
                 "".join(("\n\t", str(k), ": ", str(v)))
                 for k, v in sorted(core_opps_core.items())
             ]
-            pc.append("".join(rep))
-            if sum([len(v) for v in core_opps_link.values()]) == 0:
-                pc.append("\nThere are no opponents in link populations.")
+            output.append("".join(rep))
+            if sum(len(v) for v in core_opps_link.values()) == 0:
+                output.append("\nThere are no opponents in link populations.")
             else:
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\nThe number of opponents of core players in ",
@@ -284,14 +284,14 @@ class Population(object):
                     )
                     for k, v in sorted(core_opps_link.items())
                 ]
-                pc.append("".join(rep))
+                output.append("".join(rep))
             if len(link_players) == 0:
                 continue
-            elif len(link_players) == 1:
+            if len(link_players) == 1:
                 msg = "".join(
                     (
                         "\nEach player in the link population played at most ",
-                        str(e),
+                        str(index),
                         " opponents from the whole population, including at ",
                         "least one opponent from a core population.\n",
                         "The number of players in the link population is: ",
@@ -313,7 +313,7 @@ class Population(object):
                 msg = "".join(
                     (
                         "\nEach player in a link population played at most ",
-                        str(e),
+                        str(index),
                         " opponents from the whole population, including at ",
                         "least one opponent from a core population.\n",
                         "The numbers of players in the link populations are: ",
@@ -331,27 +331,27 @@ class Population(object):
                         "link populations are: ",
                     )
                 )
-            pc.append(msg)
+            output.append(msg)
             rep = [
                 "".join(("\n\t", str(k), ": ", str(v)))
                 for k, v in sorted(link_players.items())
             ]
-            pc.append("".join(rep))
-            pc.append(allmsg)
+            output.append("".join(rep))
+            output.append(allmsg)
             rep = [
                 "".join(("\n\t", str(k), ": ", str(v)))
                 for k, v in sorted(link_opps_all.items())
             ]
-            pc.append("".join(rep))
+            output.append("".join(rep))
             rep = [
                 "".join(("\n\t", str(k), ": ", str(v)))
                 for k, v in sorted(link_opps_link.items())
             ]
             if len(rep):
-                pc.append(linkmsg)
-                pc.append("".join(rep))
+                output.append(linkmsg)
+                output.append("".join(rep))
             else:
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\nNo players in link populations played ",
@@ -359,10 +359,12 @@ class Population(object):
                         )
                     )
                 )
-            if sum([len(v) for v in link_opps_rest.values()]) == 0:
-                pc.append("\nThere are no opponents in remainder populations.")
+            if sum(len(v) for v in link_opps_rest.values()) == 0:
+                output.append(
+                    "\nThere are no opponents in remainder populations."
+                )
             else:
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\nThe number of opponents of link players in ",
@@ -388,11 +390,11 @@ class Population(object):
                     for k, v in sorted(link_opps_rest.items())
                     if len(v)
                 ]
-                pc.append("".join(rep))
+                output.append("".join(rep))
             # start link_opps_core
             # This section should give same figures as 'core_opps_link'
             # Remove it?
-            pc.append(
+            output.append(
                 "".join(
                     (
                         "\nThe number of opponents of link players in the ",
@@ -417,16 +419,16 @@ class Population(object):
                 )
                 for k, v in sorted(link_opps_core.items())
             ]
-            pc.append("".join(rep))
+            output.append("".join(rep))
             # end link_opps_core
             if len(rest_players) == 0:
                 continue
-            elif len(rest_players) == 1:
+            if len(rest_players) == 1:
                 msg = "".join(
                     (
                         "\nEach player in the remainder population played at ",
                         "most ",
-                        str(e),
+                        str(index),
                         " opponents from the whole population, including at ",
                         "least one opponent from a link population but no ",
                         "opponents from a core population.\n",
@@ -451,7 +453,7 @@ class Population(object):
                     (
                         "\nEach player in a remainder population played at ",
                         "most ",
-                        str(e),
+                        str(index),
                         " opponents from the whole population, including at ",
                         "least one opponent from a link population but no ",
                         "opponents from a core population.\nThe numbers of ",
@@ -470,27 +472,27 @@ class Population(object):
                         "the remainder populations are: ",
                     )
                 )
-            pc.append(msg)
+            output.append(msg)
             rep = [
                 "".join(("\n\t", str(k), ": ", str(v)))
                 for k, v in sorted(rest_players.items())
             ]
-            pc.append("".join(rep))
-            pc.append(allmsg)
+            output.append("".join(rep))
+            output.append(allmsg)
             rep = [
                 "".join(("\n\t", str(k), ": ", str(v)))
                 for k, v in sorted(rest_opps_all.items())
             ]
-            pc.append("".join(rep))
+            output.append("".join(rep))
             rep = [
                 "".join(("\n\t", str(k), ": ", str(v)))
                 for k, v in sorted(rest_opps_rest.items())
             ]
             if len(rep):
-                pc.append(restmsg)
-                pc.append("".join(rep))
+                output.append(restmsg)
+                output.append("".join(rep))
             else:
-                pc.append(
+                output.append(
                     "".join(
                         (
                             "\nNo players in remainder populations played ",
@@ -501,7 +503,7 @@ class Population(object):
             # start rest_opps_link
             # This section should give same figures as 'link_opps_rest'
             # Remove it?
-            pc.append(
+            output.append(
                 "".join(
                     (
                         "\nThe number of opponents of remainder players in ",
@@ -526,6 +528,6 @@ class Population(object):
                 )
                 for k, v in sorted(rest_opps_link.items())
             ]
-            pc.append("".join(rep))
+            output.append("".join(rep))
             # end rest_opps_link
-        self.mapcalc.append("".join(pc))
+        self.mapcalc.append("".join(output))

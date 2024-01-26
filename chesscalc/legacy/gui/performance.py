@@ -10,7 +10,7 @@ from solentware_misc.gui.reports import AppSysReport
 from ..core import performances
 
 
-class Performance(object):
+class Performance:
     """Chess performance calculation report."""
 
     def __init__(
@@ -26,18 +26,18 @@ class Performance(object):
         show_report=AppSysReport,
     ):
         """Create widget to display performance calculations for games."""
-        super(Performance, self).__init__()
+        super().__init__()
         self.games = games
         self.players = players
         self.game_opponent = game_opponent
         self.opponents = opponents
         if names is None:
-            self.names = dict()
+            self.names = {}
         else:
             self.names = names
-        for p in self.players.keys():
-            if p not in self.names:
-                self.names[p] = str(p)
+        for key in self.players.keys():
+            if key not in self.names:
+                self.names[key] = str(key)
         self.performance = None
         self.calculation = None
 
@@ -201,10 +201,8 @@ class Performance(object):
 
         max_performance = round(
             max(
-                [
-                    p.get_calculated_performance()
-                    for p in self.calculation.persons.values()
-                ]
+                p.get_calculated_performance()
+                for p in self.calculation.persons.values()
             )
         )
         player_order = sorted(
@@ -238,39 +236,39 @@ class Performance(object):
             ]
         )
         self.perfcalc.append("\n\nPerformances in name order:\n\n")
-        pc = []
-        for v in player_order:
-            pc.append(
+        output = []
+        for item in player_order:
+            output.append(
                 "".join(
                     (
-                        v[3],
+                        item[3],
                         "\t\t\t",
-                        str(v[4]),
+                        str(item[4]),
                         "\t",
                         "(",
-                        str(-v[1]),
+                        str(-item[1]),
                         ")\t\n",
                     )
                 )
             )
-        self.perfcalc.append("".join(pc))
+        self.perfcalc.append("".join(output))
         self.perfcalc.append("\n\nPerformances in performance order:\n\n")
-        pc = []
-        for v in performance_order:
-            pc.append(
+        output = []
+        for item in performance_order:
+            output.append(
                 "".join(
                     (
-                        str(v[4]),
+                        str(item[4]),
                         "\t",
                         "(",
-                        str(-v[1]),
+                        str(-item[1]),
                         ")\t\t",
-                        v[3],
+                        item[3],
                         "\n",
                     )
                 )
             )
-        self.perfcalc.append("".join(pc))
+        self.perfcalc.append("".join(output))
         if self.performance.discarded_players is not None:
             discarded_players = sorted(
                 [self.names[p] for p in self.performance.discarded_players]

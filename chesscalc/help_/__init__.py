@@ -24,7 +24,7 @@ folder = os.path.dirname(__file__).replace(
 
 for k in list(_textfile.keys()):
     _textfile[k] = tuple(
-        [os.path.join(folder, ".".join((n, "txt"))) for n in _textfile[k]]
+        os.path.join(folder, ".".join((n, "txt"))) for n in _textfile[k]
     )
 
 del folder, k, os
