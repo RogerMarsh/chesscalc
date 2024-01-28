@@ -14,7 +14,6 @@ class Database(database.Database, db_tkinter_database.Database):
     """Methods and data structures to create, open, and close database."""
 
     _deferred_update_process = "chesscalc.db_tkinter.database_du"
-    _datasourceset_modulename = "solentware_grid.core.datasourceset"
 
     def __init__(
         self,
