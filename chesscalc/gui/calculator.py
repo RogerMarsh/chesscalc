@@ -186,63 +186,63 @@ class Calculator(Bindings):
         menubar.add_cascade(label="Help", menu=menuh, underline=0)
         for menu, accelerator, function in (
             (menu1,) + _MENU_SEPARATOR,
-            (menu1, EventSpec.menu_database_open, self.database_open),
-            (menu1, EventSpec.menu_database_new, self.database_new),
-            (menu1, EventSpec.menu_database_close, self.database_close),
+            (menu1, EventSpec.menu_database_open, self._database_open),
+            (menu1, EventSpec.menu_database_new, self._database_new),
+            (menu1, EventSpec.menu_database_close, self._database_close),
             (menu1,) + _MENU_SEPARATOR,
-            (menu1, EventSpec.menu_database_import, self.database_import),
-            (menu1, EventSpec.menu_database_verify, self.database_verify),
+            (menu1, EventSpec.menu_database_import, self._database_import),
+            (menu1, EventSpec.menu_database_verify, self._database_verify),
             (menu1,) + _MENU_SEPARATOR,
-            (menu1, EventSpec.menu_database_delete, self.database_delete),
+            (menu1, EventSpec.menu_database_delete, self._database_delete),
             (menu1,) + _MENU_SEPARATOR,
-            (menu1, EventSpec.menu_database_quit, self.database_quit),
+            (menu1, EventSpec.menu_database_quit, self._database_quit),
             (menu1,) + _MENU_SEPARATOR,
             (menu2,) + _MENU_SEPARATOR,
-            (menu2, EventSpec.menu_player_identify, self.player_identify),
+            (menu2, EventSpec.menu_player_identify, self._player_identify),
             (menu2,) + _MENU_SEPARATOR,
-            (menu2, EventSpec.menu_player_break, self.player_break),
-            (menu2, EventSpec.menu_player_split, self.player_split),
-            (menu2, EventSpec.menu_player_change, self.player_change),
+            (menu2, EventSpec.menu_player_break, self._player_break),
+            (menu2, EventSpec.menu_player_split, self._player_split),
+            (menu2, EventSpec.menu_player_change, self._player_change),
             (menu2,) + _MENU_SEPARATOR,
             (menu3,) + _MENU_SEPARATOR,
-            (menu3, EventSpec.menu_other_event_identify, self.event_identify),
+            (menu3, EventSpec.menu_other_event_identify, self._event_identify),
             (menu3,) + _MENU_SEPARATOR,
-            (menu3, EventSpec.menu_other_event_break, self.event_break),
-            (menu3, EventSpec.menu_other_event_split, self.event_split),
-            (menu3, EventSpec.menu_other_event_change, self.event_change),
+            (menu3, EventSpec.menu_other_event_break, self._event_break),
+            (menu3, EventSpec.menu_other_event_split, self._event_split),
+            (menu3, EventSpec.menu_other_event_change, self._event_change),
             (menu3,) + _MENU_SEPARATOR,
             (menu31,) + _MENU_SEPARATOR,
-            (menu31, EventSpec.menu_other_time_identify, self.time_identify),
+            (menu31, EventSpec.menu_other_time_identify, self._time_identify),
             (menu31,) + _MENU_SEPARATOR,
-            (menu31, EventSpec.menu_other_time_break, self.time_break),
-            (menu31, EventSpec.menu_other_time_split, self.time_split),
-            (menu31, EventSpec.menu_other_time_change, self.time_change),
+            (menu31, EventSpec.menu_other_time_break, self._time_break),
+            (menu31, EventSpec.menu_other_time_split, self._time_split),
+            (menu31, EventSpec.menu_other_time_change, self._time_change),
             (menu31,) + _MENU_SEPARATOR,
             (menu32,) + _MENU_SEPARATOR,
-            (menu32, EventSpec.menu_other_mode_identify, self.mode_identify),
+            (menu32, EventSpec.menu_other_mode_identify, self._mode_identify),
             (menu32,) + _MENU_SEPARATOR,
-            (menu32, EventSpec.menu_other_mode_break, self.mode_break),
-            (menu32, EventSpec.menu_other_mode_split, self.mode_split),
-            (menu32, EventSpec.menu_other_mode_change, self.mode_change),
+            (menu32, EventSpec.menu_other_mode_break, self._mode_break),
+            (menu32, EventSpec.menu_other_mode_split, self._mode_split),
+            (menu32, EventSpec.menu_other_mode_change, self._mode_change),
             (menu32,) + _MENU_SEPARATOR,
             (menu4,) + _MENU_SEPARATOR,
-            (menu4, EventSpec.menu_selectors_new, self.selectors_new),
-            (menu4, EventSpec.menu_selectors_show, self.selectors_show),
-            (menu4, EventSpec.menu_selectors_edit, self.selectors_edit),
+            (menu4, EventSpec.menu_selectors_new, self._selectors_new),
+            (menu4, EventSpec.menu_selectors_show, self._selectors_show),
+            (menu4, EventSpec.menu_selectors_edit, self._selectors_edit),
             (menu4,) + _MENU_SEPARATOR,
-            (menu4, EventSpec.menu_selectors_insert, self.selectors_insert),
-            (menu4, EventSpec.menu_selectors_update, self.selectors_update),
-            (menu4, EventSpec.menu_selectors_delete, self.selectors_delete),
+            (menu4, EventSpec.menu_selectors_insert, self._selectors_insert),
+            (menu4, EventSpec.menu_selectors_update, self._selectors_update),
+            (menu4, EventSpec.menu_selectors_delete, self._selectors_delete),
             (menu4,) + _MENU_SEPARATOR,
-            (menu4, EventSpec.menu_selectors_close, self.selectors_close),
+            (menu4, EventSpec.menu_selectors_close, self._selectors_close),
             (menu4,) + _MENU_SEPARATOR,
             (menu5,) + _MENU_SEPARATOR,
-            (menu5, EventSpec.menu_calculate_calculate, self.calculate),
+            (menu5, EventSpec.menu_calculate_calculate, self._calculate),
             (menu5,) + _MENU_SEPARATOR,
-            (menu5, EventSpec.menu_calculate_save, self.save),
+            (menu5, EventSpec.menu_calculate_save, self._save),
             (menu5,) + _MENU_SEPARATOR,
             (menuh,) + _MENU_SEPARATOR,
-            (menuh, EventSpec.menu_help_widget, self.help_widget),
+            (menuh, EventSpec.menu_help_widget, self._help_widget),
             (menuh,) + _MENU_SEPARATOR,
         ):
             if function is None:
@@ -333,7 +333,7 @@ class Calculator(Bindings):
         # So it can be destoyed when closing database but not quitting.
         self._notebook = notebook
 
-    def help_widget(self):
+    def _help_widget(self):
         """Display help in a Toplevel."""
         widget = tkinter.Toplevel(master=self.widget)
         rule_help = tkinter.Text(master=widget, wrap=tkinter.WORD)
@@ -342,7 +342,7 @@ class Calculator(Bindings):
         widget.grid_rowconfigure(0, weight=1)
         rule_help.insert(tkinter.END, _HELP_TEXT)
 
-    def database_quit(self):
+    def _database_quit(self):
         """Quit performance calculation application."""
         if not tkinter.messagebox.askyesno(
             parent=self.widget,
@@ -350,13 +350,13 @@ class Calculator(Bindings):
             title="Quit Chess Performance Calcultion",
         ):
             return
-        self._database_quit()
+        self._quit_database()
         self.widget.winfo_toplevel().destroy()
 
-    def database_verify(self):
-        """To be implemented or absorbed in database_import."""
+    def _database_verify(self):
+        """To be implemented or absorbed in _database_import."""
 
-    def database_close(self):
+    def _database_close(self):
         """Close performance calculation database."""
         if self.database is None:
             tkinter.messagebox.showinfo(
@@ -387,7 +387,7 @@ class Calculator(Bindings):
                 return False
         return None
 
-    def database_delete(self):
+    def _database_delete(self):
         """Delete performance calculation database."""
         if self.database is None:
             tkinter.messagebox.showinfo(
@@ -449,7 +449,7 @@ class Calculator(Bindings):
                 ),
             )
 
-    def database_new(self):
+    def _database_new(self):
         """Create and open a new performance calculation database."""
         if self.database is not None:
             tkinter.messagebox.showinfo(
@@ -559,7 +559,7 @@ class Calculator(Bindings):
         if self.database:
             self._initialize_database_interface()
 
-    def database_open(self):
+    def _database_open(self):
         """Open performance calculation database."""
         if self.database is not None:
             tkinter.messagebox.showinfo(
@@ -705,7 +705,7 @@ class Calculator(Bindings):
             self._database_class = import_name(_modulename, _Import.Database)
 
         try:
-            self._database_open(database_folder)
+            self._open_database(database_folder)
         except KeyError as exc:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
@@ -724,7 +724,7 @@ class Calculator(Bindings):
             self._database_close()
             self.database = None
 
-    def _database_open(self, database_folder):
+    def _open_database(self, database_folder):
         """Open performance calculation database, creating it if necessary."""
         self.database = self._database_class(
             database_folder, **self._database_kargs
@@ -751,14 +751,14 @@ class Calculator(Bindings):
         self.database.close_database()
         self._notebook.destroy()
 
-    def _database_quit(self):
+    def _quit_database(self):
         """Quit performance calculation database."""
         if self.database is None:
             return
         self._database_close()
         self.database = None
 
-    def database_import(self):
+    def _database_import(self):
         """Import PGN headers to open database."""
         if self.database is None:
             tkinter.messagebox.showinfo(
@@ -812,7 +812,7 @@ class Calculator(Bindings):
 
     def _import_pgnfiles(self, pgn_directory):
         """Import games to open database."""
-        self.set_import_subprocess()  # raises exception if already active
+        self._set_import_subprocess()  # raises exception if already active
         self._pgn_directory = pgn_directory
         self._games.games_grid.bind_off()
         self._players.players_grid.bind_off()
@@ -820,7 +820,7 @@ class Calculator(Bindings):
         self._persons.data_grid.bind_off()
         self._selectors.data_grid.bind_off()
         self.database.close_database_contexts()
-        self.set_import_subprocess(
+        self._set_import_subprocess(
             subprocess_id=multiprocessing.Process(
                 target=rundu.rundu,
                 args=(
@@ -833,7 +833,7 @@ class Calculator(Bindings):
         self.get_import_subprocess().start()
         self._import_pgnfiles_join()
 
-    def set_import_subprocess(self, subprocess_id=None):
+    def _set_import_subprocess(self, subprocess_id=None):
         """Set the import subprocess object if not already active."""
         if self.is_import_subprocess_active():
             raise CalculatorStartSubprocessError(
@@ -864,7 +864,7 @@ class Calculator(Bindings):
         self._selectors.data_grid.bind_on()
         self._games.games_grid.fill_view_with_top()
 
-    def player_identify(self):
+    def _player_identify(self):
         """Identify selected and bookmarked new players as selected person."""
         if self._players is None or self._players.frame is None:
             tkinter.messagebox.showinfo(
@@ -908,7 +908,7 @@ class Calculator(Bindings):
             self._players.persons_grid.fill_view_with_top()
             self._persons.data_grid.fill_view_with_top()
 
-    def player_break(self):
+    def _player_break(self):
         """Break indentification of selected and bookmarked person aliases."""
         if self._persons is None or self._persons.frame is None:
             tkinter.messagebox.showinfo(
@@ -952,7 +952,7 @@ class Calculator(Bindings):
             self._players.persons_grid.fill_view_with_top()
             self._persons.data_grid.fill_view_with_top()
 
-    def player_split(self):
+    def _player_split(self):
         """Split indentification of all aliases of selected person alias."""
         if self._persons is None or self._persons.frame is None:
             tkinter.messagebox.showinfo(
@@ -991,7 +991,7 @@ class Calculator(Bindings):
             self._players.persons_grid.fill_view_with_top()
             self._persons.data_grid.fill_view_with_top()
 
-    def player_change(self):
+    def _player_change(self):
         """Change person alias used as person identity."""
         if self._persons is None or self._persons.frame is None:
             tkinter.messagebox.showinfo(
@@ -1029,7 +1029,7 @@ class Calculator(Bindings):
             self._players.persons_grid.fill_view_with_top()
             self._persons.data_grid.fill_view_with_top()
 
-    def selectors_new(self):
+    def _selectors_new(self):
         """Define new rule to select games for performance calculation."""
         if not self._selectors_availbable(EventSpec.menu_selectors_new):
             return
@@ -1102,7 +1102,7 @@ class Calculator(Bindings):
             self._modes.data_grid.clear_bookmarks()
             self._modes.data_grid.fill_view_with_top()
 
-    def selectors_show(self):
+    def _selectors_show(self):
         """Show selected rule to select games for performance calculation."""
         if not self._selectors_choose(EventSpec.menu_selectors_show):
             return
@@ -1126,7 +1126,7 @@ class Calculator(Bindings):
         self._selectors.data_grid.clear_bookmarks()
         self._selectors.data_grid.fill_view_with_top()
 
-    def selectors_edit(self):
+    def _selectors_edit(self):
         """Edit selected rule to select games for performance calculation."""
         if not self._selectors_choose(EventSpec.menu_selectors_edit):
             return
@@ -1183,7 +1183,7 @@ class Calculator(Bindings):
             return False
         return True
 
-    def selectors_close(self):
+    def _selectors_close(self):
         """Close rule tab to select games for performance calculation."""
         tab = self._selectors_apply(EventSpec.menu_selectors_close)
         if not tab:
@@ -1191,7 +1191,7 @@ class Calculator(Bindings):
         self._notebook.forget(tab)
         del self._rule_tabs[tab]
 
-    def selectors_insert(self):
+    def _selectors_insert(self):
         """Insert rule to select games for performance calculation."""
         tab = self._selectors_apply(EventSpec.menu_selectors_insert)
         if not tab:
@@ -1201,7 +1201,7 @@ class Calculator(Bindings):
             self._selectors.data_grid.clear_bookmarks()
             self._selectors.data_grid.fill_view_with_top()
 
-    def selectors_update(self):
+    def _selectors_update(self):
         """Update rule to select games for performance calculation."""
         tab = self._selectors_apply(EventSpec.menu_selectors_update)
         if not tab:
@@ -1211,7 +1211,7 @@ class Calculator(Bindings):
             self._selectors.data_grid.clear_bookmarks()
             self._selectors.data_grid.fill_view_with_top()
 
-    def selectors_delete(self):
+    def _selectors_delete(self):
         """Delete rule to select games for performance calculation."""
         tab = self._selectors_apply(EventSpec.menu_selectors_delete)
         if not tab:
@@ -1260,7 +1260,7 @@ class Calculator(Bindings):
             return False
         return True
 
-    def event_identify(self):
+    def _event_identify(self):
         """Identify selected and bookmarked events as selected event."""
         if self._events is None or self._events.frame is None:
             tkinter.messagebox.showinfo(
@@ -1295,7 +1295,7 @@ class Calculator(Bindings):
             self._events.data_grid.clear_bookmarks()
             self._events.data_grid.fill_view_with_top()
 
-    def event_break(self):
+    def _event_break(self):
         """Break indentification of selected and bookmarked event aliases."""
         if self._events is None or self._events.frame is None:
             tkinter.messagebox.showinfo(
@@ -1335,7 +1335,7 @@ class Calculator(Bindings):
             self._events.data_grid.clear_bookmarks()
             self._events.data_grid.fill_view_with_top()
 
-    def event_split(self):
+    def _event_split(self):
         """Split indentification of all aliases of selected event alias."""
         if self._events is None or self._events.frame is None:
             tkinter.messagebox.showinfo(
@@ -1370,7 +1370,7 @@ class Calculator(Bindings):
             self._events.data_grid.clear_bookmarks()
             self._events.data_grid.fill_view_with_top()
 
-    def event_change(self):
+    def _event_change(self):
         """Change event alias used as event identity."""
         if self._events is None or self._events.frame is None:
             tkinter.messagebox.showinfo(
@@ -1405,7 +1405,7 @@ class Calculator(Bindings):
             self._events.data_grid.clear_bookmarks()
             self._events.data_grid.fill_view_with_top()
 
-    def time_identify(self):
+    def _time_identify(self):
         """Identify bookmarked time controls as selected time control."""
         if self._time_controls is None or self._time_controls.frame is None:
             tkinter.messagebox.showinfo(
@@ -1440,7 +1440,7 @@ class Calculator(Bindings):
             self._time_controls.data_grid.clear_bookmarks()
             self._time_controls.data_grid.fill_view_with_top()
 
-    def time_break(self):
+    def _time_break(self):
         """Break indentity of selected and bookmarked time control aliases."""
         if self._time_controls is None or self._time_controls.frame is None:
             tkinter.messagebox.showinfo(
@@ -1480,7 +1480,7 @@ class Calculator(Bindings):
             self._time_controls.data_grid.clear_bookmarks()
             self._time_controls.data_grid.fill_view_with_top()
 
-    def time_split(self):
+    def _time_split(self):
         """Split identity of all aliases of selected time control."""
         if self._time_controls is None or self._time_controls.frame is None:
             tkinter.messagebox.showinfo(
@@ -1515,7 +1515,7 @@ class Calculator(Bindings):
             self._time_controls.data_grid.clear_bookmarks()
             self._time_controls.data_grid.fill_view_with_top()
 
-    def time_change(self):
+    def _time_change(self):
         """Change time control alias used as time control identity."""
         if self._time_controls is None or self._time_controls.frame is None:
             tkinter.messagebox.showinfo(
@@ -1552,7 +1552,7 @@ class Calculator(Bindings):
             self._time_controls.data_grid.clear_bookmarks()
             self._time_controls.data_grid.fill_view_with_top()
 
-    def mode_identify(self):
+    def _mode_identify(self):
         """Identify bookmarked playing modes as selected playing mode."""
         if self._modes is None or self._modes.frame is None:
             tkinter.messagebox.showinfo(
@@ -1587,7 +1587,7 @@ class Calculator(Bindings):
             self._modes.data_grid.clear_bookmarks()
             self._modes.data_grid.fill_view_with_top()
 
-    def mode_break(self):
+    def _mode_break(self):
         """Break indentity of selected and bookmarked playing mode aliases."""
         if self._modes is None or self._modes.frame is None:
             tkinter.messagebox.showinfo(
@@ -1627,7 +1627,7 @@ class Calculator(Bindings):
             self._modes.data_grid.clear_bookmarks()
             self._modes.data_grid.fill_view_with_top()
 
-    def mode_split(self):
+    def _mode_split(self):
         """Split indentity of playing modes of selected playing mode alias."""
         if self._modes is None or self._modes.frame is None:
             tkinter.messagebox.showinfo(
@@ -1662,7 +1662,7 @@ class Calculator(Bindings):
             self._modes.data_grid.clear_bookmarks()
             self._modes.data_grid.fill_view_with_top()
 
-    def mode_change(self):
+    def _mode_change(self):
         """Change playing mode alias used as playing mode identity."""
         if self._modes is None or self._modes.frame is None:
             tkinter.messagebox.showinfo(
@@ -1699,7 +1699,7 @@ class Calculator(Bindings):
             self._modes.data_grid.clear_bookmarks()
             self._modes.data_grid.fill_view_with_top()
 
-    def calculate(self):
+    def _calculate(self):
         """Calulate player performances from games selected by rule."""
         tab = self._selectors_apply(EventSpec.menu_calculate_calculate)
         if not tab:
@@ -1707,7 +1707,7 @@ class Calculator(Bindings):
         self._rule_tabs[tab].calulate_performances_for_rule()
         return
 
-    def save(self):
+    def _save(self):
         """Save calculted player performances from games selected by rule."""
         tab = self._selectors_apply(EventSpec.menu_calculate_save)
         if not tab:

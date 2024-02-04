@@ -17,7 +17,6 @@ authors = [
 description = "Calculate player performances in chess games."
 classifiers = [
     "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -46,7 +45,18 @@ Repository = "https://github.com/RogerMarsh/chesscalc.git"
 packages = [
     "chesscalc",
     "chesscalc.core",
+    "chesscalc.basecore",
+    "chesscalc.apsw",
+    "chesscalc.berkeleydb",
+    "chesscalc.db",
+    "chesscalc.db_tkinter",
+    "chesscalc.dpt",
+    "chesscalc.lmdb",
+    "chesscalc.sqlite",
+    "chesscalc.unqlite",
+    "chesscalc.vedis",
     "chesscalc.gui",
+    "chesscalc.shared",
     "chesscalc.legacy",
     "chesscalc.legacy.gui",
     "chesscalc.legacy.core",

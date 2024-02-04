@@ -271,12 +271,7 @@ class Calculate:
         person_list = database.recordlist_nil(filespec.PLAYER_FILE_DEF)
         game = performancerecord.GameDBrecord()
         player = performancerecord.PlayerDBrecord()
-        cursor = database.database_cursor(
-            filespec.GAME_FILE_DEF,
-            None,
-            recordset=self.selected_games,
-        )
-        cursor.recordset.reset_current_segment()
+        cursor = self.selected_games.create_recordsetbase_cursor()
         while True:
             record = cursor.next()
             if record is None:
@@ -288,9 +283,7 @@ class Calculate:
                     filespec.PERSON_ALIAS_FIELD_DEF,
                     key=database.encode_record_selector(key),
                 )
-                player_cursor = database.database_cursor(
-                    filespec.PLAYER_FILE_DEF, None, recordset=player_list
-                )
+                player_cursor = player_list.create_recordsetbase_cursor()
                 try:
                     record = player_cursor.first()
                     if record is None:
@@ -304,17 +297,11 @@ class Calculate:
                                 player.value.alias
                             ),
                         )
-                        alias_cursor = database.database_cursor(
-                            filespec.PLAYER_FILE_DEF,
-                            None,
-                            recordset=alias_list,
+                        record = (
+                            alias_list.create_recordsetbase_cursor().first()
                         )
-                        try:
-                            record = alias_cursor.first()
-                            if record is None:
-                                continue
-                        finally:
-                            alias_cursor.close()
+                        if record is None:
+                            continue
                         player.load_record(record)
                     person_list.place_record_number(player.key.pack())
                 finally:
@@ -359,7 +346,6 @@ class Calculate:
         """
         database = self._database
         encode_record_selector = database.encode_record_selector
-        database_cursor = database.database_cursor
         recordlist_key = database.recordlist_key
         recordlist_nil = database.recordlist_nil
         if self.selected_games is None and self.selected_players is None:
@@ -368,12 +354,7 @@ class Calculate:
         selected_games = self.selected_games
         person_record = performancerecord.PlayerDBrecord()
         game_record = performancerecord.GameDBrecord()
-        person_cursor = database_cursor(
-            filespec.PLAYER_FILE_DEF,
-            None,
-            recordset=self.selected_players,
-        )
-        person_cursor.recordset.reset_current_segment()
+        person_cursor = self.selected_players.create_recordsetbase_cursor()
         while True:
             record = person_cursor.next()
             if record is None:
@@ -388,9 +369,7 @@ class Calculate:
                 key=encode_record_selector(person_record.value.identity),
             )
             person_games &= selected_games
-            game_cursor = database_cursor(
-                filespec.GAME_FILE_DEF, None, recordset=person_games
-            )
+            game_cursor = person_games.create_recordsetbase_cursor()
             while True:
                 record = game_cursor.next()
                 if record is None:
@@ -407,10 +386,8 @@ class Calculate:
                         filespec.PERSON_ALIAS_FIELD_DEF,
                         key=encode_record_selector(game_player),
                     )
-                    opponent_cursor = database_cursor(
-                        filespec.PLAYER_FILE_DEF,
-                        None,
-                        recordset=person_opponent,
+                    opponent_cursor = (
+                        person_opponent.create_recordsetbase_cursor()
                     )
                     record = opponent_cursor.first()
                     if record is None:
@@ -450,7 +427,6 @@ class Calculate:
         game_record = performancerecord.GameDBrecord()
         database = self._database
         encode_record_selector = database.encode_record_selector
-        database_cursor = database.database_cursor
         recordlist_key = database.recordlist_key
         recordlist_nil = database.recordlist_nil
         person_list = recordlist_key(
@@ -458,9 +434,7 @@ class Calculate:
             filespec.PLAYER_IDENTITY_FIELD_DEF,
             key=encode_record_selector(self._player_identity),
         )
-        cursor = database_cursor(
-            filespec.PLAYER_FILE_DEF, None, recordset=person_list
-        )
+        cursor = person_list.create_recordsetbase_cursor()
         person_record.load_record(cursor.first())
 
         # Create list again based on alias, which is sometimes same as
@@ -478,10 +452,7 @@ class Calculate:
                 break
             playerset |= person_list
             person_connected = recordlist_nil(filespec.PLAYER_FILE_DEF)
-            person_cursor = database_cursor(
-                filespec.PLAYER_FILE_DEF, None, recordset=person_list
-            )
-            person_cursor.recordset.reset_current_segment()
+            person_cursor = person_list.create_recordsetbase_cursor()
             while True:
                 record = person_cursor.next()
                 if record is None:
@@ -494,9 +465,7 @@ class Calculate:
                     key=encode_record_selector(person_record.value.identity),
                 )
                 person_games &= selected_games
-                game_cursor = database_cursor(
-                    filespec.GAME_FILE_DEF, None, recordset=person_games
-                )
+                game_cursor = person_games.create_recordsetbase_cursor()
                 while True:
                     record = game_cursor.next()
                     if record is None:
@@ -513,10 +482,8 @@ class Calculate:
                             filespec.PERSON_ALIAS_FIELD_DEF,
                             key=encode_record_selector(game_player),
                         )
-                        opponent_cursor = database_cursor(
-                            filespec.PLAYER_FILE_DEF,
-                            None,
-                            recordset=person_opponent,
+                        opponent_cursor = (
+                            person_opponent.create_recordsetbase_cursor()
                         )
                         record = opponent_cursor.first()
                         if record is None:
@@ -615,15 +582,17 @@ class Calculate:
         game_record = performancerecord.GameDBrecord()
         database = self._database
         encode_record_selector = database.encode_record_selector
-        database_cursor = database.database_cursor
         recordlist_key = database.recordlist_key
         recordlist_nil = database.recordlist_nil
+        helpers = (
+            person_record,
+            game_record,
+            recordlist_key,
+            encode_record_selector,
+        )
         for playerset in self.playersets:
             convergent = False
-            person_cursor = database_cursor(
-                filespec.PLAYER_FILE_DEF, None, recordset=playerset
-            )
-            person_cursor.recordset.reset_current_segment()
+            person_cursor = playerset.create_recordsetbase_cursor()
             while True:
                 if convergent:
                     break
@@ -642,47 +611,15 @@ class Calculate:
                     )
                     & selected_games
                 )
-                game_cursor = database_cursor(
-                    filespec.GAME_FILE_DEF, None, recordset=person_games
+                _add_opponents_of_person_in_games_to_players(
+                    person_opponents,
+                    person_games,
+                    alias_index_key,
+                    person_alias,
+                    helpers,
                 )
-                while True:
-                    record = game_cursor.next()
-                    if record is None:
-                        break
-                    game_record.load_record(record)
-                    for game_player in (
-                        game_record.value.black_key(),
-                        game_record.value.white_key(),
-                    ):
-                        if game_player == alias_index_key:
-                            continue
-                        game_opponent = recordlist_key(
-                            filespec.PLAYER_FILE_DEF,
-                            filespec.PERSON_ALIAS_FIELD_DEF,
-                            key=encode_record_selector(game_player),
-                        )
-                        game_opponent_cursor = database_cursor(
-                            filespec.PLAYER_FILE_DEF,
-                            None,
-                            recordset=game_opponent,
-                        )
-                        record = game_opponent_cursor.first()
-                        if record is None:
-                            continue
-                        person_record.load_record(record)
-                        if person_record.value.alias == person_alias:
-                            continue
-                        game_opponent = recordlist_key(
-                            filespec.PLAYER_FILE_DEF,
-                            filespec.PLAYER_UNIQUE_FIELD_DEF,
-                            key=encode_record_selector(
-                                person_record.value.alias
-                            ),
-                        )
-                        person_opponents |= game_opponent
-                        del game_opponent, game_opponent_cursor
-                opponent_cursor = database_cursor(
-                    filespec.PLAYER_FILE_DEF, None, recordset=person_opponents
+                opponent_cursor = (
+                    person_opponents.create_recordsetbase_cursor()
                 )
                 while True:
                     if convergent:
@@ -706,48 +643,59 @@ class Calculate:
                         )
                         & selected_games
                     )
-                    game_cursor = database_cursor(
-                        filespec.GAME_FILE_DEF, None, recordset=opponent_games
+                    _add_opponents_of_person_in_games_to_players(
+                        opponent_opponents,
+                        opponent_games,
+                        alias_index_key,
+                        person_alias,
+                        helpers,
                     )
-                    while True:
-                        record = game_cursor.next()
-                        if record is None:
-                            break
-                        game_record.load_record(record)
-                        for game_player in (
-                            game_record.value.black_key(),
-                            game_record.value.white_key(),
-                        ):
-                            if game_player == alias_index_key:
-                                continue
-                            game_opponent = recordlist_key(
-                                filespec.PLAYER_FILE_DEF,
-                                filespec.PERSON_ALIAS_FIELD_DEF,
-                                key=encode_record_selector(game_player),
-                            )
-                            game_opponent_cursor = database_cursor(
-                                filespec.PLAYER_FILE_DEF,
-                                None,
-                                recordset=game_opponent,
-                            )
-                            record = game_opponent_cursor.first()
-                            if record is None:
-                                continue
-                            person_record.load_record(record)
-                            if person_record.value.alias == person_alias:
-                                continue
-                            game_opponent = recordlist_key(
-                                filespec.PLAYER_FILE_DEF,
-                                filespec.PLAYER_UNIQUE_FIELD_DEF,
-                                key=encode_record_selector(
-                                    person_record.value.alias
-                                ),
-                            )
-                            opponent_opponents |= game_opponent
                     if (person_opponents & opponent_opponents).count_records():
                         convergent = True
                         break
             self.convergent.append(convergent)
+
+
+def _add_opponents_of_person_in_games_to_players(
+    players, games, person_index_key, person_alias, helpers
+):
+    """Add opponents of person in games to players."""
+    (
+        person_record,
+        game_record,
+        recordlist_key,
+        encode_record_selector,
+    ) = helpers
+    cursor = games.create_recordsetbase_cursor()
+    while True:
+        record = cursor.next()
+        if record is None:
+            break
+        game_record.load_record(record)
+        for game_player in (
+            game_record.value.black_key(),
+            game_record.value.white_key(),
+        ):
+            if game_player == person_index_key:
+                continue
+            game_opponent = recordlist_key(
+                filespec.PLAYER_FILE_DEF,
+                filespec.PERSON_ALIAS_FIELD_DEF,
+                key=encode_record_selector(game_player),
+            )
+            game_opponent_cursor = game_opponent.create_recordsetbase_cursor()
+            record = game_opponent_cursor.first()
+            if record is None:
+                continue
+            person_record.load_record(record)
+            if person_record.value.alias == person_alias:
+                continue
+            game_opponent = recordlist_key(
+                filespec.PLAYER_FILE_DEF,
+                filespec.PLAYER_UNIQUE_FIELD_DEF,
+                key=encode_record_selector(person_record.value.alias),
+            )
+            players |= game_opponent
 
 
 def _get_games_for_identity(
@@ -770,7 +718,7 @@ def _get_games_for_identity(
         alias_field,
         key=database.encode_record_selector(identity),
     )
-    cursor = database.database_cursor(file, None, recordset=recordlist)
+    cursor = recordlist.create_recordsetbase_cursor()
     games = database.recordlist_nil(filespec.GAME_FILE_DEF)
     try:
         while True:

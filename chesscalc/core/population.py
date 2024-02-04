@@ -38,14 +38,10 @@ class Population:
         self.measure = measure
         persons = self.persons
         encode_record_selector = database.encode_record_selector
-        database_cursor = database.database_cursor
         recordlist_key = database.recordlist_key
         person_record = performancerecord.PlayerDBrecord()
         game_record = performancerecord.GameDBrecord()
-        person_cursor = database_cursor(
-            filespec.PLAYER_FILE_DEF, None, recordset=playerset
-        )
-        person_cursor.recordset.reset_current_segment()
+        person_cursor = playerset.create_recordsetbase_cursor()
         while True:
             record = person_cursor.next()
             if record is None:
@@ -63,9 +59,7 @@ class Population:
             )
             opponents = persons[player_identity].opponents
             person_games &= games
-            game_cursor = database_cursor(
-                filespec.GAME_FILE_DEF, None, recordset=person_games
-            )
+            game_cursor = person_games.create_recordsetbase_cursor()
             while True:
                 record = game_cursor.next()
                 if record is None:
@@ -85,10 +79,8 @@ class Population:
                         filespec.PERSON_ALIAS_FIELD_DEF,
                         key=encode_record_selector(game_player),
                     )
-                    game_opponent_cursor = database_cursor(
-                        filespec.PLAYER_FILE_DEF,
-                        None,
-                        recordset=game_opponent,
+                    game_opponent_cursor = (
+                        game_opponent.create_recordsetbase_cursor()
                     )
                     record = game_opponent_cursor.first()
                     if record is None:
@@ -109,10 +101,8 @@ class Population:
                         filespec.PLAYER_UNIQUE_FIELD_DEF,
                         key=encode_record_selector(person_record.value.alias),
                     )
-                    game_opponent_cursor = database_cursor(
-                        filespec.PLAYER_FILE_DEF,
-                        None,
-                        recordset=game_opponent,
+                    game_opponent_cursor = (
+                        game_opponent.create_recordsetbase_cursor()
                     )
                     record = game_opponent_cursor.first()
                     if record is None:
@@ -126,12 +116,7 @@ class Population:
 
     def __deepcopy__(self, memo):
         """Return deep copy of self."""
-        newcopy = empty_copy(self)
-        newcopy.iterations = 0
-        newcopy.high_performance = None
-        newcopy.persons = copy.deepcopy(self.persons, memo)
-        newcopy.measure = self.measure
-        return newcopy
+        return deep_copy(self, memo)
 
     def do_iterations_until_stable(self, delta=0.000000000001):
         """Iterate until all performances vary by less tham delta.
@@ -166,15 +151,26 @@ class Population:
         self.high_performance = high_performance
 
 
-def empty_copy(obj):
-    """Return an empty instance of obj."""
+def deep_copy(obj, memo):
+    """Return a deep copy of obj.
 
-    class EmptyCopy(obj.__class__):
-        """Empty subclass which does not invoke superclass __init__()."""
+    Take a deep copy of obj.persons rather than do the file accesses in
+    obj.__init__() call.
+    """
+
+    class PartialCopyPopulation(obj.__class__):
+        """Subclass which does not invoke superclass __init__().
+
+        Bind all Population attributes except persons to initial objects.
+        """
 
         def __init__(self):
-            pass
+            """Initialize the attributes which do not need a deep copy."""
+            self.iterations = 0
+            self.high_performance = None
+            self.measure = obj.measure
 
-    newcopy = EmptyCopy()
+    newcopy = PartialCopyPopulation()
     newcopy.__class__ = obj.__class__
+    newcopy.persons = copy.deepcopy(obj.persons, memo)
     return newcopy
