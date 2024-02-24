@@ -35,8 +35,13 @@ from . import rule
 from . import ruleedit
 from . import ruleinsert
 from . import ruleshow
+from . import reportapply
+from . import reportmirror
 from ..core import identity
 from ..core import tab_from_selection
+from ..core import export
+from ..core import apply_identities
+from ..core import mirror_identities
 
 ExceptionHandler.set_application_name(APPLICATION_NAME)
 
@@ -143,6 +148,7 @@ class Calculator(Bindings):
         self._modes_tab = None
         self._calculations_tab = None
         self._rule_tabs = {}
+        self._report_tabs = {}
         self._games = None
         self._players = None
         self._persons = None
@@ -182,6 +188,8 @@ class Calculator(Bindings):
         menubar.add_cascade(label="Selectors", menu=menu4, underline=0)
         menu5 = tkinter.Menu(menubar, tearoff=False)
         menubar.add_cascade(label="Calculate", menu=menu5, underline=0)
+        menu6 = tkinter.Menu(menubar, tearoff=False)
+        menubar.add_cascade(label="Reports", menu=menu6, underline=0)
         menuh = tkinter.Menu(menubar, tearoff=False)
         menubar.add_cascade(label="Help", menu=menuh, underline=0)
         for menu, accelerator, function in (
@@ -191,7 +199,22 @@ class Calculator(Bindings):
             (menu1, EventSpec.menu_database_close, self._database_close),
             (menu1,) + _MENU_SEPARATOR,
             (menu1, EventSpec.menu_database_import, self._database_import),
-            (menu1, EventSpec.menu_database_verify, self._database_verify),
+            (
+                menu1,
+                EventSpec.menu_database_apply_aliases,
+                self._database_apply_aliases,
+            ),
+            (
+                menu1,
+                EventSpec.menu_database_mirror_identities,
+                self._database_mirror_identities,
+            ),
+            (menu1,) + _MENU_SEPARATOR,
+            (
+                menu1,
+                EventSpec.menu_database_export_identities,
+                self._database_export_identities,
+            ),
             (menu1,) + _MENU_SEPARATOR,
             (menu1, EventSpec.menu_database_delete, self._database_delete),
             (menu1,) + _MENU_SEPARATOR,
@@ -199,10 +222,13 @@ class Calculator(Bindings):
             (menu1,) + _MENU_SEPARATOR,
             (menu2,) + _MENU_SEPARATOR,
             (menu2, EventSpec.menu_player_identify, self._player_identify),
+            (menu2, EventSpec.menu_player_name_match, self._player_name_match),
             (menu2,) + _MENU_SEPARATOR,
             (menu2, EventSpec.menu_player_break, self._player_break),
             (menu2, EventSpec.menu_player_split, self._player_split),
             (menu2, EventSpec.menu_player_change, self._player_change),
+            (menu2,) + _MENU_SEPARATOR,
+            (menu2, EventSpec.menu_player_export, self._player_export),
             (menu2,) + _MENU_SEPARATOR,
             (menu3,) + _MENU_SEPARATOR,
             (menu3, EventSpec.menu_other_event_identify, self._event_identify),
@@ -210,6 +236,12 @@ class Calculator(Bindings):
             (menu3, EventSpec.menu_other_event_break, self._event_break),
             (menu3, EventSpec.menu_other_event_split, self._event_split),
             (menu3, EventSpec.menu_other_event_change, self._event_change),
+            (menu3,) + _MENU_SEPARATOR,
+            (
+                menu3,
+                EventSpec.menu_other_event_export_persons,
+                self._event_export_persons,
+            ),
             (menu3,) + _MENU_SEPARATOR,
             (menu31,) + _MENU_SEPARATOR,
             (menu31, EventSpec.menu_other_time_identify, self._time_identify),
@@ -241,6 +273,11 @@ class Calculator(Bindings):
             (menu5,) + _MENU_SEPARATOR,
             (menu5, EventSpec.menu_calculate_save, self._save),
             (menu5,) + _MENU_SEPARATOR,
+            (menu6,) + _MENU_SEPARATOR,
+            (menu6, EventSpec.menu_report_save, self._report_save),
+            (menu6,) + _MENU_SEPARATOR,
+            (menu6, EventSpec.menu_report_close, self._report_close),
+            (menu6,) + _MENU_SEPARATOR,
             (menuh,) + _MENU_SEPARATOR,
             (menuh, EventSpec.menu_help_widget, self._help_widget),
             (menuh,) + _MENU_SEPARATOR,
@@ -272,7 +309,6 @@ class Calculator(Bindings):
         self._games_tab.grid_rowconfigure(0, weight=1)
         self._games_tab.grid_columnconfigure(0, weight=1)
         self._games = games.Games(self._games_tab, self.database)
-        self._games.frame.grid(column=0, row=0, sticky=tkinter.NSEW)
 
         # Second tab: will be list of unidentified players and list of
         # players with their identifiers, in two columns (unlike Results).
@@ -281,7 +317,6 @@ class Calculator(Bindings):
         self._players_tab.grid_rowconfigure(0, weight=1)
         self._players_tab.grid_columnconfigure(0, weight=1)
         self._players = players.Players(self._players_tab, self.database)
-        self._players.frame.grid(column=0, row=0, sticky=tkinter.NSEW)
 
         # Third tab: will be a list of players with their identifiers.
         self._persons_tab = tkinter.ttk.Frame(master=notebook)
@@ -289,7 +324,6 @@ class Calculator(Bindings):
         self._persons_tab.grid_rowconfigure(0, weight=1)
         self._persons_tab.grid_columnconfigure(0, weight=1)
         self._persons = persons.Persons(self._persons_tab, self.database)
-        self._persons.frame.grid(column=0, row=0, sticky=tkinter.NSEW)
 
         # Fourth tab: will be a list of events.
         self._events_tab = tkinter.ttk.Frame(master=notebook)
@@ -297,7 +331,6 @@ class Calculator(Bindings):
         self._events_tab.grid_rowconfigure(0, weight=1)
         self._events_tab.grid_columnconfigure(0, weight=1)
         self._events = events.Events(self._events_tab, self.database)
-        self._events.frame.grid(column=0, row=0, sticky=tkinter.NSEW)
 
         # Fifth tab: will be a list of time controls.
         self._time_limits_tab = tkinter.ttk.Frame(master=notebook)
@@ -307,7 +340,6 @@ class Calculator(Bindings):
         self._time_controls = timecontrols.TimeControls(
             self._time_limits_tab, self.database
         )
-        self._time_controls.frame.grid(column=0, row=0, sticky=tkinter.NSEW)
 
         # Sixth tab: will be a list of playing modes.
         self._modes_tab = tkinter.ttk.Frame(master=notebook)
@@ -315,7 +347,6 @@ class Calculator(Bindings):
         self._modes_tab.grid_rowconfigure(0, weight=1)
         self._modes_tab.grid_columnconfigure(0, weight=1)
         self._modes = modes.Modes(self._modes_tab, self.database)
-        self._modes.frame.grid(column=0, row=0, sticky=tkinter.NSEW)
 
         # Seventh tab: will be a list of performance calculation queries.
         self._calculations_tab = tkinter.ttk.Frame(master=notebook)
@@ -325,7 +356,6 @@ class Calculator(Bindings):
         self._selectors = selectors.Selectors(
             self._calculations_tab, self.database
         )
-        self._selectors.frame.grid(column=0, row=0, sticky=tkinter.NSEW)
 
         # Enable tab traversal.
         notebook.enable_traversal()
@@ -353,8 +383,151 @@ class Calculator(Bindings):
         self._quit_database()
         self.widget.winfo_toplevel().destroy()
 
-    def _database_verify(self):
-        """To be implemented or absorbed in _database_import."""
+    def _database_apply_aliases(self):
+        """Verify imported player identifications and apply if consistent."""
+        title = EventSpec.menu_database_apply_aliases[1]
+        if self.database is None:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=title,
+                message="No performance calculation database open",
+            )
+            return None
+        if self._database_class is None:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=title,
+                message="Database interface not defined",
+            )
+            return None
+        conf = configuration.Configuration()
+        initdir = conf.get_configuration_value(
+            constants.RECENT_IMPORT_DIRECTORY
+        )
+        import_file = tkinter.filedialog.askopenfilename(
+            parent=self.widget,
+            title=title,
+            initialdir=initdir,
+        )
+        if not import_file:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                message="Import of person identifications cancelled",
+                title=title,
+            )
+            return False
+        conf.set_configuration_value(
+            constants.RECENT_IMPORT_DIRECTORY,
+            conf.convert_home_directory_to_tilde(os.path.dirname(import_file)),
+        )
+        # gives time for destruction of dialogue and widget refresh
+        # does nothing for obscuring and revealing application later
+        self.widget.after_idle(
+            self.try_command(
+                self._verify_and_apply_person_identities, self.widget
+            ),
+            import_file,
+        )
+        return True
+
+    def _database_mirror_identities(self):
+        """Verify imported player identifications and mirror if consistent."""
+        title = EventSpec.menu_database_mirror_identities[1]
+        if self.database is None:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=title,
+                message="No performance calculation database open",
+            )
+            return None
+        if self._database_class is None:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=title,
+                message="Database interface not defined",
+            )
+            return None
+        conf = configuration.Configuration()
+        initdir = conf.get_configuration_value(
+            constants.RECENT_IMPORT_DIRECTORY
+        )
+        import_file = tkinter.filedialog.askopenfilename(
+            parent=self.widget,
+            title=title,
+            initialdir=initdir,
+        )
+        if not import_file:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                message="Import of mirror identifications cancelled",
+                title=title,
+            )
+            return False
+        conf.set_configuration_value(
+            constants.RECENT_IMPORT_DIRECTORY,
+            conf.convert_home_directory_to_tilde(os.path.dirname(import_file)),
+        )
+        # gives time for destruction of dialogue and widget refresh
+        # does nothing for obscuring and revealing application later
+        self.widget.after_idle(
+            self.try_command(
+                self._verify_and_mirror_person_identities, self.widget
+            ),
+            import_file,
+        )
+        return True
+
+    def _database_export_identities(self):
+        """Export player identifications."""
+        title = EventSpec.menu_database_export_identities[1]
+        if self.database is None:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=title,
+                message="No performance calculation database open",
+            )
+            return None
+        if self._database_class is None:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=title,
+                message="Database interface not defined",
+            )
+            return None
+        exporter = export.ExportIdentities(self.database)
+        exporter.prepare_export_data()
+        serialized_data = exporter.export_repr()
+        conf = configuration.Configuration()
+        initdir = conf.get_configuration_value(
+            constants.RECENT_EXPORT_DIRECTORY
+        )
+        export_file = tkinter.filedialog.asksaveasfilename(
+            parent=self.widget,
+            title=title,
+            initialdir=initdir,
+            initialfile="mirror-identities.txt",
+        )
+        if not export_file:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                message="Export of mirror cancelled",
+                title=title,
+            )
+            return False
+        conf.set_configuration_value(
+            constants.RECENT_EXPORT_DIRECTORY,
+            conf.convert_home_directory_to_tilde(os.path.dirname(export_file)),
+        )
+        # gives time for destruction of dialogue and widget refresh
+        # does nothing for obscuring and revealing application later
+        # Why? the work is in the prepare_export_data() call earlier.
+        # Might make sense if the exporter object were the argument.
+        self.widget.after_idle(
+            self.try_command(export.write_export_file, self.widget),
+            export_file,
+            serialized_data,
+        )
+        return True
 
     def _database_close(self):
         """Close performance calculation database."""
@@ -377,7 +550,7 @@ class Calculator(Bindings):
                 message="Close performance calculation database",
             )
             if dlg == tkinter.messagebox.YES:
-                self._database_close()
+                self._close_database()
                 self.database = None
                 self.set_error_file_name(None)
                 # return False to inhibit context switch if invoked from close
@@ -721,7 +894,7 @@ class Calculator(Bindings):
                 ),
                 title=title,
             )
-            self._database_close()
+            self._close_database()
             self.database = None
 
     def _open_database(self, database_folder):
@@ -744,7 +917,7 @@ class Calculator(Bindings):
         self.database_folder = database_folder
         self.set_error_file_name(os.path.join(self.database_folder, ERROR_LOG))
 
-    def _database_close(self):
+    def _close_database(self):
         """Close performance calculation database."""
         if self.database is None:
             return
@@ -755,7 +928,7 @@ class Calculator(Bindings):
         """Quit performance calculation database."""
         if self.database is None:
             return
-        self._database_close()
+        self._close_database()
         self.database = None
 
     def _database_import(self):
@@ -814,7 +987,7 @@ class Calculator(Bindings):
         """Import games to open database."""
         self._set_import_subprocess()  # raises exception if already active
         self._pgn_directory = pgn_directory
-        self._games.games_grid.bind_off()
+        self._games.data_grid.bind_off()
         self._players.players_grid.bind_off()
         self._players.persons_grid.bind_off()
         self._persons.data_grid.bind_off()
@@ -857,42 +1030,42 @@ class Calculator(Bindings):
             self.widget.after(1000, self._import_pgnfiles_join)
             return
         self.database.open_database()
-        self._games.games_grid.bind_on()
+        self._games.data_grid.bind_on()
         self._players.players_grid.bind_on()
         self._players.persons_grid.bind_on()
         self._persons.data_grid.bind_on()
         self._selectors.data_grid.bind_on()
-        self._games.games_grid.fill_view_with_top()
+        self._games.data_grid.fill_view_with_top()
 
-    def _player_identify(self):
-        """Identify selected and bookmarked new players as selected person."""
+    def _is_player_tab_visible(self, title, prefix):
+        """Return True if player tab is visible or False if not."""
         if self._players is None or self._players.frame is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
-                title=EventSpec.menu_player_identify[1],
-                message="Identify player as person not available at present",
+                title=title,
+                message=" ".join((prefix, "not available at present")),
             )
-            return
+            return False
         if self._players.players_grid is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
-                title=EventSpec.menu_player_identify[1],
+                title=title,
                 message="List of new players not available at present",
             )
-            return
+            return False
         if self._players.persons_grid is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
-                title=EventSpec.menu_player_identify[1],
+                title=title,
                 message="List of identified persons not available at present",
             )
-            return
+            return False
         if self._notebook.index(self._players_tab) != self._notebook.index(
             self._notebook.select()
         ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
-                title=EventSpec.menu_player_identify[1],
+                title=title,
                 message="".join(
                     (
                         "List of new players is ",
@@ -900,48 +1073,84 @@ class Calculator(Bindings):
                     )
                 ),
             )
+            return False
+        return True
+
+    def _player_identify(self):
+        """Identify selected and bookmarked new players as selected person."""
+        if not self._is_player_tab_visible(
+            EventSpec.menu_player_identify[1], "Identify player as person"
+        ):
             return
         if self._players.identify():
             self._players.players_grid.clear_selections()
             self._players.players_grid.clear_bookmarks()
+            self._players.persons_grid.clear_selections()
             self._players.players_grid.fill_view_with_top()
             self._players.persons_grid.fill_view_with_top()
             self._persons.data_grid.fill_view_with_top()
 
-    def _player_break(self):
-        """Break indentification of selected and bookmarked person aliases."""
-        if self._persons is None or self._persons.frame is None:
+    def _player_name_match(self):
+        """Identify selected and bookmarked new players as selected person."""
+        if not self._is_player_tab_visible(
+            EventSpec.menu_player_name_match[1], "Identify players by name"
+        ):
+            return
+        if self._players.identify_by_name():
+            self._players.players_grid.clear_selections()
+            self._players.players_grid.clear_bookmarks()
+            self._players.persons_grid.clear_selections()
+            self._players.players_grid.fill_view_with_top()
+            self._players.persons_grid.fill_view_with_top()
+            self._persons.data_grid.fill_view_with_top()
+
+    def _is_instance_tab_visible(self, instance, tab, name, title, prefix):
+        """Return True if person tab is visible or False if not."""
+        if instance is None or instance.frame is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
-                title=EventSpec.menu_player_break[1],
-                message="".join(
-                    (
-                        "Break selected person aliases ",
-                        "not available at present",
-                    )
-                ),
+                title=title,
+                message=" ".join((prefix, "not available at present")),
             )
-            return
-        if self._persons.data_grid is None:
+            return False
+        if instance.data_grid is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
-                title=EventSpec.menu_player_break[1],
-                message="List of identified persons not available at present",
+                title=title,
+                message=name.join(("List of ", " not available at present")),
             )
-            return
-        if self._notebook.index(self._persons_tab) != self._notebook.index(
+            return False
+        if self._notebook.index(tab) != self._notebook.index(
             self._notebook.select()
         ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
-                title=EventSpec.menu_player_break[1],
-                message="".join(
+                title=title,
+                message=name.join(
                     (
-                        "List of identified persons is ",
-                        "not the visible tab at present",
+                        "List of ",
+                        " is not the visible tab at present",
                     )
                 ),
             )
+            return False
+        return True
+
+    def _is_person_tab_visible(self, title, prefix):
+        """Return True if person tab is visible or False if not."""
+        return self._is_instance_tab_visible(
+            self._persons,
+            self._persons_tab,
+            "identified persons",
+            title,
+            prefix,
+        )
+
+    def _player_break(self):
+        """Break indentification of selected and bookmarked person aliases."""
+        if not self._is_person_tab_visible(
+            EventSpec.menu_player_break[1], "Break selected person aliases"
+        ):
             return
         if self._persons.break_selected():
             self._players.persons_grid.clear_selections()
@@ -954,33 +1163,9 @@ class Calculator(Bindings):
 
     def _player_split(self):
         """Split indentification of all aliases of selected person alias."""
-        if self._persons is None or self._persons.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_player_split[1],
-                message="Split all person aliases not available at present",
-            )
-            return
-        if self._persons.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_player_split[1],
-                message="List of identified persons not available at present",
-            )
-            return
-        if self._notebook.index(self._persons_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_person_tab_visible(
+            EventSpec.menu_player_split[1], "Split all person aliases"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_player_split[1],
-                message="".join(
-                    (
-                        "List of identified persons is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._persons.split_all():
             self._players.persons_grid.clear_selections()
@@ -993,35 +1178,25 @@ class Calculator(Bindings):
 
     def _player_change(self):
         """Change person alias used as person identity."""
-        if self._persons is None or self._persons.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_player_split[1],
-                message="Change person identity not available at present",
-            )
-            return
-        if self._persons.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_player_split[1],
-                message="List of identified persons not available at present",
-            )
-            return
-        if self._notebook.index(self._persons_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_person_tab_visible(
+            EventSpec.menu_player_change[1], "Change person identity"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_player_split[1],
-                message="".join(
-                    (
-                        "List of identified persons is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._persons.change_identity():
+            self._players.persons_grid.clear_selections()
+            self._players.persons_grid.clear_bookmarks()
+            self._persons.data_grid.clear_selections()
+            self._persons.data_grid.clear_bookmarks()
+            self._players.persons_grid.fill_view_with_top()
+            self._persons.data_grid.fill_view_with_top()
+
+    def _player_export(self):
+        """Export aliases for known players in selection and bookmarks."""
+        if not self._is_person_tab_visible(
+            EventSpec.menu_player_export[1], "Export identified person"
+        ):
+            return
+        if self._persons.export_selected_players():
             self._players.persons_grid.clear_selections()
             self._players.persons_grid.clear_bookmarks()
             self._persons.data_grid.clear_selections()
@@ -1121,7 +1296,7 @@ class Calculator(Bindings):
             self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
         except tkinter.TclError as exc:
             self._rule_tabs[workarounds.winfo_pathname(frame, exc)] = tab
-        self._notebook.add(frame, text="Show Rule")
+        self._notebook.add(frame, text="Show " + tab.get_rule_name_from_tab())
         self._selectors.data_grid.clear_selections()
         self._selectors.data_grid.clear_bookmarks()
         self._selectors.data_grid.fill_view_with_top()
@@ -1145,7 +1320,7 @@ class Calculator(Bindings):
             self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
         except tkinter.TclError as exc:
             self._rule_tabs[workarounds.winfo_pathname(frame, exc)] = tab
-        self._notebook.add(frame, text="Edit Rule")
+        self._notebook.add(frame, text="Edit " + tab.get_rule_name_from_tab())
         self._selectors.data_grid.clear_selections()
         self._selectors.data_grid.clear_bookmarks()
         self._selectors.data_grid.fill_view_with_top()
@@ -1260,35 +1435,17 @@ class Calculator(Bindings):
             return False
         return True
 
+    def _is_event_tab_visible(self, title, prefix):
+        """Return True if event tab is visible or False if not."""
+        return self._is_instance_tab_visible(
+            self._events, self._events_tab, "events", title, prefix
+        )
+
     def _event_identify(self):
         """Identify selected and bookmarked events as selected event."""
-        if self._events is None or self._events.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_identify[1],
-                message="Identify event not available at present",
-            )
-            return
-        if self._events.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_identify[1],
-                message="List of events not available at present",
-            )
-            return
-        if self._notebook.index(self._events_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_event_tab_visible(
+            EventSpec.menu_other_event_identify[1], "Identify event"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_identify[1],
-                message="".join(
-                    (
-                        "List of events is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._events.identify():
             self._events.data_grid.clear_selections()
@@ -1297,38 +1454,9 @@ class Calculator(Bindings):
 
     def _event_break(self):
         """Break indentification of selected and bookmarked event aliases."""
-        if self._events is None or self._events.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_break[1],
-                message="".join(
-                    (
-                        "Break event aliases ",
-                        "not available at present",
-                    )
-                ),
-            )
-            return
-        if self._events.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_break[1],
-                message="List of events not available at present",
-            )
-            return
-        if self._notebook.index(self._events_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_event_tab_visible(
+            EventSpec.menu_other_event_break[1], "Break event aliases"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_break[1],
-                message="".join(
-                    (
-                        "List of events is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._events.break_selected():
             self._events.data_grid.clear_selections()
@@ -1337,33 +1465,9 @@ class Calculator(Bindings):
 
     def _event_split(self):
         """Split indentification of all aliases of selected event alias."""
-        if self._events is None or self._events.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_split[1],
-                message="Split all events not available at present",
-            )
-            return
-        if self._events.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_split[1],
-                message="List of events not available at present",
-            )
-            return
-        if self._notebook.index(self._events_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_event_tab_visible(
+            EventSpec.menu_other_event_split[1], "Split all events"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_split[1],
-                message="".join(
-                    (
-                        "List of events is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._events.split_all():
             self._events.data_grid.clear_selections()
@@ -1372,68 +1476,46 @@ class Calculator(Bindings):
 
     def _event_change(self):
         """Change event alias used as event identity."""
-        if self._events is None or self._events.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_change[1],
-                message="Change event identity not available at present",
-            )
-            return
-        if self._events.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_change[1],
-                message="List of events not available at present",
-            )
-            return
-        if self._notebook.index(self._events_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_event_tab_visible(
+            EventSpec.menu_other_event_change[1], "Change event identity"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_event_change[1],
-                message="".join(
-                    (
-                        "List of events is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._events.change_identity():
             self._events.data_grid.clear_selections()
             self._events.data_grid.clear_bookmarks()
             self._events.data_grid.fill_view_with_top()
 
+    def _event_export_persons(self):
+        """Export known players for events in selection and bookmarks.
+
+        Aliases for the known players are included.
+
+        """
+        if not self._is_event_tab_visible(
+            EventSpec.menu_other_event_export_persons[1],
+            "Export event persons",
+        ):
+            return
+        if self._events.export_players_in_selected_events():
+            self._events.data_grid.clear_selections()
+            self._events.data_grid.clear_bookmarks()
+            self._events.data_grid.fill_view_with_top()
+
+    def _is_time_tab_visible(self, title, prefix):
+        """Return True if time control tab is visible or False if not."""
+        return self._is_instance_tab_visible(
+            self._time_controls,
+            self._time_limits_tab,
+            "time controls",
+            title,
+            prefix,
+        )
+
     def _time_identify(self):
         """Identify bookmarked time controls as selected time control."""
-        if self._time_controls is None or self._time_controls.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_identify[1],
-                message="Identify time control not available at present",
-            )
-            return
-        if self._time_controls.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_identify[1],
-                message="List of time controls not available at present",
-            )
-            return
-        if self._notebook.index(self._time_limits_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_time_tab_visible(
+            EventSpec.menu_other_time_identify[1], "Identify time control"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_identify[1],
-                message="".join(
-                    (
-                        "List of time controls is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._time_controls.identify():
             self._time_controls.data_grid.clear_selections()
@@ -1442,38 +1524,9 @@ class Calculator(Bindings):
 
     def _time_break(self):
         """Break indentity of selected and bookmarked time control aliases."""
-        if self._time_controls is None or self._time_controls.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_break[1],
-                message="".join(
-                    (
-                        "Break time control aliases ",
-                        "not available at present",
-                    )
-                ),
-            )
-            return
-        if self._time_controls.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_break[1],
-                message="List of time controls not available at present",
-            )
-            return
-        if self._notebook.index(self._time_limits_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_time_tab_visible(
+            EventSpec.menu_other_time_break[1], "Break time control aliases"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_break[1],
-                message="".join(
-                    (
-                        "List of time controls is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._time_controls.break_selected():
             self._time_controls.data_grid.clear_selections()
@@ -1482,33 +1535,9 @@ class Calculator(Bindings):
 
     def _time_split(self):
         """Split identity of all aliases of selected time control."""
-        if self._time_controls is None or self._time_controls.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_split[1],
-                message="Split all time controls not available at present",
-            )
-            return
-        if self._time_controls.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_split[1],
-                message="List of time controls not available at present",
-            )
-            return
-        if self._notebook.index(self._time_limits_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_time_tab_visible(
+            EventSpec.menu_other_time_split[1], "Split all time controls"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_split[1],
-                message="".join(
-                    (
-                        "List of time controls is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._time_controls.split_all():
             self._time_controls.data_grid.clear_selections()
@@ -1517,70 +1546,26 @@ class Calculator(Bindings):
 
     def _time_change(self):
         """Change time control alias used as time control identity."""
-        if self._time_controls is None or self._time_controls.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_change[1],
-                message="".join(
-                    ("Change time control identity not available at present",)
-                ),
-            )
-            return
-        if self._time_controls.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_change[1],
-                message="List of time controls not available at present",
-            )
-            return
-        if self._notebook.index(self._time_limits_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_time_tab_visible(
+            EventSpec.menu_other_time_change[1], "Change time control identity"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_time_change[1],
-                message="".join(
-                    (
-                        "List of time controls is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._time_controls.change_identity():
             self._time_controls.data_grid.clear_selections()
             self._time_controls.data_grid.clear_bookmarks()
             self._time_controls.data_grid.fill_view_with_top()
 
+    def _is_mode_tab_visible(self, title, prefix):
+        """Return True if mode tab is visible or False if not."""
+        return self._is_instance_tab_visible(
+            self._modes, self._modes_tab, "playing modes", title, prefix
+        )
+
     def _mode_identify(self):
         """Identify bookmarked playing modes as selected playing mode."""
-        if self._modes is None or self._modes.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_identify[1],
-                message="Identify playing mode not available at present",
-            )
-            return
-        if self._modes.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_identify[1],
-                message="List of playing modes not available at present",
-            )
-            return
-        if self._notebook.index(self._modes_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_mode_tab_visible(
+            EventSpec.menu_other_mode_identify[1], "Identify playing mode"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_identify[1],
-                message="".join(
-                    (
-                        "List of playing modes is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._modes.identify():
             self._modes.data_grid.clear_selections()
@@ -1589,38 +1574,9 @@ class Calculator(Bindings):
 
     def _mode_break(self):
         """Break indentity of selected and bookmarked playing mode aliases."""
-        if self._modes is None or self._modes.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_break[1],
-                message="".join(
-                    (
-                        "Break playing mode aliases ",
-                        "not available at present",
-                    )
-                ),
-            )
-            return
-        if self._modes.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_break[1],
-                message="List of playing modes not available at present",
-            )
-            return
-        if self._notebook.index(self._modes_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_mode_tab_visible(
+            EventSpec.menu_other_mode_break[1], "Break playing mode aliases"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_break[1],
-                message="".join(
-                    (
-                        "List of playing modes is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._modes.break_selected():
             self._modes.data_grid.clear_selections()
@@ -1629,33 +1585,9 @@ class Calculator(Bindings):
 
     def _mode_split(self):
         """Split indentity of playing modes of selected playing mode alias."""
-        if self._modes is None or self._modes.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_split[1],
-                message="Split all playing modes not available at present",
-            )
-            return
-        if self._modes.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_split[1],
-                message="List of playing modes not available at present",
-            )
-            return
-        if self._notebook.index(self._modes_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_mode_tab_visible(
+            EventSpec.menu_other_mode_split[1], "Split all playing modes"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_split[1],
-                message="".join(
-                    (
-                        "List of playing modes is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._modes.split_all():
             self._modes.data_grid.clear_selections()
@@ -1664,35 +1596,9 @@ class Calculator(Bindings):
 
     def _mode_change(self):
         """Change playing mode alias used as playing mode identity."""
-        if self._modes is None or self._modes.frame is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_change[1],
-                message="".join(
-                    ("Change playing mode identity not available at present",)
-                ),
-            )
-            return
-        if self._modes.data_grid is None:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_change[1],
-                message="List of playing modes not available at present",
-            )
-            return
-        if self._notebook.index(self._modes_tab) != self._notebook.index(
-            self._notebook.select()
+        if not self._is_mode_tab_visible(
+            EventSpec.menu_other_mode_change[1], "Change playing mode identity"
         ):
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_other_mode_change[1],
-                message="".join(
-                    (
-                        "List of playing modes is ",
-                        "not the visible tab at present",
-                    )
-                ),
-            )
             return
         if self._modes.change_identity():
             self._modes.data_grid.clear_selections()
@@ -1718,3 +1624,98 @@ class Calculator(Bindings):
             message="Save not implemented yet",
         )
         return
+
+    def _report_save(self):
+        """Save report on apply identities."""
+        tab = self._report_apply(EventSpec.menu_report_close)
+        if not tab:
+            return
+        tkinter.messagebox.showinfo(
+            parent=self.widget,
+            title=EventSpec.menu_calculate_save[1],
+            message="Save report not implemented yet",
+        )
+        return
+
+    def _report_close(self):
+        """Close report on apply identities."""
+        tab = self._report_apply(EventSpec.menu_report_close)
+        if not tab:
+            return
+        self._notebook.forget(tab)
+        if tab in self._report_tabs:
+            del self._report_tabs[tab]
+        elif tab in self._rule_tabs:
+            del self._rule_tabs[tab]
+
+    def _report_apply(self, menu_event_spec):
+        """Return tab if a selection rule tab is visible, False otherwise."""
+        if self._notebook is None:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=menu_event_spec[1],
+                message="Reports not available at present",
+            )
+            return False
+        tab = self._notebook.select()
+        if tab not in self._report_tabs and tab not in self._rule_tabs:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=menu_event_spec[1],
+                message="".join(
+                    (
+                        "A report is ",
+                        "not the visible tab at present",
+                    )
+                ),
+            )
+            return False
+        return tab
+
+    def _verify_and_apply_person_identities(self, import_file):
+        """Verify imported player identifications and apply if consistent."""
+        identities = export.read_export_file(import_file)
+        report = apply_identities.verify_and_apply_identities(
+            self.database, identities
+        )
+        frame = tkinter.ttk.Frame(master=self._notebook)
+        tab = reportapply.ReportApply(frame, self.database)
+        self._notebook.add(
+            frame, text="Report " + os.path.basename(import_file)
+        )
+        try:
+            self._report_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        except tkinter.TclError as exc:
+            self._report_tabs[workarounds.winfo_pathname(frame, exc)] = tab
+        tab.populate(report)
+        if report.messages_exist:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                message="Identities not applied for reasons in report",
+                title=EventSpec.menu_database_apply_aliases[1],
+            )
+            return
+
+    def _verify_and_mirror_person_identities(self, import_file):
+        """Verify imported player identifications and apply if consistent."""
+        identities = export.read_export_file(import_file)
+        report = mirror_identities.verify_and_mirror_identities(
+            self.database, identities
+        )
+        frame = tkinter.ttk.Frame(master=self._notebook)
+        tab = reportmirror.ReportMirror(frame, self.database)
+        self._notebook.add(
+            frame, text="Report " + os.path.basename(import_file)
+        )
+        try:
+            self._report_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        except tkinter.TclError as exc:
+            self._report_tabs[workarounds.winfo_pathname(frame, exc)] = tab
+        tab.populate(report)
+        if report.messages_exist:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                message="Identities not mirrored for reasons in report",
+                title=EventSpec.menu_database_mirror_identities[1],
+            )
+            return

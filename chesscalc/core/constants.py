@@ -42,6 +42,8 @@ TAG_BLACKTEAM = "BlackTeam"  # Team name: part of player identity.
 # Some could be per database, but done per user.
 RECENT_DATABASE = "database"
 RECENT_PGN_DIRECTORY = "pgn_directory"
+RECENT_EXPORT_DIRECTORY = "export_directory"
+RECENT_IMPORT_DIRECTORY = "import_directory"
 
 # PGN header values: directory names, non-tag field names and values,
 # and regular expression pattern for picking tags.

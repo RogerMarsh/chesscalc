@@ -1,8 +1,8 @@
-# update_database.py
+# update_rule.py
 # Copyright 2023 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""This module provides functions to update a database."""
+"""This module provides functions to update a calculation rule record."""
 
 from . import performancerecord
 from . import filespec

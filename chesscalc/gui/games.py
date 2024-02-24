@@ -29,6 +29,6 @@ class Games(Bindings):
         return self._games_grid.frame
 
     @property
-    def games_grid(self):
+    def data_grid(self):
         """Return the games widget."""
         return self._games_grid

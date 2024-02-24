@@ -5,12 +5,16 @@
 """List the persons in the database."""
 
 import tkinter
+import os
 
 from solentware_bind.gui.bindings import Bindings
 
 from . import personsgrid
 from .eventspec import EventSpec
 from ..core import identify_person
+from ..core import export
+from ..core import configuration
+from ..core import constants
 
 
 class PersonsError(Exception):
@@ -232,6 +236,67 @@ class Persons(Bindings):
                 message=message,
             )
             return False
+        return True
+
+    def export_selected_players(self):
+        """Export players for selection and bookmarked events."""
+        title = EventSpec.menu_player_export[1]
+        database = self.get_database(title)
+        if not database:
+            return None
+        persons_sel = self._persons_grid.selection
+        persons_bmk = self._persons_grid.bookmarks
+        if len(persons_sel) + len(persons_bmk) == 0:
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="No identified persons are selected or bookmarked",
+            )
+            return False
+        exporter = export.ExportPersons(database, persons_bmk, persons_sel)
+        exporter.prepare_export_data()
+        status = exporter.prepare_export_data()
+        if status.error_message is not None:
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                message="\n\n".join(
+                    (
+                        "Export of selected persons failed",
+                        status.error_message,
+                    )
+                ),
+                title=title,
+            )
+            return False
+        serialized_data = exporter.export_repr()
+        conf = configuration.Configuration()
+        initdir = conf.get_configuration_value(
+            constants.RECENT_EXPORT_DIRECTORY
+        )
+        export_file = tkinter.filedialog.asksaveasfilename(
+            parent=self.frame,
+            title=title,
+            initialdir=initdir,
+            initialfile="export-identities.txt",
+        )
+        if not export_file:
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                message="Export of persons cancelled",
+                title=title,
+            )
+            return False
+        conf.set_configuration_value(
+            constants.RECENT_EXPORT_DIRECTORY,
+            conf.convert_home_directory_to_tilde(os.path.dirname(export_file)),
+        )
+        # gives time for destruction of dialogue and widget refresh
+        # does nothing for obscuring and revealing application later
+        self.frame.after_idle(
+            self.try_command(export.write_export_file, self.frame),
+            export_file,
+            serialized_data,
+        )
         return True
 
     def get_database(self, title):

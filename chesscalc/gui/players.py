@@ -27,14 +27,21 @@ class Players(Bindings):
         self._players = tkinter.ttk.PanedWindow(
             master=master, orient=tkinter.HORIZONTAL
         )
+        players_frame = tkinter.ttk.Frame(master=self._players)
         self._players_grid = playersgrid.PlayersGrid(
-            parent=self._players, database=database
+            parent=players_frame, database=database
         )
+        players_frame.grid_rowconfigure(0, weight=1)
+        players_frame.grid_columnconfigure(0, weight=1)
+        persons_frame = tkinter.ttk.Frame(master=self._players)
         self._persons_grid = personsgrid.PersonsGrid(
-            parent=self._players, database=database
+            parent=persons_frame, database=database
         )
-        self._players.add(self._players_grid.frame, weight=1)
-        self._players.add(self._persons_grid.frame, weight=1)
+        persons_frame.grid_rowconfigure(0, weight=1)
+        persons_frame.grid_columnconfigure(0, weight=1)
+        self._players.add(players_frame, weight=1)
+        self._players.add(persons_frame, weight=1)
+        self._players.grid(column=0, row=0, sticky=tkinter.NSEW)
 
     @property
     def frame(self):
@@ -67,7 +74,7 @@ class Players(Bindings):
                 message="".join(
                     (
                         "No new players are selected or bookmarked for ",
-                        "identification as a person",
+                        "identification as a known player",
                     )
                 ),
             )
@@ -78,8 +85,8 @@ class Players(Bindings):
                 title=title,
                 message="".join(
                     (
-                        "A new player must be selected as person identity ",
-                        "when no identified person is selected",
+                        "A new or known player must be selected as the ",
+                        "known player to be aliased",
                     )
                 ),
             )
@@ -91,32 +98,19 @@ class Players(Bindings):
                 message="".join(
                     (
                         "The selected and bookmarked new players ",
-                        "will be marked as aliases of the selected ",
-                        "identified person",
+                        "will become aliases of the selected known ",
+                        "player",
                     )
                 ),
             ):
                 return False
-        elif len(players_sel) != 1:
-            tkinter.messagebox.showinfo(
-                parent=self._players,
-                title=title,
-                message="".join(
-                    (
-                        "Exactly one new player must be selected as person ",
-                        "identity when no identified person is selected",
-                    )
-                ),
-            )
-            return False
         elif not tkinter.messagebox.askokcancel(
             parent=self._players,
             title=title,
             message="".join(
                 (
-                    "The selected new player will be marked as an "
-                    "identified person, and any bookmarked new players ",
-                    "will become aliases of this identified person",
+                    "The selected and bookmarked new players will become ",
+                    "aliases of the selected new player",
                 )
             ),
         ):
@@ -129,6 +123,70 @@ class Players(Bindings):
             identified = players_sel
             new.difference_update(set(players_sel))
         identify_person.identify_players_as_person(database, new, identified)
+        return True
+
+    def identify_by_name(self):
+        """Identify selected new players as persons matching on names."""
+        title = EventSpec.menu_player_identify[1]
+        database = self.get_database(title)
+        if not database:
+            return None
+        players_sel = self._players_grid.selection
+        persons_sel = self._persons_grid.selection
+        if self._players_grid.bookmarks or self._persons_grid.bookmarks:
+            tkinter.messagebox.showinfo(
+                parent=self._players,
+                title=title,
+                message="".join(
+                    (
+                        "Bookmarked items are ignored in this action ",
+                        "but will be cleared on completion",
+                    )
+                ),
+            )
+        if len(players_sel) == 0:
+            tkinter.messagebox.showinfo(
+                parent=self._players,
+                title=title,
+                message="".join(
+                    (
+                        "Please select a new player to become a known ",
+                        "player (with any of the same name)",
+                    )
+                ),
+            )
+            return False
+        if len(persons_sel) == 1:
+            if not tkinter.messagebox.askokcancel(
+                parent=self._players,
+                title=title,
+                message="".join(
+                    (
+                        "The selected new player and any with the same ",
+                        "name will become aliases of the selected known ",
+                        "player",
+                    )
+                ),
+            ):
+                return False
+        elif not tkinter.messagebox.askokcancel(
+            parent=self._players,
+            title=title,
+            message="".join(
+                (
+                    "The selected player and any with the same name ",
+                    "will become one known player",
+                )
+            ),
+        ):
+            return False
+        if len(persons_sel) == 1:
+            identified = persons_sel
+        else:
+            identified = players_sel
+        identify_person.identify_players_by_name_as_person(
+            database, set(players_sel), identified
+        )
         return True
 
     def get_database(self, title):

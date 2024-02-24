@@ -12,7 +12,7 @@ from solentware_bind.gui.bindings import Bindings
 
 from ..core.utilities import AppSysDate
 from .eventspec import EventSpec
-from ..core import update_database
+from ..core import update_rule
 from ..core import name_lookup
 from ..core import calculate
 from ..core import filespec
@@ -197,6 +197,10 @@ class Rule(Bindings):
         """Return the top frame of the rule widget."""
         return self._frame
 
+    def get_rule_name_from_tab(self):
+        """Return name displayed in the rule name widget."""
+        return self._rule.get()
+
     def populate_rule_from_record(self, record):
         """Populate rule widget with values from record."""
         assert self._rule_record is None
@@ -360,7 +364,7 @@ class Rule(Bindings):
         )
         if not valid_values:
             return False
-        if update_database.insert_record(self._database, *valid_values):
+        if update_rule.insert_record(self._database, *valid_values):
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=EventSpec.menu_selectors_insert[1],
@@ -388,7 +392,7 @@ class Rule(Bindings):
         )
         if not valid_values:
             return False
-        if update_database.update_record(
+        if update_rule.update_record(
             self._database, self._rule_record, *valid_values
         ):
             tkinter.messagebox.showinfo(
@@ -413,7 +417,7 @@ class Rule(Bindings):
                 message="Record not known, perhaps already deleted",
             )
             return False
-        if update_database.delete_record(self._database, self._rule_record):
+        if update_rule.delete_record(self._database, self._rule_record):
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=EventSpec.menu_selectors_delete[1],

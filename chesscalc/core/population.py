@@ -54,10 +54,10 @@ class Population:
                 filespec.GAME_PERSON_FIELD_DEF,
                 key=encode_record_selector(player_identity),
             )
-            persons[player_identity] = person.Person(
+            person_detail = person.Person(
                 player_identity, person_record.value.name
             )
-            opponents = persons[player_identity].opponents
+            opponents = person_detail.opponents
             person_games &= games
             game_cursor = person_games.create_recordsetbase_cursor()
             while True:
@@ -90,7 +90,7 @@ class Population:
                     if value.alias == player_identity:
                         continue
                     if value.alias == value.identity:
-                        persons[player_identity].add_reward(
+                        person_detail.add_reward(
                             _RESULT_TO_REWARD[result][side],
                             measure,
                         )
@@ -108,11 +108,13 @@ class Population:
                     if record is None:
                         continue
                     person_record.load_record(record)
-                    persons[player_identity].add_reward(
+                    person_detail.add_reward(
                         _RESULT_TO_REWARD[result][side],
                         measure,
                     )
                     opponents.append(value.identity)
+            if opponents:
+                persons[player_identity] = person_detail
 
     def __deepcopy__(self, memo):
         """Return deep copy of self."""

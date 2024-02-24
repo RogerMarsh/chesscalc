@@ -137,6 +137,9 @@ class GameDBvalue(ValueList):
                 )
             ),
         ]
+        index[filespec.GAME_NAME_FIELD_DEF] = [
+            headers.get(constants.TAG_EVENT)
+        ]
         # index[filespec.GAME_STATUS_FIELD_DEF] = list(
         #    _FILE_NAMES_TO_BE_POPULATED
         # )
@@ -260,6 +263,8 @@ class GameDBrecord(Record):
             if dbname == filespec.GAME_TIMECONTROL_FIELD_DEF:
                 return [(self.value.timecontrol, srkey)]
             if dbname == filespec.GAME_MODE_FIELD_DEF:
+                return [(self.value.mode, srkey)]
+            if dbname == filespec.GAME_NAME_FIELD_DEF:
                 return [(self.value.mode, srkey)]
             return []
         except:  # pycodestyle E722: pylint is happy with following 'raise'.
@@ -701,12 +706,11 @@ class PlayerDBkey(KeyData):
     """Primary key of player."""
 
 
-class _PlayerDBvalue(ValueList):
-    """Player data.
+class _PlayerValue(ValueList):
+    """The player data used in player and person name indicies.
 
-    This class is not intended for direct use as it lacks an extended
-    version of the pack() method.  Subclasses will need to supply a
-    suitable pack() method.
+    Subclasses which provide alias and identity attributes are used in
+    database records.
     """
 
     attributes = dict(
@@ -717,8 +721,6 @@ class _PlayerDBvalue(ValueList):
         stage=None,  # TAG_STAGE.
         team=None,  # TAG_BLACKTEAM or TAG_WHITETEAM.
         fideid=None,  # TAG_BLACKFIDEID or TAG_WHITEFIDEID.
-        alias=None,
-        identity=None,
     )
     _attribute_order = (
         "name",
@@ -728,8 +730,6 @@ class _PlayerDBvalue(ValueList):
         "stage",
         "team",
         "fideid",
-        "alias",
-        "identity",
     )
     assert set(_attribute_order) == set(attributes)
 
@@ -743,20 +743,6 @@ class _PlayerDBvalue(ValueList):
         self.stage = None
         self.team = None
         self.fideid = None
-        self.alias = None
-        self.identity = None
-
-    def empty(self):
-        """(Re)Initialize value attribute."""
-        self.name = None
-        self.event = None
-        self.eventdate = None
-        self.section = None
-        self.stage = None
-        self.team = None
-        self.fideid = None
-        self.alias = None
-        self.identity = None
 
     def alias_index_key(self):
         """Return the key for the playeralias or persionalias index."""
@@ -773,7 +759,11 @@ class _PlayerDBvalue(ValueList):
         )
 
     def load_alias_index_key(self, value):
-        """Bind playeralias or personalias index attributes to value items."""
+        """Bind playeralias or personalias index attributes to value items.
+
+        Unpack from repr(<attributes>) in value by literal_eval() call.
+
+        """
         (
             self.name,
             self.event,
@@ -783,6 +773,80 @@ class _PlayerDBvalue(ValueList):
             self.team,
             self.fideid,
         ) = literal_eval(value)
+
+    def set_alias_index_key(self, value):
+        """Bind playeralias or personalias index attributes to value items.
+
+        Unpack from tuple in value.
+
+        """
+        (
+            self.name,
+            self.event,
+            self.eventdate,
+            self.section,
+            self.stage,
+            self.team,
+            self.fideid,
+        ) = value
+
+    def alias_index(self):
+        """Return value packed by alias_index_key method as tuple."""
+        return (
+            self.name,
+            self.event,
+            self.eventdate,
+            self.section,
+            self.stage,
+            self.team,
+            self.fideid,
+        )
+
+
+# This may never differ from _PlayerValue.
+class PersonValue(_PlayerValue):
+    """Provide player and person index key manipulation.
+
+    PersonValue should not be used in *Record classes.
+    """
+
+
+class _PlayerDBvalue(_PlayerValue):
+    """Player data.
+
+    This class is not intended for direct use as it lacks an extended
+    version of the pack() method.  Subclasses will need to supply a
+    suitable pack() method.
+    """
+
+    attributes = dict(
+        alias=None,
+        identity=None,
+    )
+    attributes.update(_PlayerValue.attributes)
+    _attribute_order = _PlayerValue._attribute_order + (
+        "alias",
+        "identity",
+    )
+    assert set(_attribute_order) == set(attributes)
+
+    def __init__(self):
+        """Customise _PlayerValue for player data."""
+        super().__init__()
+        self.alias = None
+        self.identity = None
+
+    def empty(self):
+        """(Re)Initialize value attribute."""
+        self.name = None
+        self.event = None
+        self.eventdate = None
+        self.section = None
+        self.stage = None
+        self.team = None
+        self.fideid = None
+        self.alias = None
+        self.identity = None
 
 
 class PlayerDBvalue(_PlayerDBvalue):
@@ -804,9 +868,11 @@ class PlayerDBvalue(_PlayerDBvalue):
         val = super().pack()
         index = val[1]
         index[filespec.PLAYER_ALIAS_FIELD_DEF] = [self.alias_index_key()]
+        index[filespec.PLAYER_NAME_FIELD_DEF] = [self.name]
         index[filespec.PLAYER_UNIQUE_FIELD_DEF] = []
         index[filespec.PLAYER_IDENTITY_FIELD_DEF] = []
         index[filespec.PERSON_ALIAS_FIELD_DEF] = []
+        index[filespec.PERSON_NAME_FIELD_DEF] = []
         return val
 
 
@@ -829,12 +895,14 @@ class PersonDBvalue(_PlayerDBvalue):
         val = super().pack()
         index = val[1]
         index[filespec.PLAYER_ALIAS_FIELD_DEF] = []
+        index[filespec.PLAYER_NAME_FIELD_DEF] = []
         if self.identity != self.alias:
             index[filespec.PLAYER_UNIQUE_FIELD_DEF] = []
         else:
             index[filespec.PLAYER_UNIQUE_FIELD_DEF] = [self.alias]
         index[filespec.PLAYER_IDENTITY_FIELD_DEF] = [self.alias]
         index[filespec.PERSON_ALIAS_FIELD_DEF] = [self.alias_index_key()]
+        index[filespec.PERSON_NAME_FIELD_DEF] = [self.name]
         return val
 
 
@@ -860,6 +928,10 @@ class PlayerDBrecord(Record):
                 return [(self.value.alias, srkey)]
             if dbname == filespec.PERSON_ALIAS_FIELD_DEF:
                 return [(self.value.alias_index_key(), srkey)]
+            if dbname == filespec.PLAYER_NAME_FIELD_DEF:
+                return [(self.value.name, srkey)]
+            if dbname == filespec.PERSON_NAME_FIELD_DEF:
+                return [(self.value.name, srkey)]
             return []
         except:  # pycodestyle E722: pylint is happy with following 'raise'.
             if datasource is None:
@@ -905,15 +977,7 @@ class PlayerDBImporter(PlayerDBrecord):
                 continue
             game_count += 1
             prev_record = this_record
-            (
-                value.name,
-                value.event,
-                value.eventdate,
-                value.section,
-                value.stage,
-                value.team,
-                value.fideid,
-            ) = this_record
+            value.set_alias_index_key(this_record)
             alias = value.alias_index_key()
             if quit_event and quit_event.is_set():
                 if reporter is not None:
@@ -1024,15 +1088,7 @@ class PlayerDBImporter(PlayerDBrecord):
             if prev_record == this_record:
                 continue
             prev_record = this_record
-            (
-                value.name,
-                value.event,
-                value.eventdate,
-                value.section,
-                value.stage,
-                value.team,
-                value.fideid,
-            ) = this_record
+            value.set_alias_index_key(this_record)
             alias = value.alias_index_key()
             if quit_event and quit_event.is_set():
                 if reporter is not None:
@@ -1220,6 +1276,7 @@ class EventDBvalue(ValueList):
         index = val[1]
         index[filespec.EVENT_ALIAS_FIELD_DEF] = [self.alias_index_key()]
         index[filespec.EVENT_IDENTITY_FIELD_DEF] = [self.alias]
+        index[filespec.EVENT_NAME_FIELD_DEF] = [self.event]
         return val
 
 
@@ -1243,6 +1300,8 @@ class EventDBrecord(Record):
                 return [(self.value.alias_index_key(), srkey)]
             if dbname == filespec.EVENT_IDENTITY_FIELD_DEF:
                 return [(self.value.alias, srkey)]
+            if dbname == filespec.EVENT_NAME_FIELD_DEF:
+                return [(self.value.event, srkey)]
             return []
         except:  # pycodestyle E722: pylint is happy with following 'raise'.
             if datasource is None:
@@ -1544,7 +1603,8 @@ class TimeControlDBImporter(TimeControlDBrecord):
             record = cursor.next()
             if record is None:
                 break
-            this_record = literal_eval(record[0])
+            # this_record = literal_eval(record[0])
+            this_record = record[0]
             if prev_record == this_record:
                 continue
             game_count += 1

@@ -77,6 +77,7 @@ GAME_PLAYER_FIELD_DEF = "gameplayer"
 GAME_EVENT_FIELD_DEF = "gameevent"
 GAME_STATUS_FIELD_DEF = "gamestatus"
 GAME_PERSON_FIELD_DEF = "gameperson"
+GAME_NAME_FIELD_DEF = "gamename"
 
 # player file fields.
 PLAYER_FIELD_DEF = PLAYER_FILE_DEF
@@ -84,6 +85,8 @@ PLAYER_UNIQUE_FIELD_DEF = "playerunique"
 PLAYER_IDENTITY_FIELD_DEF = "playeridentity"
 PLAYER_ALIAS_FIELD_DEF = "playeralias"
 PERSON_ALIAS_FIELD_DEF = "personalias"
+PLAYER_NAME_FIELD_DEF = "playername"
+PERSON_NAME_FIELD_DEF = "personname"
 
 # identity file fields.
 IDENTITY_FIELD_DEF = IDENTITY_FILE_DEF
@@ -97,6 +100,7 @@ RULE_FIELD_DEF = "rule"
 EVENT_FIELD_DEF = EVENT_FILE_DEF
 EVENT_IDENTITY_FIELD_DEF = "eventidentity"
 EVENT_ALIAS_FIELD_DEF = "eventalias"
+EVENT_NAME_FIELD_DEF = "eventname"
 
 # time (limit/control) file fields.
 TIME_FIELD_DEF = TIME_FILE_DEF
@@ -145,6 +149,7 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         GAME_EVENT_FIELD_DEF: None,
                         GAME_STATUS_FIELD_DEF: None,
                         GAME_PERSON_FIELD_DEF: None,
+                        GAME_NAME_FIELD_DEF: None,
                     },
                     FIELDS: {
                         fld(GAME_FIELD_DEF): None,
@@ -160,6 +165,7 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         fld(GAME_EVENT_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_STATUS_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_PERSON_FIELD_DEF): {INV: True, ORD: True},
+                        fld(GAME_NAME_FIELD_DEF): {INV: True, ORD: True},
                     },
                 },
                 PLAYER_FILE_DEF: {
@@ -179,6 +185,8 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         PLAYER_IDENTITY_FIELD_DEF: None,
                         PLAYER_ALIAS_FIELD_DEF: None,
                         PERSON_ALIAS_FIELD_DEF: None,
+                        PLAYER_NAME_FIELD_DEF: None,
+                        PERSON_NAME_FIELD_DEF: None,
                     },
                     FIELDS: {
                         fld(PLAYER_FIELD_DEF): None,
@@ -186,6 +194,8 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         fld(PLAYER_IDENTITY_FIELD_DEF): {INV: True, ORD: True},
                         fld(PLAYER_ALIAS_FIELD_DEF): {INV: True, ORD: True},
                         fld(PERSON_ALIAS_FIELD_DEF): {INV: True, ORD: True},
+                        fld(PLAYER_NAME_FIELD_DEF): {INV: True, ORD: True},
+                        fld(PERSON_NAME_FIELD_DEF): {INV: True, ORD: True},
                     },
                 },
                 IDENTITY_FILE_DEF: {
@@ -244,11 +254,13 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                     SECONDARY: {
                         EVENT_IDENTITY_FIELD_DEF: None,
                         EVENT_ALIAS_FIELD_DEF: None,
+                        EVENT_NAME_FIELD_DEF: None,
                     },
                     FIELDS: {
                         fld(EVENT_FIELD_DEF): None,
                         fld(EVENT_IDENTITY_FIELD_DEF): {INV: True, ORD: True},
                         fld(EVENT_ALIAS_FIELD_DEF): {INV: True, ORD: True},
+                        fld(EVENT_NAME_FIELD_DEF): {INV: True, ORD: True},
                     },
                 },
                 TIME_FILE_DEF: {
