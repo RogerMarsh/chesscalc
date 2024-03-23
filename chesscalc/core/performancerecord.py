@@ -576,6 +576,7 @@ class GameDBImporter(GameDBrecord):
                     self.put_record(self.database, filespec.GAME_FILE_DEF)
                     if copy_number % db_segment_size == 0:
                         database.commit()
+                        database.deferred_update_housekeeping()
                         database.start_transaction()
                         if reporter is not None:
                             reporter.append_text(
@@ -1011,6 +1012,7 @@ class PlayerDBImporter(PlayerDBrecord):
                 # and lmdb too.
                 cursor.close()
                 database.commit()
+                database.deferred_update_housekeeping()
                 database.start_transaction()
                 cursor = database.database_cursor(
                     filespec.GAME_FILE_DEF, filespec.GAME_PLAYER_FIELD_DEF
@@ -1379,6 +1381,7 @@ class EventDBImporter(EventDBrecord):
                 # and lmdb too.
                 cursor.close()
                 database.commit()
+                database.deferred_update_housekeeping()
                 database.start_transaction()
                 cursor = database.database_cursor(
                     filespec.GAME_FILE_DEF, filespec.GAME_EVENT_FIELD_DEF
@@ -1636,6 +1639,7 @@ class TimeControlDBImporter(TimeControlDBrecord):
                 # and lmdb too.
                 cursor.close()
                 database.commit()
+                database.deferred_update_housekeeping()
                 database.start_transaction()
                 cursor = database.database_cursor(
                     filespec.GAME_FILE_DEF, filespec.GAME_TIMECONTROL_FIELD_DEF
@@ -1887,6 +1891,7 @@ class ModeDBImporter(ModeDBrecord):
                 # and lmdb too.
                 cursor.close()
                 database.commit()
+                database.deferred_update_housekeeping()
                 database.start_transaction()
                 cursor = database.database_cursor(
                     filespec.GAME_FILE_DEF, filespec.GAME_MODE_FIELD_DEF

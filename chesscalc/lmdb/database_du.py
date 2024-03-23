@@ -83,9 +83,7 @@ class Database(alldu.Alldu, litedu.Litedu, lmdbdu_database.Database):
         become full, a convenient point for commit and database resize.
 
         """
-        self.commit()
         self._set_map_size_above_used_pages_between_transactions(100)
-        self.start_transaction()
 
 
 class DatabaseSU(alldu.Alldu, litedu.Litedu, lmdb_database.Database):
@@ -107,6 +105,4 @@ class DatabaseSU(alldu.Alldu, litedu.Litedu, lmdb_database.Database):
         become full, a convenient point for commit and database resize.
 
         """
-        self.commit()
         self._set_map_size_above_used_pages_between_transactions(100)
-        self.start_transaction()

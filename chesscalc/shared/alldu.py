@@ -19,59 +19,6 @@ from .. import ERROR_LOG, APPLICATION_NAME
 from ..core import pgnheaders
 
 
-# This function is not absorbed in chess_du_import because the database
-# has to be open for DPT backup, but not in the mode used to do an
-# import.
-def du_backup_before_task(
-    cdb,
-    taskname,
-    file=None,
-    reporter=None,
-    **kwargs,
-):
-    """Backup database cdb before taskname."""
-    del kwargs
-    if cdb.take_backup_before_deferred_update:
-        if reporter is not None:
-            reporter.append_text_only("")
-            reporter.append_text(
-                "Make backup before " + taskname.lower() + "."
-            )
-        try:
-            cdb.archive(name=file)
-        except Exception as exc:
-            _report_exception(cdb, reporter, exc)
-            raise
-        if reporter is not None:
-            reporter.append_text("Backup completed.")
-
-
-# This function is not absorbed in chess_du_import because in DPT the
-# absence of 'file full' conditions has to be confirmed before deleting
-# the backups.
-def du_delete_backup_after_task(
-    cdb,
-    taskname,
-    file=None,
-    reporter=None,
-    **kwargs,
-):
-    """Delete backup of database cdb after taskname."""
-    del kwargs
-    if cdb.take_backup_before_deferred_update:
-        if reporter is not None:
-            reporter.append_text(
-                taskname.lower().join(("Delete backup for ", "."))
-            )
-        cdb.delete_archive(name=file)
-        if reporter is not None:
-            reporter.append_text("Backup deleted.")
-            reporter.append_text_only("")
-    if reporter is not None:
-        reporter.append_text(" ".join((taskname.title(), "finished.")))
-        reporter.append_text_only("")
-
-
 def du_import(
     cdb,
     pgn_directory,
@@ -283,11 +230,9 @@ def _post_unset_defer_update_reports(database, file, reporter, dsize):
 
 def do_deferred_update(cdb, *args, file=None, **kwargs):
     """Open database, delegate to du_import, and close database."""
-    # du_backup_before_task(cdb, "import", file=file, **kwargs)
     cdb.open_database()
     du_import(cdb, *args, file=file, **kwargs)
     cdb.close_database()
-    # du_delete_backup_after_task(cdb, "import", file=file, **kwargs)
 
 
 def players_du_copy(
@@ -346,11 +291,9 @@ def do_players_deferred_update(cdb, pgn_directory, *args, file=None, **kwargs):
     call.
 
     """
-    # du_backup_before_task(cdb, "copy", file=file, **kwargs)
     cdb.open_database()
     players_du_copy(cdb, *args, file=file, **kwargs)
     cdb.close_database()
-    # du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
 
 
 def events_du_copy(
@@ -409,11 +352,9 @@ def do_events_deferred_update(cdb, pgn_directory, *args, file=None, **kwargs):
     call.
 
     """
-    # du_backup_before_task(cdb, "copy", file=file, **kwargs)
     cdb.open_database()
     events_du_copy(cdb, *args, file=file, **kwargs)
     cdb.close_database()
-    # du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
 
 
 def time_controls_du_copy(
@@ -474,11 +415,9 @@ def do_time_controls_deferred_update(
     call.
 
     """
-    # du_backup_before_task(cdb, "copy", file=file, **kwargs)
     cdb.open_database()
     time_controls_du_copy(cdb, *args, file=file, **kwargs)
     cdb.close_database()
-    # du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
 
 
 def modes_du_copy(
@@ -546,14 +485,12 @@ def do_modes_deferred_update(
     This is final copy stage so report finished when database is closed.
 
     """
-    # du_backup_before_task(cdb, "copy", file=file, **kwargs)
     cdb.open_database()
     modes_du_copy(cdb, *args, reporter=reporter, file=file, **kwargs)
     cdb.close_database()
     if reporter is not None:
         reporter.append_text("Import finished.")
         reporter.append_text_only("")
-    # du_delete_backup_after_task(cdb, "copy", file=file, **kwargs)
 
 
 def _du_report_increases(reporter, file, size_increases):

@@ -12,12 +12,10 @@ reclaim any unused space by setting an arbitrarly low size.  The size
 determines how large the database can get before giving a 'full' error.
 
 """
-from solentware_base.core.archivedu import Archivedu
-
 from .alldu import get_filespec
 
 
-class Litedu(Archivedu):
+class Litedu:
     """Provide methods for compatibility with DPT interface.
 
     The methods have their DPT-specific code removed.

@@ -207,7 +207,7 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                     },
                     BTOD_FACTOR: 2.0,
                     BTOD_CONSTANT: 50,
-                    DEFAULT_RECORDS: 200000,
+                    DEFAULT_RECORDS: 20,
                     DEFAULT_INCREASE_FACTOR: 0.01,
                     PRIMARY: fld(IDENTITY_FIELD_DEF),
                     SECONDARY: {
