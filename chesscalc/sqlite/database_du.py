@@ -78,3 +78,7 @@ class DatabaseSU(alldu.Alldu, litedu.Litedu, sqlite3_database.Database):
     def __init__(self, sqlite3file, **kargs):
         """Delegate with Sqlite3DatabaseduError as exception class."""
         super().__init__(sqlite3file, Sqlite3DatabaseduError, **kargs)
+
+    # Class structure implies this is not an override at present.
+    def deferred_update_housekeeping(self):
+        """Override to do nothing."""

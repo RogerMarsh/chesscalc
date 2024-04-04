@@ -106,3 +106,7 @@ class DatabaseSU(alldu.Alldu, dbdu.Dbdu, berkeleydb_database.Database):
             ),
             **kargs
         )
+
+    # Class structure implies this is not an override at present.
+    def deferred_update_housekeeping(self):
+        """Override to do nothing."""

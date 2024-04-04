@@ -88,3 +88,7 @@ class DatabaseSU(alldu.Alldu, dbdu.Dbdu, db_tkinter_database.Database):
             ("-create", "-recover", "-txn", "-private", "-system_mem"),
             **kargs
         )
+
+    # Class structure implies this is not an override at present.
+    def deferred_update_housekeeping(self):
+        """Override to do nothing."""

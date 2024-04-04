@@ -78,3 +78,7 @@ class DatabaseSU(alldu.Alldu, litedu.Litedu, vedis_database.Database):
     def __init__(self, vedisfile, **kargs):
         """Delegate with VedisDatabaseduError as exception class."""
         super().__init__(vedisfile, VedisDatabaseduError, **kargs)
+
+    # Class structure implies this is not an override at present.
+    def deferred_update_housekeeping(self):
+        """Override to do nothing."""

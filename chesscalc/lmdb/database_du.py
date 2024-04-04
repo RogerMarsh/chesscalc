@@ -98,6 +98,7 @@ class DatabaseSU(alldu.Alldu, litedu.Litedu, lmdb_database.Database):
         # commit is done after every segment.
         self._set_map_blocks_above_used_pages(100)
 
+    # Class structure implies this is not an override at present.
     def deferred_update_housekeeping(self):
         """Override to check map size and pages used expected page usage.
 
