@@ -36,49 +36,63 @@ def identify_players_as_person(database, players, person):
     The changes are applied to database.
 
     """
-    value = performancerecord.PersonDBvalue()
-    value.load_alias_index_key(person[0][0])
-    selector = database.encode_record_selector(value.alias_index_key())
     database.start_transaction()
     try:
         gamelist = database.recordlist_nil(filespec.GAME_FILE_DEF)
+        recordlist = database.recordlist_record_number(
+            filespec.PLAYER_FILE_DEF, key=person[0][1]
+        )
+        count = recordlist.count_records()
+        if count == 0:
+            raise PlayerToPerson(
+                repr(person[0]).join(
+                    ("Person record ", " does not exist")
+                )
+            )
+        primary_record = identify_item.get_first_item_on_recordlist(
+            database, recordlist, filespec.PLAYER_FILE_DEF
+        )
+        player_record = performancerecord.PlayerDBrecord()
+        player_record.load_record(primary_record)
+        alias = player_record.value.alias
+        selector = database.encode_record_selector(
+            player_record.value.alias_index_key()
+        )
+
+        # May be adding aliases to an existing known player.
+        current_gamelist = database.recordlist_key(
+            filespec.GAME_FILE_DEF,
+            filespec.GAME_PERSON_FIELD_DEF,
+            key=database.encode_record_selector(alias),
+        )
+
+        if current_gamelist is not None:
+            gamelist |= current_gamelist
+        current_gamelist.close()
+        gamelist |= database.recordlist_key(
+            filespec.GAME_FILE_DEF,
+            filespec.GAME_PLAYER_FIELD_DEF,
+            key=selector,
+        )
         recordlist = database.recordlist_key(
             filespec.PLAYER_FILE_DEF,
             filespec.PERSON_ALIAS_FIELD_DEF,
             key=selector,
         )
         count = recordlist.count_records()
-        if count > 1:
-            raise PlayerToPerson("Person record duplicated")
-        if count == 1:
-            person_record = performancerecord.PlayerDBrecord(
-                valueclass=performancerecord.PersonDBvalue
-            )
-            person_record.load_record(
-                identify_item.get_first_item_on_recordlist(
-                    database,
-                    recordlist,
-                    filespec.PLAYER_FILE_DEF,
+        if count + database.recordlist_key(
+            filespec.PLAYER_FILE_DEF,
+            filespec.PLAYER_ALIAS_FIELD_DEF,
+            key=selector,
+        ).count_records() != 1:
+            if count:
+                raise PlayerToPerson("Duplicate references for person")
+            raise PlayerToPerson(
+                repr(person[0]).join(
+                    ("Player reference for ", " does not exist")
                 )
             )
-        else:
-            recordlist = database.recordlist_key(
-                filespec.PLAYER_FILE_DEF,
-                filespec.PLAYER_ALIAS_FIELD_DEF,
-                key=selector,
-            )
-            count = recordlist.count_records()
-            if count == 0:
-                raise PlayerToPerson("New person record does not exists")
-            if count > 1:
-                raise PlayerToPerson("New person record duplicated")
-            primary_record = identify_item.get_first_item_on_recordlist(
-                database,
-                recordlist,
-                filespec.PLAYER_FILE_DEF,
-            )
-            player_record = performancerecord.PlayerDBrecord()
-            player_record.load_record(primary_record)
+        if count == 0:
             person_record = performancerecord.PlayerDBrecord(
                 valueclass=performancerecord.PersonDBvalue
             )
@@ -90,44 +104,30 @@ def identify_players_as_person(database, players, person):
             player_record.edit_record(
                 database, filespec.PLAYER_FILE_DEF, None, person_record
             )
-        # May be adding aliases to an existing known player.
-        current_gamelist = database.recordlist_key(
-            filespec.GAME_FILE_DEF,
-            filespec.GAME_PLAYER_FIELD_DEF,
-            key=database.encode_record_selector(person_record.value.alias),
-        )
-        if current_gamelist is not None:
-            gamelist |= current_gamelist
-        current_gamelist.close()
-        gamelist |= database.recordlist_key(
-            filespec.GAME_FILE_DEF,
-            filespec.GAME_PLAYER_FIELD_DEF,
-            key=selector,
-        )
 
-        alias = person_record.value.alias
         for player in players:
-            # value should be PlayerDBvalue but while PersonDBvalue gives
-            # the same answer there is no need to change it.
-            value.load_alias_index_key(player[0])
-            selector = database.encode_record_selector(value.alias_index_key())
-            recordlist = database.recordlist_key(
-                filespec.PLAYER_FILE_DEF,
-                filespec.PLAYER_ALIAS_FIELD_DEF,
-                key=selector,
+            recordlist = database.recordlist_record_number(
+                filespec.PLAYER_FILE_DEF, key=player[1]
             )
             count = recordlist.count_records()
-            if count > 1:
-                raise PlayerToPerson("Player record duplicated")
             if count == 0:
-                raise PlayerToPerson("Player record does not exists")
+                raise PlayerToPerson(
+                    repr(person[0]).join(
+                        ("Player record ", " does not exist")
+                    )
+                )
             primary_record = identify_item.get_first_item_on_recordlist(
-                database,
-                recordlist,
-                filespec.PLAYER_FILE_DEF,
+                database, recordlist, filespec.PLAYER_FILE_DEF
             )
             player_record = performancerecord.PlayerDBrecord()
             player_record.load_record(primary_record)
+            gamelist |= database.recordlist_key(
+                filespec.GAME_FILE_DEF,
+                filespec.GAME_PLAYER_FIELD_DEF,
+                key=database.encode_record_selector(
+                    player_record.value.alias_index_key()
+                ),
+            )
             person_record = performancerecord.PlayerDBrecord(
                 valueclass=performancerecord.PersonDBvalue
             )
@@ -140,19 +140,12 @@ def identify_players_as_person(database, players, person):
             player_record.edit_record(
                 database, filespec.PLAYER_FILE_DEF, None, person_record
             )
-
-            gamelist |= database.recordlist_key(
-                filespec.GAME_FILE_DEF,
-                filespec.GAME_PLAYER_FIELD_DEF,
-                key=selector,
-            )
         database.file_records_under(
             filespec.GAME_FILE_DEF,
             filespec.GAME_PERSON_FIELD_DEF,
             gamelist,
             database.encode_record_selector(alias),
         )
-
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise
@@ -175,64 +168,55 @@ def identify_players_by_name_as_person(database, players, person):
     The changes are applied to database.
 
     """
-    player_record = performancerecord.PlayerDBrecord()
-    person_record = performancerecord.PlayerDBrecord(
-        valueclass=performancerecord.PersonDBvalue
-    )
-    value = performancerecord.PersonDBvalue()
-    value.load_alias_index_key(person[0][0])
     encode_record_selector = database.encode_record_selector
-    selector = encode_record_selector(value.alias_index_key())
     database.start_transaction()
     try:
         gamelist = database.recordlist_nil(filespec.GAME_FILE_DEF)
-        recordlist = database.recordlist_key(
-            filespec.PLAYER_FILE_DEF,
-            filespec.PERSON_ALIAS_FIELD_DEF,
-            key=selector,
+        recordlist = database.recordlist_record_number(
+            filespec.PLAYER_FILE_DEF, key=person[0][1]
         )
         count = recordlist.count_records()
-        if count > 1:
-            raise PlayerToPerson("Person record duplicated")
-        if count == 1:
-            person_record.load_record(
-                identify_item.get_first_item_on_recordlist(
-                    database,
-                    recordlist,
-                    filespec.PLAYER_FILE_DEF,
+        if count == 0:
+            raise PlayerToPerson(
+                repr(person[0]).join(
+                    ("Person record ", " does not exist")
                 )
             )
-        else:
+        primary_record = identify_item.get_first_item_on_recordlist(
+            database, recordlist, filespec.PLAYER_FILE_DEF
+        )
+        player_record = performancerecord.PlayerDBrecord()
+        player_record.load_record(primary_record)
+        if player_record.value.alias != player_record.value.identity:
+            # person is alias on identified players list so find known player.
             recordlist = database.recordlist_key(
                 filespec.PLAYER_FILE_DEF,
-                filespec.PLAYER_ALIAS_FIELD_DEF,
-                key=selector,
+                filespec.PLAYER_UNIQUE_FIELD_DEF,
+                key=encode_record_selector(player_record.value.alias),
             )
             count = recordlist.count_records()
             if count == 0:
-                raise PlayerToPerson("New person record does not exists")
-            if count > 1:
-                raise PlayerToPerson("New person record duplicated")
+                raise PlayerToPerson(
+                    repr(person[0]).join(
+                        ("Person record for alias ", " does not exist")
+                    )
+                )
             primary_record = identify_item.get_first_item_on_recordlist(
-                database,
-                recordlist,
-                filespec.PLAYER_FILE_DEF,
+                database, recordlist, filespec.PLAYER_FILE_DEF
             )
             player_record.load_record(primary_record)
-            person_record.load_record(primary_record)
+            assert player_record.value.alias == player_record.value.identity
+        selector = encode_record_selector(
+            player_record.value.alias_index_key()
+        )
 
-            # None is safe because self.srkey == new_record.srkey.
-            # filespec.PLAYER_ALIAS_FIELD_DEF is correct value otherwise
-            # because of how argument is used in edit_record().
-            player_record.edit_record(
-                database, filespec.PLAYER_FILE_DEF, None, person_record
-            )
         # May be adding aliases to an existing known player.
         current_gamelist = database.recordlist_key(
             filespec.GAME_FILE_DEF,
-            filespec.GAME_PLAYER_FIELD_DEF,
-            key=database.encode_record_selector(person_record.value.alias),
+            filespec.GAME_PERSON_FIELD_DEF,
+            key=encode_record_selector(player_record.value.alias),
         )
+
         if current_gamelist is not None:
             gamelist |= current_gamelist
         current_gamelist.close()
@@ -241,30 +225,56 @@ def identify_players_by_name_as_person(database, players, person):
             filespec.GAME_PLAYER_FIELD_DEF,
             key=selector,
         )
+        recordlist = database.recordlist_key(
+            filespec.PLAYER_FILE_DEF,
+            filespec.PERSON_ALIAS_FIELD_DEF,
+            key=selector,
+        )
+        count = recordlist.count_records()
+        if count + database.recordlist_key(
+            filespec.PLAYER_FILE_DEF,
+            filespec.PLAYER_ALIAS_FIELD_DEF,
+            key=selector,
+        ).count_records() != 1:
+            if count:
+                raise PlayerToPerson("Duplicate references for person")
+            raise PlayerToPerson(
+                repr(person[0]).join(
+                    ("Player reference for ", " does not exist")
+                )
+            )
+        if count == 0:
+            # A known player was not selected so the selection on the new
+            # player list becomes a known player and all the other entries
+            # on the new list with the same same become aliases of it.
+            # Even if entries with the same name exist on the known list.
+            person_record = performancerecord.PlayerDBrecord(
+                valueclass=performancerecord.PersonDBvalue
+            )
+            person_record.load_record(primary_record)
 
-        processed = database.recordlist_nil(filespec.PLAYER_FILE_DEF)
-        processed |= recordlist
-        unprocessed = database.recordlist_nil(filespec.PLAYER_FILE_DEF)
-        alias = person_record.value.alias
+            # None is safe because self.srkey == new_record.srkey.
+            # filespec.PLAYER_ALIAS_FIELD_DEF is correct value otherwise
+            # because of how argument is used in edit_record().
+            player_record.edit_record(
+                database, filespec.PLAYER_FILE_DEF, None, person_record
+            )
+        alias = player_record.value.alias
         player_value = player_record.value
+        person_record = performancerecord.PlayerDBrecord(
+            valueclass=performancerecord.PersonDBvalue
+        )
         for player in players:
-            # value should be PlayerDBvalue but while PersonDBvalue gives
-            # the same answer there is no need to change it.
-            value.load_alias_index_key(player[0])
-            selector = encode_record_selector("(" + repr(value.name))
-            recordlist = database.recordlist_key_startswith(
+            recordlist = database.recordlist_key(
                 filespec.PLAYER_FILE_DEF,
-                filespec.PLAYER_ALIAS_FIELD_DEF,
-                keystart=selector,
+                filespec.PLAYER_NAME_FIELD_DEF,
+                key=encode_record_selector(player[0]),
             )
             count = recordlist.count_records()
             if count == 0:
-                raise PlayerToPerson("No player records found")
-            # The startswith key may have been selected more than once.
-            unprocessed.replace_records(recordlist)
-            unprocessed.remove_recordset(processed)
-            processed |= recordlist
-            cursor = unprocessed.create_recordsetbase_cursor()
+                # Assume players set refered to same entry as person list.
+                continue
+            cursor = recordlist.create_recordsetbase_cursor()
             while True:
                 record = cursor.next()
                 if record is None:
@@ -294,7 +304,6 @@ def identify_players_by_name_as_person(database, players, person):
             gamelist,
             database.encode_record_selector(alias),
         )
-
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise
@@ -309,25 +318,20 @@ def split_person_into_all_players(database, person):
     The changes are applied to database.
 
     """
-    value = performancerecord.PersonDBvalue()
-    value.load_alias_index_key(person[0][0])
-    selector = database.encode_record_selector(value.alias_index_key())
     database.start_transaction()
     try:
-        recordlist = database.recordlist_key(
-            filespec.PLAYER_FILE_DEF,
-            filespec.PERSON_ALIAS_FIELD_DEF,
-            key=selector,
+        recordlist = database.recordlist_record_number(
+            filespec.PLAYER_FILE_DEF, key=person[0][1]
         )
         count = recordlist.count_records()
         if count == 0:
-            raise PersonToPlayer("Cannot split: person record does not exist")
-        if count > 1:
-            raise PersonToPlayer("Cannot split: person record duplicated")
+            raise PersonToPlayer(
+                repr(person[0]).join(
+                    ("Person record ", " does not exist")
+                )
+            )
         primary_record = identify_item.get_first_item_on_recordlist(
-            database,
-            recordlist,
-            filespec.PLAYER_FILE_DEF,
+            database, recordlist, filespec.PLAYER_FILE_DEF
         )
         person_record = performancerecord.PlayerDBrecord(
             valueclass=performancerecord.PersonDBvalue
@@ -377,7 +381,6 @@ def split_person_into_all_players(database, person):
                 )
         finally:
             cursor.close()
-
         database.unfile_records_under(
             filespec.GAME_FILE_DEF,
             filespec.GAME_PERSON_FIELD_DEF,
@@ -397,25 +400,20 @@ def break_person_into_picked_players(database, person, aliases):
     The changes are applied to database.
 
     """
-    value = performancerecord.PersonDBvalue()
-    value.load_alias_index_key(person[0][0])
-    selector = database.encode_record_selector(value.alias_index_key())
     database.start_transaction()
     try:
-        recordlist = database.recordlist_key(
-            filespec.PLAYER_FILE_DEF,
-            filespec.PERSON_ALIAS_FIELD_DEF,
-            key=selector,
+        recordlist = database.recordlist_record_number(
+            filespec.PLAYER_FILE_DEF, key=person[0][1]
         )
         count = recordlist.count_records()
         if count == 0:
-            raise PersonToPlayer("Cannot break: person record does not exist")
-        if count > 1:
-            raise PersonToPlayer("Cannot break: person record duplicated")
+            raise PersonToPlayer(
+                repr(person[0]).join(
+                    ("Person record ", " does not exist")
+                )
+            )
         primary_record = identify_item.get_first_item_on_recordlist(
-            database,
-            recordlist,
-            filespec.PLAYER_FILE_DEF,
+            database, recordlist, filespec.PLAYER_FILE_DEF
         )
         person_record = performancerecord.PlayerDBrecord(
             valueclass=performancerecord.PersonDBvalue
@@ -431,21 +429,15 @@ def break_person_into_picked_players(database, person, aliases):
             key=database.encode_record_selector(identity),
         )
         for alias in aliases:
-            value.load_alias_index_key(alias[0])
-            selector = database.encode_record_selector(value.alias_index_key())
-            recordlist = database.recordlist_key(
-                filespec.PLAYER_FILE_DEF,
-                filespec.PERSON_ALIAS_FIELD_DEF,
-                key=selector,
+            recordlist = database.recordlist_record_number(
+                filespec.PLAYER_FILE_DEF, key=alias[1]
             )
             count = recordlist.count_records()
-            if count > 1:
-                raise PlayerToPerson(
-                    "Cannot break: person alias record duplicated"
-                )
             if count == 0:
-                raise PlayerToPerson(
-                    "Cannot break: person alias record does not exist"
+                raise PersonToPlayer(
+                    repr(alias[0]).join(
+                        ("Cannot break: alias record ", " does not exist")
+                    )
                 )
             primary_record = identify_item.get_first_item_on_recordlist(
                 database,
@@ -467,7 +459,9 @@ def break_person_into_picked_players(database, person, aliases):
                 database.recordlist_key(
                     filespec.GAME_FILE_DEF,
                     filespec.GAME_PLAYER_FIELD_DEF,
-                    key=selector,
+                    key=database.encode_record_selector(
+                        player_record.value.alias_index_key()
+                    ),
                 )
             )
             alias_record = performancerecord.PlayerDBrecord(
@@ -503,25 +497,20 @@ def change_identified_person(database, player):
     The changes are applied to database.
 
     """
-    value = performancerecord.PersonDBvalue()
-    value.load_alias_index_key(player[0][0])
-    selector = database.encode_record_selector(value.alias_index_key())
     database.start_transaction()
     try:
-        recordlist = database.recordlist_key(
-            filespec.PLAYER_FILE_DEF,
-            filespec.PERSON_ALIAS_FIELD_DEF,
-            key=selector,
+        recordlist = database.recordlist_record_number(
+            filespec.PLAYER_FILE_DEF, key=player[0][1]
         )
         count = recordlist.count_records()
         if count == 0:
-            raise PersonIdentity("Cannot change: player record does not exist")
-        if count > 1:
-            raise PersonIdentity("Cannot change: player record duplicated")
+            raise PersonIdentity(
+                repr(player[0]).join(
+                    ("Person record ", " does not exist")
+                )
+            )
         primary_record = identify_item.get_first_item_on_recordlist(
-            database,
-            recordlist,
-            filespec.PLAYER_FILE_DEF,
+            database, recordlist, filespec.PLAYER_FILE_DEF
         )
         selection_record = performancerecord.PlayerDBrecord(
             valueclass=performancerecord.PersonDBvalue
@@ -530,7 +519,6 @@ def change_identified_person(database, player):
         if selection_record.value.identity == selection_record.value.alias:
             database.backout()
             return "Not changed: selection is already the identified person"
-
         recordlist = database.recordlist_key(
             filespec.PLAYER_FILE_DEF,
             filespec.PLAYER_IDENTITY_FIELD_DEF,
@@ -538,7 +526,7 @@ def change_identified_person(database, player):
         )
         count = recordlist.count_records()
         if count == 0:
-            raise PlayerToPerson(
+            raise PersonIdentity(
                 "Cannot change: no players with this identity"
             )
         gamelist = database.recordlist_key(
