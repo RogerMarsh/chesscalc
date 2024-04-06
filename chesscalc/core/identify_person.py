@@ -45,9 +45,7 @@ def identify_players_as_person(database, players, person):
         count = recordlist.count_records()
         if count == 0:
             raise PlayerToPerson(
-                repr(person[0]).join(
-                    ("Person record ", " does not exist")
-                )
+                repr(person[0]).join(("Person record ", " does not exist"))
             )
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
@@ -80,11 +78,15 @@ def identify_players_as_person(database, players, person):
             key=selector,
         )
         count = recordlist.count_records()
-        if count + database.recordlist_key(
-            filespec.PLAYER_FILE_DEF,
-            filespec.PLAYER_ALIAS_FIELD_DEF,
-            key=selector,
-        ).count_records() != 1:
+        if (
+            count
+            + database.recordlist_key(
+                filespec.PLAYER_FILE_DEF,
+                filespec.PLAYER_ALIAS_FIELD_DEF,
+                key=selector,
+            ).count_records()
+            != 1
+        ):
             if count:
                 raise PlayerToPerson("Duplicate references for person")
             raise PlayerToPerson(
@@ -112,9 +114,7 @@ def identify_players_as_person(database, players, person):
             count = recordlist.count_records()
             if count == 0:
                 raise PlayerToPerson(
-                    repr(person[0]).join(
-                        ("Player record ", " does not exist")
-                    )
+                    repr(person[0]).join(("Player record ", " does not exist"))
                 )
             primary_record = identify_item.get_first_item_on_recordlist(
                 database, recordlist, filespec.PLAYER_FILE_DEF
@@ -178,9 +178,7 @@ def identify_players_by_name_as_person(database, players, person):
         count = recordlist.count_records()
         if count == 0:
             raise PlayerToPerson(
-                repr(person[0]).join(
-                    ("Person record ", " does not exist")
-                )
+                repr(person[0]).join(("Person record ", " does not exist"))
             )
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
@@ -231,11 +229,15 @@ def identify_players_by_name_as_person(database, players, person):
             key=selector,
         )
         count = recordlist.count_records()
-        if count + database.recordlist_key(
-            filespec.PLAYER_FILE_DEF,
-            filespec.PLAYER_ALIAS_FIELD_DEF,
-            key=selector,
-        ).count_records() != 1:
+        if (
+            count
+            + database.recordlist_key(
+                filespec.PLAYER_FILE_DEF,
+                filespec.PLAYER_ALIAS_FIELD_DEF,
+                key=selector,
+            ).count_records()
+            != 1
+        ):
             if count:
                 raise PlayerToPerson("Duplicate references for person")
             raise PlayerToPerson(
@@ -326,9 +328,7 @@ def split_person_into_all_players(database, person):
         count = recordlist.count_records()
         if count == 0:
             raise PersonToPlayer(
-                repr(person[0]).join(
-                    ("Person record ", " does not exist")
-                )
+                repr(person[0]).join(("Person record ", " does not exist"))
             )
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
@@ -408,9 +408,7 @@ def break_person_into_picked_players(database, person, aliases):
         count = recordlist.count_records()
         if count == 0:
             raise PersonToPlayer(
-                repr(person[0]).join(
-                    ("Person record ", " does not exist")
-                )
+                repr(person[0]).join(("Person record ", " does not exist"))
             )
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
@@ -505,9 +503,7 @@ def change_identified_person(database, player):
         count = recordlist.count_records()
         if count == 0:
             raise PersonIdentity(
-                repr(player[0]).join(
-                    ("Person record ", " does not exist")
-                )
+                repr(player[0]).join(("Person record ", " does not exist"))
             )
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
