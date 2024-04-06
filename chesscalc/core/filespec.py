@@ -81,8 +81,8 @@ GAME_NAME_FIELD_DEF = "gamename"
 
 # player file fields.
 PLAYER_FIELD_DEF = PLAYER_FILE_DEF
-PLAYER_UNIQUE_FIELD_DEF = "playerunique"
-PLAYER_IDENTITY_FIELD_DEF = "playeridentity"
+PLAYER_KNOWN_FIELD_DEF = "playerknown"
+PLAYER_LINKS_FIELD_DEF = "playerlinks"
 PLAYER_ALIAS_FIELD_DEF = "playeralias"
 PERSON_ALIAS_FIELD_DEF = "personalias"
 PLAYER_NAME_FIELD_DEF = "playername"
@@ -181,8 +181,8 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                     DEFAULT_INCREASE_FACTOR: 0.01,
                     PRIMARY: fld(PLAYER_FIELD_DEF),
                     SECONDARY: {
-                        PLAYER_UNIQUE_FIELD_DEF: None,
-                        PLAYER_IDENTITY_FIELD_DEF: None,
+                        PLAYER_KNOWN_FIELD_DEF: None,
+                        PLAYER_LINKS_FIELD_DEF: None,
                         PLAYER_ALIAS_FIELD_DEF: None,
                         PERSON_ALIAS_FIELD_DEF: None,
                         PLAYER_NAME_FIELD_DEF: None,
@@ -190,8 +190,8 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                     },
                     FIELDS: {
                         fld(PLAYER_FIELD_DEF): None,
-                        fld(PLAYER_UNIQUE_FIELD_DEF): {INV: True, ORD: True},
-                        fld(PLAYER_IDENTITY_FIELD_DEF): {INV: True, ORD: True},
+                        fld(PLAYER_KNOWN_FIELD_DEF): {INV: True, ORD: True},
+                        fld(PLAYER_LINKS_FIELD_DEF): {INV: True, ORD: True},
                         fld(PLAYER_ALIAS_FIELD_DEF): {INV: True, ORD: True},
                         fld(PERSON_ALIAS_FIELD_DEF): {INV: True, ORD: True},
                         fld(PLAYER_NAME_FIELD_DEF): {INV: True, ORD: True},

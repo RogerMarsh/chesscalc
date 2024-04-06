@@ -98,7 +98,7 @@ class Population:
                         continue
                     game_opponent = recordlist_key(
                         filespec.PLAYER_FILE_DEF,
-                        filespec.PLAYER_UNIQUE_FIELD_DEF,
+                        filespec.PLAYER_KNOWN_FIELD_DEF,
                         key=encode_record_selector(person_record.value.alias),
                     )
                     game_opponent_cursor = (

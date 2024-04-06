@@ -151,7 +151,7 @@ class _NameStatus:
                 player_record.load_record(record)
                 personaliases = database.recordlist_key(
                     filespec.PLAYER_FILE_DEF,
-                    filespec.PLAYER_IDENTITY_FIELD_DEF,
+                    filespec.PLAYER_LINKS_FIELD_DEF,
                     key=encode_record_selector(chosen_alias),
                 )
                 person_alias = player_record.value.identity

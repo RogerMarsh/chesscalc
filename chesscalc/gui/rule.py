@@ -1282,7 +1282,7 @@ def _non_calculable_sort_key(player, database, lookup):
     person_record = performancerecord.PlayerDBrecord()
     playerset = database.recordlist_key(
         filespec.PLAYER_FILE_DEF,
-        filespec.PLAYER_UNIQUE_FIELD_DEF,
+        filespec.PLAYER_KNOWN_FIELD_DEF,
         key=database.encode_record_selector(player.code),
     )
     person_cursor = database.database_cursor(

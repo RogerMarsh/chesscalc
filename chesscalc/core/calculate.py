@@ -292,7 +292,7 @@ class Calculate:
                     if player.value.identity != player.value.alias:
                         alias_list = database.recordlist_key(
                             filespec.PLAYER_FILE_DEF,
-                            filespec.PLAYER_UNIQUE_FIELD_DEF,
+                            filespec.PLAYER_KNOWN_FIELD_DEF,
                             key=database.encode_record_selector(
                                 player.value.alias
                             ),
@@ -400,7 +400,7 @@ class Calculate:
                         person_opponent.close()
                         person_opponent = recordlist_key(
                             filespec.PLAYER_FILE_DEF,
-                            filespec.PLAYER_UNIQUE_FIELD_DEF,
+                            filespec.PLAYER_KNOWN_FIELD_DEF,
                             key=encode_record_selector(
                                 person_record.value.alias
                             ),
@@ -431,7 +431,7 @@ class Calculate:
         recordlist_nil = database.recordlist_nil
         person_list = recordlist_key(
             filespec.PLAYER_FILE_DEF,
-            filespec.PLAYER_IDENTITY_FIELD_DEF,
+            filespec.PLAYER_LINKS_FIELD_DEF,
             key=encode_record_selector(self._player_identity),
         )
         cursor = person_list.create_recordsetbase_cursor()
@@ -442,7 +442,7 @@ class Calculate:
         cursor.close()
         person_list = recordlist_key(
             filespec.PLAYER_FILE_DEF,
-            filespec.PLAYER_IDENTITY_FIELD_DEF,
+            filespec.PLAYER_LINKS_FIELD_DEF,
             key=encode_record_selector(person_record.value.alias),
         )
 
@@ -496,7 +496,7 @@ class Calculate:
                             person_opponent.close()
                             person_opponent = recordlist_key(
                                 filespec.PLAYER_FILE_DEF,
-                                filespec.PLAYER_UNIQUE_FIELD_DEF,
+                                filespec.PLAYER_KNOWN_FIELD_DEF,
                                 key=encode_record_selector(
                                     person_record.value.alias
                                 ),
@@ -692,7 +692,7 @@ def _add_opponents_of_person_in_games_to_players(
                 continue
             game_opponent = recordlist_key(
                 filespec.PLAYER_FILE_DEF,
-                filespec.PLAYER_UNIQUE_FIELD_DEF,
+                filespec.PLAYER_KNOWN_FIELD_DEF,
                 key=encode_record_selector(person_record.value.alias),
             )
             players |= game_opponent

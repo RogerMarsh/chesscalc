@@ -870,8 +870,8 @@ class PlayerDBvalue(_PlayerDBvalue):
         index = val[1]
         index[filespec.PLAYER_ALIAS_FIELD_DEF] = [self.alias_index_key()]
         index[filespec.PLAYER_NAME_FIELD_DEF] = [self.name]
-        index[filespec.PLAYER_UNIQUE_FIELD_DEF] = []
-        index[filespec.PLAYER_IDENTITY_FIELD_DEF] = []
+        index[filespec.PLAYER_KNOWN_FIELD_DEF] = []
+        index[filespec.PLAYER_LINKS_FIELD_DEF] = []
         index[filespec.PERSON_ALIAS_FIELD_DEF] = []
         index[filespec.PERSON_NAME_FIELD_DEF] = []
         return val
@@ -898,10 +898,10 @@ class PersonDBvalue(_PlayerDBvalue):
         index[filespec.PLAYER_ALIAS_FIELD_DEF] = []
         index[filespec.PLAYER_NAME_FIELD_DEF] = []
         if self.identity != self.alias:
-            index[filespec.PLAYER_UNIQUE_FIELD_DEF] = []
+            index[filespec.PLAYER_KNOWN_FIELD_DEF] = []
         else:
-            index[filespec.PLAYER_UNIQUE_FIELD_DEF] = [self.alias]
-        index[filespec.PLAYER_IDENTITY_FIELD_DEF] = [self.alias]
+            index[filespec.PLAYER_KNOWN_FIELD_DEF] = [self.alias]
+        index[filespec.PLAYER_LINKS_FIELD_DEF] = [self.alias]
         index[filespec.PERSON_ALIAS_FIELD_DEF] = [self.alias_index_key()]
         index[filespec.PERSON_NAME_FIELD_DEF] = [self.name]
         return val
@@ -925,7 +925,7 @@ class PlayerDBrecord(Record):
             dbname = datasource.dbname
             if dbname == filespec.PLAYER_ALIAS_FIELD_DEF:
                 return [(self.value.alias_index_key(), srkey)]
-            if dbname == filespec.PLAYER_IDENTITY_FIELD_DEF:
+            if dbname == filespec.PLAYER_LINKS_FIELD_DEF:
                 return [(self.value.alias, srkey)]
             if dbname == filespec.PERSON_ALIAS_FIELD_DEF:
                 return [(self.value.alias_index_key(), srkey)]

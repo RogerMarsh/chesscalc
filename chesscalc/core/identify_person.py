@@ -191,7 +191,7 @@ def identify_players_by_name_as_person(database, players, person):
             # person is alias on identified players list so find known player.
             recordlist = database.recordlist_key(
                 filespec.PLAYER_FILE_DEF,
-                filespec.PLAYER_UNIQUE_FIELD_DEF,
+                filespec.PLAYER_KNOWN_FIELD_DEF,
                 key=encode_record_selector(player_record.value.alias),
             )
             count = recordlist.count_records()
@@ -343,7 +343,7 @@ def split_person_into_all_players(database, person):
         identity = person_record.value.alias
         recordlist = database.recordlist_key(
             filespec.PLAYER_FILE_DEF,
-            filespec.PLAYER_IDENTITY_FIELD_DEF,
+            filespec.PLAYER_LINKS_FIELD_DEF,
             key=database.encode_record_selector(identity),
         )
         count = recordlist.count_records()
@@ -374,7 +374,7 @@ def split_person_into_all_players(database, person):
                 player_record.value.alias = player_record.value.identity
 
                 # None is safe because self.srkey == new_record.srkey.
-                # filespec.PLAYER_IDENTITY_FIELD_DEF is correct value otherwise
+                # filespec.PLAYER_LINKS_FIELD_DEF is correct value otherwise
                 # because of how argument is used in edit_record().
                 alias_record.edit_record(
                     database, filespec.PLAYER_FILE_DEF, None, player_record
@@ -521,7 +521,7 @@ def change_identified_person(database, player):
             return "Not changed: selection is already the identified person"
         recordlist = database.recordlist_key(
             filespec.PLAYER_FILE_DEF,
-            filespec.PLAYER_IDENTITY_FIELD_DEF,
+            filespec.PLAYER_LINKS_FIELD_DEF,
             key=database.encode_record_selector(selection_record.value.alias),
         )
         count = recordlist.count_records()

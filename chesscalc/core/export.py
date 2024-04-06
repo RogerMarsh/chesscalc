@@ -243,7 +243,7 @@ def _export_aliases_of_person(
     person_record.load_record(itemdata)
     itemaliases = database.recordlist_key(
         filespec.PLAYER_FILE_DEF,
-        filespec.PLAYER_IDENTITY_FIELD_DEF,
+        filespec.PLAYER_LINKS_FIELD_DEF,
         key=database.encode_record_selector(person_record.value.alias),
     )
     aliases = set()

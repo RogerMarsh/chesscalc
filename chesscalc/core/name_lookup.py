@@ -29,7 +29,7 @@ def get_player_record_from_identity(database, identity):
     """Return player record for identity or None."""
     recordlist = database.recordlist_key(
         filespec.PLAYER_FILE_DEF,
-        filespec.PLAYER_IDENTITY_FIELD_DEF,
+        filespec.PLAYER_LINKS_FIELD_DEF,
         key=database.encode_record_selector(identity),
     )
     primary_record = identify_item.get_identity_item_on_recordlist(
