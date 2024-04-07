@@ -166,8 +166,8 @@ class Rule(Bindings):
         )
         for text, column, row in (
             ("Rule", 0, 0),
-            ("Known player identity", 0, 1),
-            ("Known player name", 2, 1),
+            ("Player identity", 0, 1),
+            ("Player name", 2, 1),
             ("From Date", 0, 2),
             ("To Date", 0, 3),
             ("Time control identity", 0, 4),
@@ -445,6 +445,26 @@ class Rule(Bindings):
             *self.get_selection_values_from_widget()
         )
         if not valid_values:
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=EventSpec.menu_selectors_update[1],
+                message="Performances not calculated: rules not valid",
+            )
+            return False
+        valid_values = self._convert_player_identity_to_known_identity(
+            *valid_values
+        )
+        if not valid_values:
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=EventSpec.menu_selectors_update[1],
+                message="".join(
+                    (
+                        "Performances not calculated: ",
+                        "player not in known list",
+                    )
+                ),
+            )
             return False
         calculation = calculate.calculate(self._database, *valid_values)
         if calculation is None:
@@ -1068,6 +1088,55 @@ class Rule(Bindings):
                 item[-1]
                 for item in sorted(zip(event_name_list, event_identity_list))
             ],
+        )
+
+    def _convert_player_identity_to_known_identity(
+        self,
+        rule,
+        player_identity,
+        from_date,
+        to_date,
+        time_control_identity,
+        mode_identity,
+        event_list,
+    ):
+        """Convert player_identity to associated known player identity.
+
+        A known player entry with alias not equal identity may be selected.
+
+        The selected entry may be removed from the known player list after
+        the rule is created.
+
+        """
+        player_record = name_lookup.get_player_record_from_identity(
+            self._database, player_identity
+        )
+        if player_record is None:
+            return None
+        if player_record.value.alias != player_record.value.identity:
+            player_record = name_lookup.get_player_record_from_identity(
+                self._database, player_record.value.alias
+            )
+            if player_record is None:
+                return None
+            if player_record.value.alias != player_record.value.identity:
+                return None
+            player_identity = player_record.value.alias
+        if (
+            name_lookup.get_known_player_record_from_identity(
+                self._database, player_identity
+            )
+            is None
+        ):
+            return None
+        return (
+            rule,
+            player_identity,
+            from_date,
+            to_date,
+            time_control_identity,
+            mode_identity,
+            event_list,
         )
 
 
