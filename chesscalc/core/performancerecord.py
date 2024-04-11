@@ -566,49 +566,36 @@ class GameDBImporter(GameDBrecord):
                     number_games.close()
                 seen_number += 1
                 self.value.headers = collected_game.pgn_tags
-                headers = self.value.headers
-                if (
-                    headers.get(constants.TAG_RESULT)
-                    in constants.WIN_DRAW_LOSS
-                ):
-                    copy_number += 1
-                    self.key.recno = None
-                    self.put_record(self.database, filespec.GAME_FILE_DEF)
-                    if copy_number % db_segment_size == 0:
-                        database.commit()
-                        database.deferred_update_housekeeping()
-                        database.start_transaction()
-                        if reporter is not None:
-                            reporter.append_text(
-                                "".join(
-                                    (
-                                        "Record ",
-                                        str(self.key.recno),
-                                        " is from game ",
-                                        reference[constants.GAME],
-                                        " in ",
-                                        reference[constants.FILE],
-                                    )
-                                )
-                            )
-                elif reporter is not None:
-                    if headers.get(constants.TAG_RESULT) is None:
+                message = self._is_game_not_ratable_between_two_humans()
+                if message:
+                    if reporter is not None:
                         reporter.append_text_only(
                             "".join(
                                 (
-                                    "No result tag in game ",
+                                    "Game ",
                                     reference[constants.GAME],
                                     " in ",
                                     reference[constants.FILE],
+                                    " : ",
+                                    message,
                                 )
                             )
                         )
-                    else:
-                        reporter.append_text_only(
+                    continue
+                copy_number += 1
+                self.key.recno = None
+                self.put_record(self.database, filespec.GAME_FILE_DEF)
+                if copy_number % db_segment_size == 0:
+                    database.commit()
+                    database.deferred_update_housekeeping()
+                    database.start_transaction()
+                    if reporter is not None:
+                        reporter.append_text(
                             "".join(
                                 (
-                                    headers.get(constants.TAG_RESULT),
-                                    " is result of game ",
+                                    "Record ",
+                                    str(self.key.recno),
+                                    " is from game ",
                                     reference[constants.GAME],
                                     " in ",
                                     reference[constants.FILE],
@@ -648,11 +635,34 @@ class GameDBImporter(GameDBrecord):
                 "".join(
                     (
                         str(seen_number - copy_number),
-                        " games had errors and were not copied.",
+                        " games were not copied for reasons given above.",
                     )
                 )
             )
         return True
+
+    def _is_game_not_ratable_between_two_humans(self):
+        """Return False if game is ratable or a message if not.
+
+        The Mode tag distinguishes OTB and online, etc, games.
+
+        The TimeControl tag distinguishes blitz and rapidplay, etc, from
+        standard play.
+
+        """
+        headers = self.value.headers
+        for name in (constants.TAG_WHITETYPE, constants.TAG_BLACKTYPE):
+            if headers.get(name, constants.HUMAN).lower() != constants.HUMAN:
+                return "game is not between two human players"
+        for name in (constants.TAG_WHITE, constants.TAG_BLACK):
+            if constants.CONSULTATION in headers.get(name, ""):
+                return "game is a consultation game"
+        if headers.get(constants.TAG_RESULT) not in constants.WIN_DRAW_LOSS:
+            return "game result is not 1-0, 0-1, or 1/2-1/2"
+        if constants.TAG_FEN in headers:
+            if headers[constants.TAG_FEN] != constants.NORMAL_START:
+                return "game is not from normal start position"
+        return False
 
     # Probably needed only by DPT database engine.
     # Probably only in this class to use _process_pgn_headers_from_directory

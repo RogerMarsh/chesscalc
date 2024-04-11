@@ -31,6 +31,16 @@ TAG_WHITEELO = "WhiteElo"  # FIDE Elo rating.
 TAG_BLACKELO = "BlackElo"  # FIDE Elo rating.
 TAG_BOARD = "Board"  # Board number (often in round or team).
 
+# Supplemental tags which distinguish types of chess.
+TAG_WHITETYPE = "WhiteType"  # Default is "human".
+TAG_BLACKTYPE = "BlackType"  # Default is 'human'.
+TAG_FEN = "FEN"  # Default is start position of a normal game of chess.
+
+# Significant values for distinguishing types of chess.
+CONSULTATION = ":"  # Consultation game if in White or Black tag values.
+HUMAN = "human"  # The player is human (the default) (not a computer).
+NORMAL_START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
 # Tags not mentioned in PGN specification but seen in real PGN files.
 TAG_WHITEFIDEID = "WhiteFideId"  # FIDE Number: part of player identity.
 TAG_BLACKFIDEID = "BlackFideId"  # FIDE Number: part of player identity.
