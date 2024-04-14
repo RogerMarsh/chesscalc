@@ -12,6 +12,8 @@ from . import performancerecord
 from . import filespec
 from . import identify_item
 
+_RECORDS_PER_TRANSACTION = 10000
+
 
 class PersonToPlayer(Exception):
     """Raise if unable to do split action on identified person."""
@@ -312,6 +314,181 @@ def identify_players_by_name_as_person(database, players, person):
     database.commit()
 
 
+def identify_all_players_by_name_as_persons(database, widget):
+    """Make new players with same aliases of same person on database.
+
+    Players are assumed to be the same if their names are the same.  Other
+    detail contributing to the identity, such as event names, is ignored.
+
+    If there is more than one person on the database with the same name then
+    the new player is left as a new player.  This method will not make a
+    decision when there is a choice on what to do.
+
+    All players become aliases of person.
+
+    The changes are applied to database.
+
+    """
+    encode_record_selector = database.encode_record_selector
+    player_record = performancerecord.PlayerDBrecord()
+    person_record = performancerecord.PlayerDBrecord(
+        valueclass=performancerecord.PersonDBvalue
+    )
+    value = player_record.value
+    name_known_map = {}
+    database.start_transaction()
+    try:
+        known = database.recordlist_all(
+            filespec.PLAYER_FILE_DEF, filespec.PLAYER_LINKS_FIELD_DEF
+        )
+        cursor = known.create_recordsetbase_cursor()
+        while True:
+            record = cursor.next()
+            if record is None:
+                break
+            widget.update()
+            record = database.get_primary_record(
+                filespec.PLAYER_FILE_DEF, record[0]
+            )
+            player_record.load_record(record)
+            name_known_map.setdefault(value.name, set()).add(value.alias)
+        cursor.close()
+        known.close()
+        del known
+        new = database.recordlist_all(
+            filespec.PLAYER_FILE_DEF, filespec.PLAYER_NAME_FIELD_DEF
+        )
+        cursor = new.create_recordsetbase_cursor()
+
+        # Keep transactions smallish.
+        # Elsewhere 32000 is not too large just indexing records, but trying
+        # to do about a million records here is too much with all the changes
+        # to related records.
+        counter = _RECORDS_PER_TRANSACTION
+
+        while True:
+            # first() not next() because of the new.remove_recordset(name_new)
+            # call done immediately after creating the name_new list.
+            # The later record updates may lead to cursor's segment pointer
+            # referring to a segment that no longer exists if next() is
+            # called.  This may cause an exception and backout or early exit
+            # from the update and commit depending on where the underlying
+            # support of cursor thinks it is located.
+            # It would be safe to call next() if the current record were not
+            # on the name_new list.
+            record = cursor.first()
+
+            if record is None:
+                break
+            if counter < 1:
+                database.commit()
+
+                # Want to do database resizing for LMDB and DPT but the
+                # deferred_update_housekeeping method is only in the *_du
+                # chain at present.
+                # database.deferred_update_housekeeping()
+
+                database.start_transaction()
+                counter = _RECORDS_PER_TRANSACTION
+            counter -= 1
+            widget.update()
+            record = database.get_primary_record(
+                filespec.PLAYER_FILE_DEF, record[0]
+            )
+            player_record.load_record(record)
+            name_new = database.recordlist_key(
+                filespec.PLAYER_FILE_DEF,
+                filespec.PLAYER_NAME_FIELD_DEF,
+                key=encode_record_selector(value.name),
+            )
+            new.remove_recordset(name_new)
+            if value.name in name_known_map:
+                if len(name_known_map[value.name]) > 1:
+                    name_new.close()
+                    continue
+                gamelist = database.recordlist_key(
+                    filespec.GAME_FILE_DEF,
+                    filespec.GAME_PERSON_FIELD_DEF,
+                    key=encode_record_selector(value.alias_index_key()),
+                )
+                alias = value.alias
+                name_cursor = name_new.create_recordsetbase_cursor()
+                while True:
+                    record = name_cursor.next()
+                    if record is None:
+                        break
+                    record = database.get_primary_record(
+                        filespec.PLAYER_FILE_DEF, record[0]
+                    )
+                    player_record.load_record(record)
+                    person_record.load_record(record)
+                    person_record.value.alias = alias
+
+                    # None is safe because self.srkey == new_record.srkey.
+                    # filespec.PLAYER_ALIAS_FIELD_DEF is correct value
+                    # otherwise because of how argument is used in
+                    # edit_record().
+                    player_record.edit_record(
+                        database, filespec.PLAYER_FILE_DEF, None, person_record
+                    )
+
+                    gamelist |= database.recordlist_key(
+                        filespec.GAME_FILE_DEF,
+                        filespec.GAME_PLAYER_FIELD_DEF,
+                        key=encode_record_selector(
+                            player_record.value.alias_index_key()
+                        ),
+                    )
+                database.file_records_under(
+                    filespec.GAME_FILE_DEF,
+                    filespec.GAME_PERSON_FIELD_DEF,
+                    gamelist,
+                    database.encode_record_selector(alias),
+                )
+                name_new.close()
+                continue
+            gamelist = database.recordlist_nil(filespec.GAME_FILE_DEF)
+            alias = value.alias
+            name_cursor = name_new.create_recordsetbase_cursor()
+            while True:
+                record = name_cursor.next()
+                if record is None:
+                    break
+                record = database.get_primary_record(
+                    filespec.PLAYER_FILE_DEF, record[0]
+                )
+                player_record.load_record(record)
+                person_record.load_record(record)
+                person_record.value.alias = alias
+
+                # None is safe because self.srkey == new_record.srkey.
+                # filespec.PLAYER_ALIAS_FIELD_DEF is correct value
+                # otherwise because of how argument is used in
+                # edit_record().
+                player_record.edit_record(
+                    database, filespec.PLAYER_FILE_DEF, None, person_record
+                )
+
+                gamelist |= database.recordlist_key(
+                    filespec.GAME_FILE_DEF,
+                    filespec.GAME_PLAYER_FIELD_DEF,
+                    key=encode_record_selector(
+                        player_record.value.alias_index_key()
+                    ),
+                )
+            database.file_records_under(
+                filespec.GAME_FILE_DEF,
+                filespec.GAME_PERSON_FIELD_DEF,
+                gamelist,
+                database.encode_record_selector(alias),
+            )
+            name_new.close()
+    except:  # pycodestyle E722: pylint is happy with following 'raise'.
+        database.backout()
+        raise
+    database.commit()
+
+
 def split_person_into_all_players(database, person):
     """Split person into new player aliases on database.
 
@@ -390,6 +567,7 @@ def split_person_into_all_players(database, person):
         database.backout()
         raise
     database.commit()
+    return None
 
 
 def break_person_into_picked_players(database, person, aliases):
@@ -574,3 +752,4 @@ def change_identified_person(database, player):
         database.backout()
         raise
     database.commit()
+    return None

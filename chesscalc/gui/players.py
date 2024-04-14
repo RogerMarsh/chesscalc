@@ -189,6 +189,34 @@ class Players(Bindings):
         )
         return True
 
+    def match_players_by_name(self):
+        """Identify new players with same name as person for all names."""
+        title = EventSpec.menu_match_players_by_name[1]
+        database = self.get_database(title)
+        if not database:
+            return None
+        if (
+            self._players_grid.bookmarks
+            or self._persons_grid.bookmarks
+            or self._players_grid.selection
+            or self._persons_grid.selection
+        ):
+            if not tkinter.messagebox.askokcancel(
+                parent=self._players,
+                title=title,
+                message="".join(
+                    (
+                        "Selection and bookmarked items are ignored in this ",
+                        "action but will be cleared on completion",
+                    )
+                ),
+            ):
+                return False
+        identify_person.identify_all_players_by_name_as_persons(
+            database, self._players
+        )
+        return True
+
     def get_database(self, title):
         """Return database if both player lists are from same database.
 

@@ -39,6 +39,10 @@ _NAMES_NOT_ALLOWED_IN_STATUS = set(_FILE_NAMES_TO_BE_POPULATED).union(
     _FIELD_NAMES_TO_BE_POPULATED
 )
 _FILE_AND_FIELD_NAMES_TO_BE_POPULATED = tuple(_NAMES_NOT_ALLOWED_IN_STATUS)
+_NO_OPPONENT = frozenset(
+    (constants.BYE_TERMINATION, constants.DEFAULT_TERMINATION)
+)
+_NO_PLAYER = frozenset((constants.UNKNOWN_VALUE, constants.NO_VALUE))
 
 
 class GameDBvalueError(Exception):
@@ -655,13 +659,36 @@ class GameDBImporter(GameDBrecord):
             if headers.get(name, constants.HUMAN).lower() != constants.HUMAN:
                 return "game is not between two human players"
         for name in (constants.TAG_WHITE, constants.TAG_BLACK):
-            if constants.CONSULTATION in headers.get(name, ""):
+            value = headers.get(name, "")
+            if constants.CONSULTATION in value:
                 return "game is a consultation game"
+            if value in _NO_PLAYER:
+                return "".join(
+                    ("game has '", value, "' as value of '", name, "' tag")
+                )
+            if not value:
+                return name.join(
+                    ("game is missing ", ' tag or it has "" value')
+                )
         if headers.get(constants.TAG_RESULT) not in constants.WIN_DRAW_LOSS:
             return "game result is not 1-0, 0-1, or 1/2-1/2"
+        termination = headers.get(constants.TAG_TERMINATION, "")
+        if termination.lower() in _NO_OPPONENT:
+            return termination.join(
+                ("game is not ratable due to termination reason: '", "'")
+            )
         if constants.TAG_FEN in headers:
             if headers[constants.TAG_FEN] != constants.NORMAL_START:
                 return "game is not from normal start position"
+        for name in (
+            constants.TAG_EVENT,
+            constants.TAG_SITE,
+            constants.TAG_DATE,
+        ):
+            if not headers.get(name):
+                return name.join(
+                    ("game is missing ", ' tag or it has "" value')
+                )
         return False
 
     # Probably needed only by DPT database engine.

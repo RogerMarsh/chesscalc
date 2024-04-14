@@ -223,6 +223,11 @@ class Calculator(Bindings):
             (menu2,) + _MENU_SEPARATOR,
             (menu2, EventSpec.menu_player_identify, self._player_identify),
             (menu2, EventSpec.menu_player_name_match, self._player_name_match),
+            (
+                menu2,
+                EventSpec.menu_match_players_by_name,
+                self._match_players_by_name,
+            ),
             (menu2,) + _MENU_SEPARATOR,
             (menu2, EventSpec.menu_player_break, self._player_break),
             (menu2, EventSpec.menu_player_split, self._player_split),
@@ -1100,6 +1105,21 @@ class Calculator(Bindings):
             self._players.players_grid.clear_selections()
             self._players.players_grid.clear_bookmarks()
             self._players.persons_grid.clear_selections()
+            self._players.players_grid.fill_view_with_top()
+            self._players.persons_grid.fill_view_with_top()
+            self._persons.data_grid.fill_view_with_top()
+
+    def _match_players_by_name(self):
+        """Identify new players with same name as person for all names."""
+        if not self._is_player_tab_visible(
+            EventSpec.menu_player_name_match[1], "Match all players by name"
+        ):
+            return
+        if self._players.match_players_by_name():
+            self._players.players_grid.clear_selections()
+            self._players.players_grid.clear_bookmarks()
+            self._players.persons_grid.clear_selections()
+            self._players.persons_grid.clear_bookmarks()
             self._players.players_grid.fill_view_with_top()
             self._players.persons_grid.fill_view_with_top()
             self._persons.data_grid.fill_view_with_top()

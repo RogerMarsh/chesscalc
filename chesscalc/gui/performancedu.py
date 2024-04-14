@@ -894,6 +894,18 @@ class DeferredUpdate(Bindings):
         if tkinter.messagebox.askyesno(
             parent=self.root,
             title="Dismiss",
-            message="Do you want to dismiss the import log?",
+            message="".join(
+                (
+                    "Do you want to dismiss the import log?",
+                    "\n\nThe log will be saved to\n'LatestImportLog.txt'\n",
+                    "on dismissal, replacing any existing content.",
+                )
+            ),
         ):
+            with open(
+                os.path.join(self.home_directory, "LatestImportLog.txt"),
+                mode="w",
+                encoding="utf-8",
+            ) as logfile:
+                logfile.write(self.report.get("1.0", tkinter.END))
             self.root.destroy()

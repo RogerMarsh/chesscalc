@@ -451,9 +451,13 @@ class Rule(Bindings):
                 message="Performances not calculated: rules not valid",
             )
             return False
-        valid_values = self._convert_player_identity_to_known_identity(
-            *valid_values
-        )
+        self._database.start_read_only_transaction()
+        try:
+            valid_values = self._convert_player_identity_to_known_identity(
+                *valid_values
+            )
+        finally:
+            self._database.end_read_only_transaction()
         if not valid_values:
             tkinter.messagebox.showinfo(
                 parent=self.frame,

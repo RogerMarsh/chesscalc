@@ -33,6 +33,7 @@ class EventSpec:
     menu_database_quit = ("", "Quit", "", 0)
     menu_player_identify = ("", "Identify Player", "", 0)
     menu_player_name_match = ("", "Player Name Match", "", 0)
+    menu_match_players_by_name = ("", "Match Players by Name", "", 0)
     menu_player_break = ("", "Break Selected", "", 0)
     menu_player_split = ("", "Split All", "", 0)
     menu_player_change = ("", "Change Person", "", 0)

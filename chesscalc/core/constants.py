@@ -35,11 +35,18 @@ TAG_BOARD = "Board"  # Board number (often in round or team).
 TAG_WHITETYPE = "WhiteType"  # Default is "human".
 TAG_BLACKTYPE = "BlackType"  # Default is 'human'.
 TAG_FEN = "FEN"  # Default is start position of a normal game of chess.
+TAG_TERMINATION = "Termination"  # Default is 'normal'.
 
 # Significant values for distinguishing types of chess.
 CONSULTATION = ":"  # Consultation game if in White or Black tag values.
 HUMAN = "human"  # The player is human (the default) (not a computer).
 NORMAL_START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+# Significant values for deciding if game is ratable.
+DEFAULT_TERMINATION = "default"  # The game was decided by default.
+BYE_TERMINATION = "bye"  # The game was declared a bye.
+UNKNOWN_VALUE = "?"  # Proper tag value is unknown.
+NO_VALUE = "-"  # The tag has no proper value.
 
 # Tags not mentioned in PGN specification but seen in real PGN files.
 TAG_WHITEFIDEID = "WhiteFideId"  # FIDE Number: part of player identity.
