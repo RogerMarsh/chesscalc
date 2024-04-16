@@ -16,6 +16,7 @@ from solentware_bind.gui.exceptionhandler import ExceptionHandler
 from solentware_base import modulequery
 
 from solentware_misc.workarounds import workarounds
+from solentware_misc.gui import logtextbase
 
 from .. import APPLICATION_NAME
 from .eventspec import EventSpec
@@ -157,6 +158,13 @@ class Calculator(Bindings):
         self._modes = None
         self._selectors = None
         self.widget = tkinter.Tk()
+        self._lock = tkinter.StringVar(master=self.widget)  # , name="lock")
+        self._lock_value = tkinter.StringVar(
+            master=self.widget  # , name="lock_value"
+        )
+        self._mask = None
+        self._masklog = None
+        self._resizeable = None
         try:
             self._initialize()
         except Exception as exc:
@@ -368,6 +376,51 @@ class Calculator(Bindings):
         # So it can be destoyed when closing database but not quitting.
         self._notebook = notebook
 
+    def _clear_lock(self):
+        """Set value of StringVars 'lock' and 'lock_value' to ''."""
+        self._lock_value.set("")
+        self._lock.set("")
+        self._notebook.state(statespec=["!" + tkinter.DISABLED])
+        self._mask.destroy()
+        self.widget.wm_resizable(*self._resizeable)
+
+    def _apply_lock(self):
+        """Set value of StringVar 'lock' to 'locked' and note old value."""
+        self._lock_value.set(self._lock.get())
+        self._lock.set("locked")
+        self._resizeable = self.widget.wm_resizable()
+        self.widget.wm_resizable(width=False, height=False)
+        select = self._notebook.index(self._notebook.select())
+        for tab in (
+            self._games_tab,
+            self._players_tab,
+            self._persons_tab,
+            self._calculations_tab,
+            self._events_tab,
+            self._time_limits_tab,
+            self._modes_tab,
+            self._calculations_tab,
+        ):
+            if self._notebook.index(tab) == select:
+                self._mask = tkinter.Frame(master=tab)
+                self._masklog = logtextbase.LogTextBase(
+                    master=self._mask, width=20, height=10
+                )
+                self._mask.grid(
+                    row=0, column=0, rowspan=2, sticky=tkinter.NSEW
+                )
+                self._masklog.focus_set()
+                break
+        self._notebook.state(statespec=[tkinter.DISABLED])
+
+    def _set_lock_to_eventspec_name(self, name):
+        """Set value of StringVar 'lock' to eventspec menu item name."""
+        if self._lock.get() == "locked":
+            return False
+        self._lock_value.set("")
+        self._lock.set(name[1])
+        return True
+
     def _help_widget(self):
         """Display help in a Toplevel."""
         widget = tkinter.Toplevel(master=self.widget)
@@ -379,6 +432,8 @@ class Calculator(Bindings):
 
     def _database_quit(self):
         """Quit performance calculation application."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_database_quit):
+            return
         if not tkinter.messagebox.askyesno(
             parent=self.widget,
             message="Do you really want to quit?",
@@ -390,6 +445,10 @@ class Calculator(Bindings):
 
     def _database_apply_aliases(self):
         """Verify imported player identifications and apply if consistent."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_database_apply_aliases
+        ):
+            return None
         title = EventSpec.menu_database_apply_aliases[1]
         if self.database is None:
             tkinter.messagebox.showinfo(
@@ -425,18 +484,23 @@ class Calculator(Bindings):
             constants.RECENT_IMPORT_DIRECTORY,
             conf.convert_home_directory_to_tilde(os.path.dirname(import_file)),
         )
-        # gives time for destruction of dialogue and widget refresh
-        # does nothing for obscuring and revealing application later
+        self._apply_lock()
         self.widget.after_idle(
             self.try_command(
                 self._verify_and_apply_person_identities, self.widget
             ),
             import_file,
+            self._clear_lock,
         )
+        self.widget.wait_variable(str(self._lock))
         return True
 
     def _database_mirror_identities(self):
         """Verify imported player identifications and mirror if consistent."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_database_mirror_identities
+        ):
+            return None
         title = EventSpec.menu_database_mirror_identities[1]
         if self.database is None:
             tkinter.messagebox.showinfo(
@@ -472,18 +536,23 @@ class Calculator(Bindings):
             constants.RECENT_IMPORT_DIRECTORY,
             conf.convert_home_directory_to_tilde(os.path.dirname(import_file)),
         )
-        # gives time for destruction of dialogue and widget refresh
-        # does nothing for obscuring and revealing application later
+        self._apply_lock()
         self.widget.after_idle(
             self.try_command(
                 self._verify_and_mirror_person_identities, self.widget
             ),
             import_file,
+            self._clear_lock,
         )
+        self.widget.wait_variable(str(self._lock))
         return True
 
     def _database_export_identities(self):
         """Export player identifications."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_database_export_identities
+        ):
+            return None
         title = EventSpec.menu_database_export_identities[1]
         if self.database is None:
             tkinter.messagebox.showinfo(
@@ -499,8 +568,14 @@ class Calculator(Bindings):
                 message="Database interface not defined",
             )
             return None
+        self._apply_lock()
+        self._masklog.append_text_only("")
+        self._masklog.append_text_only(
+            "Please wait while export identities is done"
+        )
+        self._masklog.append_text_only("")
         exporter = export.ExportIdentities(self.database)
-        exporter.prepare_export_data()
+        exporter.prepare_export_data(self.widget)
         serialized_data = exporter.export_repr()
         conf = configuration.Configuration()
         initdir = conf.get_configuration_value(
@@ -518,24 +593,25 @@ class Calculator(Bindings):
                 message="Export of mirror cancelled",
                 title=title,
             )
+            self._clear_lock()
             return False
         conf.set_configuration_value(
             constants.RECENT_EXPORT_DIRECTORY,
             conf.convert_home_directory_to_tilde(os.path.dirname(export_file)),
         )
-        # gives time for destruction of dialogue and widget refresh
-        # does nothing for obscuring and revealing application later
-        # Why? the work is in the prepare_export_data() call earlier.
-        # Might make sense if the exporter object were the argument.
         self.widget.after_idle(
             self.try_command(export.write_export_file, self.widget),
             export_file,
             serialized_data,
+            self._clear_lock,
         )
+        self.widget.wait_variable(str(self._lock))
         return True
 
     def _database_close(self):
         """Close performance calculation database."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_database_close):
+            return False
         if self.database is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
@@ -567,6 +643,10 @@ class Calculator(Bindings):
 
     def _database_delete(self):
         """Delete performance calculation database."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_database_delete
+        ):
+            return
         if self.database is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
@@ -629,6 +709,8 @@ class Calculator(Bindings):
 
     def _database_new(self):
         """Create and open a new performance calculation database."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_database_new):
+            return
         if self.database is not None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
@@ -739,6 +821,8 @@ class Calculator(Bindings):
 
     def _database_open(self):
         """Open performance calculation database."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_database_open):
+            return
         if self.database is not None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
@@ -926,7 +1010,11 @@ class Calculator(Bindings):
         """Close performance calculation database."""
         if self.database is None:
             return
-        self.database.close_database()
+        self._apply_lock()
+        try:
+            self.database.close_database()
+        finally:
+            self._clear_lock()
         self._notebook.destroy()
 
     def _quit_database(self):
@@ -938,6 +1026,10 @@ class Calculator(Bindings):
 
     def _database_import(self):
         """Import PGN headers to open database."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_database_import
+        ):
+            return
         if self.database is None:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
@@ -981,12 +1073,11 @@ class Calculator(Bindings):
             constants.RECENT_PGN_DIRECTORY,
             conf.convert_home_directory_to_tilde(pgn_directory),
         )
-        # gives time for destruction of dialogue and widget refresh
-        # does nothing for obscuring and revealing application later
-        self.widget.after_idle(
-            self.try_command(self._import_pgnfiles, self.widget),
-            pgn_directory,
-        )
+        self._apply_lock()
+        self._import_pgnfiles(pgn_directory)
+        self._masklog.append_text_only("")
+        self._masklog.append_text_only("Please wait while import is done")
+        self._masklog.append_text_only("")
 
     def _import_pgnfiles(self, pgn_directory):
         """Import games to open database."""
@@ -1034,6 +1125,7 @@ class Calculator(Bindings):
         if self.get_import_subprocess().exitcode is None:
             self.widget.after(1000, self._import_pgnfiles_join)
             return
+        self._clear_lock()
         self.database.open_database()
         self._games.data_grid.bind_on()
         self._players.players_grid.bind_on()
@@ -1083,46 +1175,70 @@ class Calculator(Bindings):
 
     def _player_identify(self):
         """Identify selected and bookmarked new players as selected person."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_player_identify
+        ):
+            return
         if not self._is_player_tab_visible(
             EventSpec.menu_player_identify[1], "Identify player as person"
         ):
             return
-        if self._players.identify():
-            self._players.players_grid.clear_selections()
-            self._players.players_grid.clear_bookmarks()
-            self._players.persons_grid.clear_selections()
-            self._players.players_grid.fill_view_with_top()
-            self._players.persons_grid.fill_view_with_top()
-            self._persons.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._players.identify():
+                self._players.players_grid.clear_selections()
+                self._players.players_grid.clear_bookmarks()
+                self._players.persons_grid.clear_selections()
+                self._players.players_grid.fill_view_with_top()
+                self._players.persons_grid.fill_view_with_top()
+                self._persons.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _player_name_match(self):
         """Identify selected and bookmarked new players as selected person."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_player_name_match
+        ):
+            return
         if not self._is_player_tab_visible(
             EventSpec.menu_player_name_match[1], "Identify players by name"
         ):
             return
-        if self._players.identify_by_name():
-            self._players.players_grid.clear_selections()
-            self._players.players_grid.clear_bookmarks()
-            self._players.persons_grid.clear_selections()
-            self._players.players_grid.fill_view_with_top()
-            self._players.persons_grid.fill_view_with_top()
-            self._persons.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._players.identify_by_name():
+                self._players.players_grid.clear_selections()
+                self._players.players_grid.clear_bookmarks()
+                self._players.persons_grid.clear_selections()
+                self._players.players_grid.fill_view_with_top()
+                self._players.persons_grid.fill_view_with_top()
+                self._persons.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _match_players_by_name(self):
         """Identify new players with same name as person for all names."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_match_players_by_name
+        ):
+            return
         if not self._is_player_tab_visible(
             EventSpec.menu_player_name_match[1], "Match all players by name"
         ):
             return
-        if self._players.match_players_by_name():
-            self._players.players_grid.clear_selections()
-            self._players.players_grid.clear_bookmarks()
-            self._players.persons_grid.clear_selections()
-            self._players.persons_grid.clear_bookmarks()
-            self._players.players_grid.fill_view_with_top()
-            self._players.persons_grid.fill_view_with_top()
-            self._persons.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._players.match_players_by_name():
+                self._players.players_grid.clear_selections()
+                self._players.players_grid.clear_bookmarks()
+                self._players.persons_grid.clear_selections()
+                self._players.persons_grid.clear_bookmarks()
+                self._players.players_grid.fill_view_with_top()
+                self._players.persons_grid.fill_view_with_top()
+                self._persons.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _is_instance_tab_visible(self, instance, tab, name, title, prefix):
         """Return True if person tab is visible or False if not."""
@@ -1168,64 +1284,90 @@ class Calculator(Bindings):
 
     def _player_break(self):
         """Break indentification of selected and bookmarked person aliases."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_player_break):
+            return
         if not self._is_person_tab_visible(
             EventSpec.menu_player_break[1], "Break selected person aliases"
         ):
             return
-        if self._persons.break_selected():
-            self._players.persons_grid.clear_selections()
-            self._players.persons_grid.clear_bookmarks()
-            self._persons.data_grid.clear_selections()
-            self._persons.data_grid.clear_bookmarks()
-            self._players.players_grid.fill_view_with_top()
-            self._players.persons_grid.fill_view_with_top()
-            self._persons.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._persons.break_selected():
+                self._players.persons_grid.clear_selections()
+                self._players.persons_grid.clear_bookmarks()
+                self._persons.data_grid.clear_selections()
+                self._persons.data_grid.clear_bookmarks()
+                self._players.players_grid.fill_view_with_top()
+                self._players.persons_grid.fill_view_with_top()
+                self._persons.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _player_split(self):
         """Split indentification of all aliases of selected person alias."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_player_split):
+            return
         if not self._is_person_tab_visible(
             EventSpec.menu_player_split[1], "Split all person aliases"
         ):
             return
-        if self._persons.split_all():
-            self._players.persons_grid.clear_selections()
-            self._players.persons_grid.clear_bookmarks()
-            self._persons.data_grid.clear_selections()
-            self._persons.data_grid.clear_bookmarks()
-            self._players.players_grid.fill_view_with_top()
-            self._players.persons_grid.fill_view_with_top()
-            self._persons.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._persons.split_all():
+                self._players.persons_grid.clear_selections()
+                self._players.persons_grid.clear_bookmarks()
+                self._persons.data_grid.clear_selections()
+                self._persons.data_grid.clear_bookmarks()
+                self._players.players_grid.fill_view_with_top()
+                self._players.persons_grid.fill_view_with_top()
+                self._persons.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _player_change(self):
         """Change person alias used as person identity."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_player_change):
+            return
         if not self._is_person_tab_visible(
             EventSpec.menu_player_change[1], "Change person identity"
         ):
             return
-        if self._persons.change_identity():
-            self._players.persons_grid.clear_selections()
-            self._players.persons_grid.clear_bookmarks()
-            self._persons.data_grid.clear_selections()
-            self._persons.data_grid.clear_bookmarks()
-            self._players.persons_grid.fill_view_with_top()
-            self._persons.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._persons.change_identity():
+                self._players.persons_grid.clear_selections()
+                self._players.persons_grid.clear_bookmarks()
+                self._persons.data_grid.clear_selections()
+                self._persons.data_grid.clear_bookmarks()
+                self._players.persons_grid.fill_view_with_top()
+                self._persons.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _player_export(self):
         """Export aliases for known players in selection and bookmarks."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_player_export):
+            return
         if not self._is_person_tab_visible(
             EventSpec.menu_player_export[1], "Export identified person"
         ):
             return
-        if self._persons.export_selected_players():
-            self._players.persons_grid.clear_selections()
-            self._players.persons_grid.clear_bookmarks()
-            self._persons.data_grid.clear_selections()
-            self._persons.data_grid.clear_bookmarks()
-            self._players.persons_grid.fill_view_with_top()
-            self._persons.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._persons.export_selected_players():
+                self._players.persons_grid.clear_selections()
+                self._players.persons_grid.clear_bookmarks()
+                self._persons.data_grid.clear_selections()
+                self._persons.data_grid.clear_bookmarks()
+                self._players.persons_grid.fill_view_with_top()
+                self._persons.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _selectors_new(self):
         """Define new rule to select games for performance calculation."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_selectors_new):
+            return
         if not self._selectors_availbable(EventSpec.menu_selectors_new):
             return
         persons_sel = self._persons.data_grid.selection
@@ -1235,9 +1377,11 @@ class Calculator(Bindings):
         modes_sel = self._modes.data_grid.selection
         frame = tkinter.ttk.Frame(master=self._notebook)
         tab = ruleinsert.RuleInsert(frame, self.database)
+        self._apply_lock()
         try:
             tab_from_selection.get_person(tab, persons_sel, self.database)
         except rule.PopulatePerson as exc:
+            self._clear_lock()
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_selectors_new[1],
@@ -1249,6 +1393,7 @@ class Calculator(Bindings):
                 tab, time_controls_sel, self.database
             )
         except rule.PopulateTimeControl as exc:
+            self._clear_lock()
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_selectors_new[1],
@@ -1258,6 +1403,7 @@ class Calculator(Bindings):
         try:
             tab_from_selection.get_mode(tab, modes_sel, self.database)
         except rule.PopulateMode as exc:
+            self._clear_lock()
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_selectors_new[1],
@@ -1269,12 +1415,14 @@ class Calculator(Bindings):
                 tab, events_sel, events_bmk, self.database
             )
         except rule.PopulateEvent as exc:
+            self._clear_lock()
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_selectors_new[1],
                 message=str(exc),
             )
             return
+        self._clear_lock()
         try:
             self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
         except tkinter.TclError as exc:
@@ -1299,6 +1447,8 @@ class Calculator(Bindings):
 
     def _selectors_show(self):
         """Show selected rule to select games for performance calculation."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_selectors_show):
+            return
         if not self._selectors_choose(EventSpec.menu_selectors_show):
             return
         selectors_sel = self._selectors.data_grid.selection
@@ -1311,7 +1461,11 @@ class Calculator(Bindings):
             return
         frame = tkinter.ttk.Frame(master=self._notebook)
         tab = ruleshow.RuleShow(frame, self.database)
-        tab_from_selection.get_rule(tab, selectors_sel, self.database)
+        self._apply_lock()
+        try:
+            tab_from_selection.get_rule(tab, selectors_sel, self.database)
+        finally:
+            self._clear_lock()
         try:
             self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
         except tkinter.TclError as exc:
@@ -1323,6 +1477,8 @@ class Calculator(Bindings):
 
     def _selectors_edit(self):
         """Edit selected rule to select games for performance calculation."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_selectors_edit):
+            return
         if not self._selectors_choose(EventSpec.menu_selectors_edit):
             return
         selectors_sel = self._selectors.data_grid.selection
@@ -1335,7 +1491,11 @@ class Calculator(Bindings):
             return
         frame = tkinter.ttk.Frame(master=self._notebook)
         tab = ruleedit.RuleEdit(frame, self.database)
-        tab_from_selection.get_rule(tab, selectors_sel, self.database)
+        self._apply_lock()
+        try:
+            tab_from_selection.get_rule(tab, selectors_sel, self.database)
+        finally:
+            self._clear_lock()
         try:
             self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
         except tkinter.TclError as exc:
@@ -1380,6 +1540,10 @@ class Calculator(Bindings):
 
     def _selectors_close(self):
         """Close rule tab to select games for performance calculation."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_selectors_close
+        ):
+            return
         tab = self._selectors_apply(EventSpec.menu_selectors_close)
         if not tab:
             return
@@ -1388,33 +1552,57 @@ class Calculator(Bindings):
 
     def _selectors_insert(self):
         """Insert rule to select games for performance calculation."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_selectors_insert
+        ):
+            return
         tab = self._selectors_apply(EventSpec.menu_selectors_insert)
         if not tab:
             return
-        if self._rule_tabs[tab].insert_rule():
-            self._selectors.data_grid.clear_selections()
-            self._selectors.data_grid.clear_bookmarks()
-            self._selectors.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._rule_tabs[tab].insert_rule():
+                self._selectors.data_grid.clear_selections()
+                self._selectors.data_grid.clear_bookmarks()
+                self._selectors.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _selectors_update(self):
         """Update rule to select games for performance calculation."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_selectors_update
+        ):
+            return
         tab = self._selectors_apply(EventSpec.menu_selectors_update)
         if not tab:
             return
-        if self._rule_tabs[tab].update_rule():
-            self._selectors.data_grid.clear_selections()
-            self._selectors.data_grid.clear_bookmarks()
-            self._selectors.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._rule_tabs[tab].update_rule():
+                self._selectors.data_grid.clear_selections()
+                self._selectors.data_grid.clear_bookmarks()
+                self._selectors.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _selectors_delete(self):
         """Delete rule to select games for performance calculation."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_selectors_delete
+        ):
+            return
         tab = self._selectors_apply(EventSpec.menu_selectors_delete)
         if not tab:
             return
-        if self._rule_tabs[tab].delete_rule():
-            self._selectors.data_grid.clear_selections()
-            self._selectors.data_grid.clear_bookmarks()
-            self._selectors.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._rule_tabs[tab].delete_rule():
+                self._selectors.data_grid.clear_selections()
+                self._selectors.data_grid.clear_bookmarks()
+                self._selectors.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _selectors_apply(self, menu_event_spec):
         """Return tab if a selection rule tab is visible, False otherwise."""
@@ -1463,47 +1651,79 @@ class Calculator(Bindings):
 
     def _event_identify(self):
         """Identify selected and bookmarked events as selected event."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_event_identify
+        ):
+            return
         if not self._is_event_tab_visible(
             EventSpec.menu_other_event_identify[1], "Identify event"
         ):
             return
-        if self._events.identify():
-            self._events.data_grid.clear_selections()
-            self._events.data_grid.clear_bookmarks()
-            self._events.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._events.identify():
+                self._events.data_grid.clear_selections()
+                self._events.data_grid.clear_bookmarks()
+                self._events.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _event_break(self):
         """Break indentification of selected and bookmarked event aliases."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_event_break
+        ):
+            return
         if not self._is_event_tab_visible(
             EventSpec.menu_other_event_break[1], "Break event aliases"
         ):
             return
-        if self._events.break_selected():
-            self._events.data_grid.clear_selections()
-            self._events.data_grid.clear_bookmarks()
-            self._events.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._events.break_selected():
+                self._events.data_grid.clear_selections()
+                self._events.data_grid.clear_bookmarks()
+                self._events.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _event_split(self):
         """Split indentification of all aliases of selected event alias."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_event_split
+        ):
+            return
         if not self._is_event_tab_visible(
             EventSpec.menu_other_event_split[1], "Split all events"
         ):
             return
-        if self._events.split_all():
-            self._events.data_grid.clear_selections()
-            self._events.data_grid.clear_bookmarks()
-            self._events.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._events.split_all():
+                self._events.data_grid.clear_selections()
+                self._events.data_grid.clear_bookmarks()
+                self._events.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _event_change(self):
         """Change event alias used as event identity."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_event_change
+        ):
+            return
         if not self._is_event_tab_visible(
             EventSpec.menu_other_event_change[1], "Change event identity"
         ):
             return
-        if self._events.change_identity():
-            self._events.data_grid.clear_selections()
-            self._events.data_grid.clear_bookmarks()
-            self._events.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._events.change_identity():
+                self._events.data_grid.clear_selections()
+                self._events.data_grid.clear_bookmarks()
+                self._events.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _event_export_persons(self):
         """Export known players for events in selection and bookmarks.
@@ -1511,15 +1731,23 @@ class Calculator(Bindings):
         Aliases for the known players are included.
 
         """
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_event_export_persons
+        ):
+            return
         if not self._is_event_tab_visible(
             EventSpec.menu_other_event_export_persons[1],
             "Export event persons",
         ):
             return
-        if self._events.export_players_in_selected_events():
-            self._events.data_grid.clear_selections()
-            self._events.data_grid.clear_bookmarks()
-            self._events.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._events.export_players_in_selected_events():
+                self._events.data_grid.clear_selections()
+                self._events.data_grid.clear_bookmarks()
+                self._events.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _is_time_tab_visible(self, title, prefix):
         """Return True if time control tab is visible or False if not."""
@@ -1533,47 +1761,79 @@ class Calculator(Bindings):
 
     def _time_identify(self):
         """Identify bookmarked time controls as selected time control."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_time_identify
+        ):
+            return
         if not self._is_time_tab_visible(
             EventSpec.menu_other_time_identify[1], "Identify time control"
         ):
             return
-        if self._time_controls.identify():
-            self._time_controls.data_grid.clear_selections()
-            self._time_controls.data_grid.clear_bookmarks()
-            self._time_controls.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._time_controls.identify():
+                self._time_controls.data_grid.clear_selections()
+                self._time_controls.data_grid.clear_bookmarks()
+                self._time_controls.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _time_break(self):
         """Break indentity of selected and bookmarked time control aliases."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_time_break
+        ):
+            return
         if not self._is_time_tab_visible(
             EventSpec.menu_other_time_break[1], "Break time control aliases"
         ):
             return
-        if self._time_controls.break_selected():
-            self._time_controls.data_grid.clear_selections()
-            self._time_controls.data_grid.clear_bookmarks()
-            self._time_controls.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._time_controls.break_selected():
+                self._time_controls.data_grid.clear_selections()
+                self._time_controls.data_grid.clear_bookmarks()
+                self._time_controls.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _time_split(self):
         """Split identity of all aliases of selected time control."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_time_split
+        ):
+            return
         if not self._is_time_tab_visible(
             EventSpec.menu_other_time_split[1], "Split all time controls"
         ):
             return
-        if self._time_controls.split_all():
-            self._time_controls.data_grid.clear_selections()
-            self._time_controls.data_grid.clear_bookmarks()
-            self._time_controls.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._time_controls.split_all():
+                self._time_controls.data_grid.clear_selections()
+                self._time_controls.data_grid.clear_bookmarks()
+                self._time_controls.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _time_change(self):
         """Change time control alias used as time control identity."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_time_change
+        ):
+            return
         if not self._is_time_tab_visible(
             EventSpec.menu_other_time_change[1], "Change time control identity"
         ):
             return
-        if self._time_controls.change_identity():
-            self._time_controls.data_grid.clear_selections()
-            self._time_controls.data_grid.clear_bookmarks()
-            self._time_controls.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._time_controls.change_identity():
+                self._time_controls.data_grid.clear_selections()
+                self._time_controls.data_grid.clear_bookmarks()
+                self._time_controls.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _is_mode_tab_visible(self, title, prefix):
         """Return True if mode tab is visible or False if not."""
@@ -1583,58 +1843,100 @@ class Calculator(Bindings):
 
     def _mode_identify(self):
         """Identify bookmarked playing modes as selected playing mode."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_mode_identify
+        ):
+            return
         if not self._is_mode_tab_visible(
             EventSpec.menu_other_mode_identify[1], "Identify playing mode"
         ):
             return
-        if self._modes.identify():
-            self._modes.data_grid.clear_selections()
-            self._modes.data_grid.clear_bookmarks()
-            self._modes.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._modes.identify():
+                self._modes.data_grid.clear_selections()
+                self._modes.data_grid.clear_bookmarks()
+                self._modes.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _mode_break(self):
         """Break indentity of selected and bookmarked playing mode aliases."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_mode_break
+        ):
+            return
         if not self._is_mode_tab_visible(
             EventSpec.menu_other_mode_break[1], "Break playing mode aliases"
         ):
             return
-        if self._modes.break_selected():
-            self._modes.data_grid.clear_selections()
-            self._modes.data_grid.clear_bookmarks()
-            self._modes.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._modes.break_selected():
+                self._modes.data_grid.clear_selections()
+                self._modes.data_grid.clear_bookmarks()
+                self._modes.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _mode_split(self):
         """Split indentity of playing modes of selected playing mode alias."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_mode_split
+        ):
+            return
         if not self._is_mode_tab_visible(
             EventSpec.menu_other_mode_split[1], "Split all playing modes"
         ):
             return
-        if self._modes.split_all():
-            self._modes.data_grid.clear_selections()
-            self._modes.data_grid.clear_bookmarks()
-            self._modes.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._modes.split_all():
+                self._modes.data_grid.clear_selections()
+                self._modes.data_grid.clear_bookmarks()
+                self._modes.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _mode_change(self):
         """Change playing mode alias used as playing mode identity."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_mode_change
+        ):
+            return
         if not self._is_mode_tab_visible(
             EventSpec.menu_other_mode_change[1], "Change playing mode identity"
         ):
             return
-        if self._modes.change_identity():
-            self._modes.data_grid.clear_selections()
-            self._modes.data_grid.clear_bookmarks()
-            self._modes.data_grid.fill_view_with_top()
+        self._apply_lock()
+        try:
+            if self._modes.change_identity():
+                self._modes.data_grid.clear_selections()
+                self._modes.data_grid.clear_bookmarks()
+                self._modes.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
 
     def _calculate(self):
         """Calulate player performances from games selected by rule."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_calculate_calculate
+        ):
+            return
         tab = self._selectors_apply(EventSpec.menu_calculate_calculate)
         if not tab:
             return
-        self._rule_tabs[tab].calulate_performances_for_rule()
+        self._apply_lock()
+        try:
+            self._rule_tabs[tab].calulate_performances_for_rule()
+        finally:
+            self._clear_lock()
         return
 
     def _save(self):
         """Save calculted player performances from games selected by rule."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_calculate_save):
+            return
         tab = self._selectors_apply(EventSpec.menu_calculate_save)
         if not tab:
             return
@@ -1647,6 +1949,8 @@ class Calculator(Bindings):
 
     def _report_save(self):
         """Save report on apply identities."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_report_save):
+            return
         tab = self._report_apply(EventSpec.menu_report_close)
         if not tab:
             return
@@ -1659,6 +1963,8 @@ class Calculator(Bindings):
 
     def _report_close(self):
         """Close report on apply identities."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_report_close):
+            return
         tab = self._report_apply(EventSpec.menu_report_close)
         if not tab:
             return
@@ -1692,12 +1998,13 @@ class Calculator(Bindings):
             return False
         return tab
 
-    def _verify_and_apply_person_identities(self, import_file):
+    def _verify_and_apply_person_identities(self, import_file, clear_lock):
         """Verify imported player identifications and apply if consistent."""
         identities = export.read_export_file(import_file)
         report = apply_identities.verify_and_apply_identities(
-            self.database, identities
+            self.database, identities, self.widget
         )
+        clear_lock()
         frame = tkinter.ttk.Frame(master=self._notebook)
         tab = reportapply.ReportApply(frame, self.database)
         self._notebook.add(
@@ -1716,12 +2023,13 @@ class Calculator(Bindings):
             )
             return
 
-    def _verify_and_mirror_person_identities(self, import_file):
+    def _verify_and_mirror_person_identities(self, import_file, clear_lock):
         """Verify imported player identifications and apply if consistent."""
         identities = export.read_export_file(import_file)
         report = mirror_identities.verify_and_mirror_identities(
-            self.database, identities
+            self.database, identities, self.widget
         )
+        clear_lock()
         frame = tkinter.ttk.Frame(master=self._notebook)
         tab = reportmirror.ReportMirror(frame, self.database)
         self._notebook.add(

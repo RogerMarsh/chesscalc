@@ -177,7 +177,7 @@ class _NameStatus:
             break
 
 
-def verify_and_mirror_identities(database, identities):
+def verify_and_mirror_identities(database, identities, widget):
     """Return None if identities applied or a message for display if not."""
     if not database:
         return None
@@ -185,9 +185,15 @@ def verify_and_mirror_identities(database, identities):
         return None
     commit_flag = True
     report = _MirrorIdentitiesReport()
+    counter = 100
+    widget.update()
     database.start_transaction()
     try:
         for identity in identities:
+            counter -= 1
+            if counter < 1:
+                widget.update()
+                counter = 100
             name = _NameStatus(identity)
             report.append(name)
             name.classify_names(database)

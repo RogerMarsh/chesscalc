@@ -184,12 +184,18 @@ class ExportEventPersons(_ExportSelected):
 class ExportIdentities(_Export):
     """Export all person identities, but no aliases, from database."""
 
-    def prepare_export_data(self):
-        """Prepare list of person identities for all persons."""
+    def prepare_export_data(self, widget):
+        """Prepare list of person identities for all persons.
+
+        widget allows periodic update of user interface.
+
+        """
         self.export_data = []
         export_data = self.export_data
         database = self._database
         value = performancerecord.PersonDBvalue()
+        counter = 100
+        widget.update()
         database.start_read_only_transaction()
         try:
             persons = database.recordlist_all(
@@ -197,6 +203,10 @@ class ExportIdentities(_Export):
             )
             cursor = persons.create_recordsetbase_cursor()
             while True:
+                counter -= 1
+                if counter < 1:
+                    widget.update()
+                    counter = 100
                 data = cursor.next()
                 if data is None:
                     break
@@ -284,10 +294,11 @@ def import_repr(value):
     return data
 
 
-def write_export_file(export_file, serialized_data):
+def write_export_file(export_file, serialized_data, clear_lock):
     """Write serialized data to export file."""
     with open(export_file, "w", encoding="utf-8") as output:
         output.write(serialized_data)
+    clear_lock()
 
 
 def read_export_file(import_file):
