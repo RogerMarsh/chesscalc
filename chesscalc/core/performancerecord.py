@@ -261,15 +261,25 @@ class GameDBrecord(Record):
                 return [(srkey, self.srvalue)]
             dbname = datasource.dbname
             if dbname == filespec.GAME_DATE_FIELD_DEF:
-                return [(self.value.date, srkey)]
+                return [(self.value.headers["Date"], srkey)]
             if dbname == filespec.GAME_NUMBER_FIELD_DEF:
-                return [(repr((self.value.file, self.value.number)), srkey)]
+                return [
+                    (
+                        repr(
+                            (
+                                self.value.reference["file"],
+                                self.value.reference["game"],
+                            )
+                        ),
+                        srkey,
+                    )
+                ]
             if dbname == filespec.GAME_TIMECONTROL_FIELD_DEF:
-                return [(self.value.timecontrol, srkey)]
+                return [(self.value.headers["TimeControl"], srkey)]
             if dbname == filespec.GAME_MODE_FIELD_DEF:
-                return [(self.value.mode, srkey)]
+                return [(self.value.headers["Mode"], srkey)]
             if dbname == filespec.GAME_NAME_FIELD_DEF:
-                return [(self.value.mode, srkey)]
+                return [(self.value.headers["Event"], srkey)]
             return []
         except:  # pycodestyle E722: pylint is happy with following 'raise'.
             if datasource is None:
