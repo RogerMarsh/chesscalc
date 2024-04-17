@@ -29,14 +29,14 @@ class GridLocator(gridbindings.GridBindings, datagrid.DataGridReadOnly):
         """
         super().__init__(**kwargs)
         self._char = ""
-        self._scroller = tkinter.ttk.Entry(master=self.parent)
+        self.scroller = tkinter.ttk.Entry(master=self.parent)
         self.vsbar.configure(takefocus=tkinter.FALSE)
         self.hsbar.configure(takefocus=tkinter.FALSE)
         self.frame.grid(column=0, row=0, sticky=tkinter.NSEW)
-        self._scroller.grid(column=0, row=1, sticky=tkinter.NSEW)
+        self.scroller.grid(column=0, row=1, sticky=tkinter.NSEW)
         self.bindings()
-        self.bind(self._scroller, "<KeyPress>", function=self._note_char)
-        self.bind(self._scroller, "<KeyRelease>", function=self._locate_key)
+        self.bind(self.scroller, "<KeyPress>", function=self._note_char)
+        self.bind(self.scroller, "<KeyRelease>", function=self._locate_key)
 
     def show_popup_menu_no_row(self, event=None):
         """Override superclass to do nothing."""
@@ -50,7 +50,7 @@ class GridLocator(gridbindings.GridBindings, datagrid.DataGridReadOnly):
         """Adjust data grid view to fit key starting Entry widget content."""
         if event is None:
             return
-        key = self._scroller.get()
+        key = self.scroller.get()
         if not key:
             return
         if not self._char:

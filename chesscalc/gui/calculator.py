@@ -16,7 +16,6 @@ from solentware_bind.gui.exceptionhandler import ExceptionHandler
 from solentware_base import modulequery
 
 from solentware_misc.workarounds import workarounds
-from solentware_misc.gui import logtextbase
 
 from .. import APPLICATION_NAME
 from .eventspec import EventSpec
@@ -162,9 +161,10 @@ class Calculator(Bindings):
         self._lock_value = tkinter.StringVar(
             master=self.widget  # , name="lock_value"
         )
-        self._mask = None
-        self._masklog = None
-        self._resizeable = None
+        self._masktab = None
+        self._maskscroll = {}
+        self._maskpopup = {}
+        self._maskresizeable = None
         try:
             self._initialize()
         except Exception as exc:
@@ -376,19 +376,64 @@ class Calculator(Bindings):
         # So it can be destoyed when closing database but not quitting.
         self._notebook = notebook
 
+    def _show_popup_menu(self):
+        """Do nothing replacement for datagris.show_popup_menu when locked.
+
+        Not sure how to disable the Button-3 bindings so replace the method
+        temporarely instead.
+
+        """
+
     def _clear_lock(self):
         """Set value of StringVars 'lock' and 'lock_value' to ''."""
         self._lock_value.set("")
         self._lock.set("")
         self._notebook.state(statespec=["!" + tkinter.DISABLED])
-        self._mask.destroy()
-        self.widget.wm_resizable(*self._resizeable)
+        for subject in (
+            self._games,
+            self._persons,
+            self._events,
+            self._time_controls,
+            self._modes,
+            self._selectors,
+        ):
+            if subject.data_grid.parent is self._masktab:
+                subject.data_grid.bind_on()
+                for sbar, command in self._maskscroll.items():
+                    sbar.configure(command=command)
+                self._masktab = None
+                self._maskscroll.clear()
+                for grid, binding in self._maskpopup.items():
+                    grid.show_popup_menu = binding
+                subject.data_grid.scroller.state(
+                    statespec=["!" + tkinter.DISABLED]
+                )
+                self._maskpopup.clear()
+                break
+        else:
+            if self._players_tab is self._masktab:
+                self._players.players_grid.bind_on()
+                self._players.persons_grid.bind_on()
+                self._players.players_grid.scroller.state(
+                    statespec=["!" + tkinter.DISABLED]
+                )
+                self._players.persons_grid.scroller.state(
+                    statespec=["!" + tkinter.DISABLED]
+                )
+                for sbar, command in self._maskscroll.items():
+                    sbar.configure(command=command)
+                self._masktab = None
+                self._maskscroll.clear()
+                for grid, binding in self._maskpopup.items():
+                    grid.show_popup_menu = binding
+                self._maskpopup.clear()
+        self.widget.wm_resizable(*self._maskresizeable)
 
     def _apply_lock(self):
         """Set value of StringVar 'lock' to 'locked' and note old value."""
         self._lock_value.set(self._lock.get())
         self._lock.set("locked")
-        self._resizeable = self.widget.wm_resizable()
+        self._maskresizeable = self.widget.wm_resizable()
         self.widget.wm_resizable(width=False, height=False)
         select = self._notebook.index(self._notebook.select())
         for tab in (
@@ -402,14 +447,45 @@ class Calculator(Bindings):
             self._calculations_tab,
         ):
             if self._notebook.index(tab) == select:
-                self._mask = tkinter.Frame(master=tab)
-                self._masklog = logtextbase.LogTextBase(
-                    master=self._mask, width=20, height=10
-                )
-                self._mask.grid(
-                    row=0, column=0, rowspan=2, sticky=tkinter.NSEW
-                )
-                self._masklog.focus_set()
+                for subject in (
+                    self._games,
+                    self._persons,
+                    self._events,
+                    self._time_controls,
+                    self._modes,
+                    self._selectors,
+                ):
+                    if subject.data_grid.parent is tab:
+                        grid = subject.data_grid
+                        grid.bind_off()
+                        self._masktab = tab
+                        for sbar in (grid.vsbar, grid.hsbar):
+                            self._maskscroll[sbar] = sbar.cget("command")
+                            sbar.configure(command="")
+                        self._maskpopup[grid] = grid.show_popup_menu
+                        grid.show_popup_menu = self._show_popup_menu
+                        grid.scroller.state(statespec=[tkinter.DISABLED])
+                        break
+                else:
+                    if self._players_tab is tab:
+                        self._players.players_grid.bind_off()
+                        self._players.persons_grid.bind_off()
+                        self._masktab = tab
+                        for sbar in (
+                            self._players.players_grid.vsbar,
+                            self._players.players_grid.hsbar,
+                            self._players.persons_grid.vsbar,
+                            self._players.persons_grid.hsbar,
+                        ):
+                            self._maskscroll[sbar] = sbar.cget("command")
+                            sbar.configure(command="")
+                        for grid in (
+                            self._players.players_grid,
+                            self._players.persons_grid,
+                        ):
+                            self._maskpopup[grid] = grid.show_popup_menu
+                            grid.show_popup_menu = self._show_popup_menu
+                            grid.scroller.state(statespec=[tkinter.DISABLED])
                 break
         self._notebook.state(statespec=[tkinter.DISABLED])
 
@@ -569,11 +645,6 @@ class Calculator(Bindings):
             )
             return None
         self._apply_lock()
-        self._masklog.append_text_only("")
-        self._masklog.append_text_only(
-            "Please wait while export identities is done"
-        )
-        self._masklog.append_text_only("")
         exporter = export.ExportIdentities(self.database)
         exporter.prepare_export_data(self.widget)
         serialized_data = exporter.export_repr()
@@ -1075,9 +1146,6 @@ class Calculator(Bindings):
         )
         self._apply_lock()
         self._import_pgnfiles(pgn_directory)
-        self._masklog.append_text_only("")
-        self._masklog.append_text_only("Please wait while import is done")
-        self._masklog.append_text_only("")
 
     def _import_pgnfiles(self, pgn_directory):
         """Import games to open database."""
@@ -1087,6 +1155,9 @@ class Calculator(Bindings):
         self._players.players_grid.bind_off()
         self._players.persons_grid.bind_off()
         self._persons.data_grid.bind_off()
+        self._events.data_grid.bind_off()
+        self._time_controls.data_grid.bind_off()
+        self._modes.data_grid.bind_off()
         self._selectors.data_grid.bind_off()
         self.database.close_database_contexts()
         self._set_import_subprocess(
@@ -1131,6 +1202,9 @@ class Calculator(Bindings):
         self._players.players_grid.bind_on()
         self._players.persons_grid.bind_on()
         self._persons.data_grid.bind_on()
+        self._events.data_grid.bind_on()
+        self._time_controls.data_grid.bind_on()
+        self._modes.data_grid.bind_on()
         self._selectors.data_grid.bind_on()
         self._games.data_grid.fill_view_with_top()
 
