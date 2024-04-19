@@ -1287,27 +1287,28 @@ class Rule(Bindings):
         the rule is created.
 
         """
-        player_record = name_lookup.get_player_record_from_identity(
-            self._database, player_identity
-        )
-        if player_record is None:
-            return None
-        if player_record.value.alias != player_record.value.identity:
+        if player_identity:
             player_record = name_lookup.get_player_record_from_identity(
-                self._database, player_record.value.alias
+                self._database, player_identity
             )
             if player_record is None:
                 return None
             if player_record.value.alias != player_record.value.identity:
+                player_record = name_lookup.get_player_record_from_identity(
+                    self._database, player_record.value.alias
+                )
+                if player_record is None:
+                    return None
+                if player_record.value.alias != player_record.value.identity:
+                    return None
+                player_identity = player_record.value.alias
+            if (
+                name_lookup.get_known_player_record_from_identity(
+                    self._database, player_identity
+                )
+                is None
+            ):
                 return None
-            player_identity = player_record.value.alias
-        if (
-            name_lookup.get_known_player_record_from_identity(
-                self._database, player_identity
-            )
-            is None
-        ):
-            return None
         return (
             rule,
             player_identity,
