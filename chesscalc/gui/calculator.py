@@ -392,7 +392,7 @@ class Calculator(Bindings):
             self.widget.update()
             thread.join(timeout=interval)
             if not thread.is_alive():
-                return self._clear_lock
+                break
 
     def _clear_lock(self):
         """Set value of _lock to ''."""
@@ -2024,9 +2024,12 @@ class Calculator(Bindings):
         if not tab:
             return
         self._apply_lock()
-        self._rule_tabs[tab].calulate_performances_for_rule(
-            self._update_widget_and_join_loop
-        )
+        try:
+            self._rule_tabs[tab].calulate_performances_for_rule(
+                self._update_widget_and_join_loop
+            )
+        finally:
+            self._clear_lock()
         return
 
     def _save(self):
