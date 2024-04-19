@@ -26,7 +26,7 @@ class RuleEdit(rule.Rule):
         """Override to enable changes to all entry widgets."""
         self._rule.configure(state=tkinter.NORMAL)
 
-    def insert_rule(self):
+    def insert_rule(self, update_widget_and_join_loop):
         """Insert selection rule into database."""
         if not tkinter.messagebox.askyesno(
             parent=self.frame,
@@ -34,7 +34,7 @@ class RuleEdit(rule.Rule):
             message="Do you want to insert a copy of this rule?",
         ):
             return False
-        return super().insert_rule()
+        return super().insert_rule(update_widget_and_join_loop)
 
     def delete_rule(self):
         """Delete selection rule from database."""

@@ -6,6 +6,7 @@
 
 import tkinter
 import os
+from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
@@ -41,7 +42,7 @@ class Persons(Bindings):
         """Return the persons widget."""
         return self._persons_grid
 
-    def break_selected(self):
+    def break_selected(self, update_widget_and_join_loop):
         """Undo identification of selected players as a person."""
         title = EventSpec.menu_player_break[1]
         database = self.get_database(title)
@@ -93,19 +94,23 @@ class Persons(Bindings):
                 ),
             )
             return False
-        message = identify_person.break_person_into_picked_players(
-            database, persons_sel, aliases
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_person.break_person_into_picked_players,
+            args=(database, persons_sel, aliases, answer),
         )
-        if message:
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def split_all(self):
+    def split_all(self, update_widget_and_join_loop):
         """Undo identification of all player aliases as a person."""
         title = EventSpec.menu_player_split[1]
         database = self.get_database(title)
@@ -161,19 +166,23 @@ class Persons(Bindings):
             ),
         ):
             return False
-        message = identify_person.split_person_into_all_players(
-            database, persons_sel
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_person.split_person_into_all_players,
+            args=(database, persons_sel, answer),
         )
-        if message:
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def change_identity(self):
+    def change_identity(self, update_widget_and_join_loop):
         """Change identification of all player aliases as a person."""
         title = EventSpec.menu_player_change[1]
         database = self.get_database(title)
@@ -226,19 +235,32 @@ class Persons(Bindings):
             ),
         ):
             return False
-        message = identify_person.change_identified_person(
-            database, persons_sel
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_person.change_identified_person,
+            args=(database, persons_sel, answer),
         )
-        if message:
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def export_selected_players(self):
+    def _export_selected_players(
+        self, database, persons_bmk, persons_sel, answer
+    ):
+        """Prepare player data for export."""
+        exporter = export.ExportPersons(database, persons_bmk, persons_sel)
+        answer["status"] = exporter.prepare_export_data()
+        if answer["status"].error_message is None:
+            answer["serialized_data"] = exporter.export_repr()
+
+    def export_selected_players(self, update_widget_and_join_loop):
         """Export players for selection and bookmarked events."""
         title = EventSpec.menu_player_export[1]
         database = self.get_database(title)
@@ -253,22 +275,37 @@ class Persons(Bindings):
                 message="No identified persons are selected or bookmarked",
             )
             return False
-        exporter = export.ExportPersons(database, persons_bmk, persons_sel)
-        exporter.prepare_export_data()
-        status = exporter.prepare_export_data()
-        if status.error_message is not None:
+        answer = {"status": None, "serialized_data": None}
+        thread = dummy.DummyProcess(
+            target=self._export_selected_players,
+            args=(database, persons_bmk, persons_sel, answer),
+        )
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["status"] is None:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 message="\n\n".join(
                     (
                         "Export of selected persons failed",
-                        status.error_message,
+                        "Unable to extract data",
                     )
                 ),
                 title=title,
             )
             return False
-        serialized_data = exporter.export_repr()
+        if answer["status"].error_message is not None:
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                message="\n\n".join(
+                    (
+                        "Export of selected persons failed",
+                        answer["status"].error_message,
+                    )
+                ),
+                title=title,
+            )
+            return False
         conf = configuration.Configuration()
         initdir = conf.get_configuration_value(
             constants.RECENT_EXPORT_DIRECTORY
@@ -290,13 +327,12 @@ class Persons(Bindings):
             constants.RECENT_EXPORT_DIRECTORY,
             conf.convert_home_directory_to_tilde(os.path.dirname(export_file)),
         )
-        # gives time for destruction of dialogue and widget refresh
-        # does nothing for obscuring and revealing application later
-        self.frame.after_idle(
-            self.try_command(export.write_export_file, self.frame),
-            export_file,
-            serialized_data,
+        thread = dummy.DummyProcess(
+            target=export.write_export_file,
+            args=(export_file, answer["serialized_data"]),
         )
+        thread.start()
+        update_widget_and_join_loop(thread)
         return True
 
     def get_database(self, title):

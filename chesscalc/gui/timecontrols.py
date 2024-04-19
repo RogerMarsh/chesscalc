@@ -5,6 +5,7 @@
 """List the time controls in the database."""
 
 import tkinter
+from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
@@ -37,7 +38,7 @@ class TimeControls(Bindings):
         """Return the time controls widget."""
         return self._time_limits_grid
 
-    def identify(self):
+    def identify(self, update_widget_and_join_loop):
         """Identify bookmarked time controls as selected time control."""
         title = EventSpec.menu_other_time_identify[1]
         database = self.get_database(title)
@@ -79,19 +80,23 @@ class TimeControls(Bindings):
                 ),
             )
             return False
-        message = identify_timecontrol.identify(
-            database, new, time_controls_sel
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_timecontrol.identify,
+            args=(database, new, time_controls_sel, answer),
         )
-        if message is not None:
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def break_selected(self):
+    def break_selected(self, update_widget_and_join_loop):
         """Undo identification of bookmarked time controls as selection."""
         title = EventSpec.menu_other_time_break[1]
         database = self.get_database(title)
@@ -133,19 +138,23 @@ class TimeControls(Bindings):
                 ),
             )
             return False
-        message = identify_timecontrol.break_bookmarked_aliases(
-            database, new, time_controls_sel
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_timecontrol.break_bookmarked_aliases,
+            args=(database, new, time_controls_sel, answer),
         )
-        if message is not None:
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def split_all(self):
+    def split_all(self, update_widget_and_join_loop):
         """Undo identification of all aliases of selected time control."""
         title = EventSpec.menu_other_time_split[1]
         database = self.get_database(title)
@@ -167,19 +176,23 @@ class TimeControls(Bindings):
                 message="Time controls are bookmarked so no changes done",
             )
             return False
-        message = identify_timecontrol.split_aliases(
-            database, time_controls_sel
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_timecontrol.split_aliases,
+            args=(database, time_controls_sel, answer),
         )
-        if message is not None:
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def change_identity(self):
+    def change_identity(self, update_widget_and_join_loop):
         """Undo identification of all aliases of selected time control."""
         title = EventSpec.menu_other_time_change[1]
         database = self.get_database(title)
@@ -201,14 +214,18 @@ class TimeControls(Bindings):
                 message="Time controls are bookmarked so no changes done",
             )
             return False
-        message = identify_timecontrol.change_aliases(
-            database, time_controls_sel
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_timecontrol.change_aliases,
+            args=(database, time_controls_sel, answer),
         )
-        if message is not None:
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True

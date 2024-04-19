@@ -177,7 +177,7 @@ class _NameStatus:
         )
 
 
-def verify_and_apply_identities(database, identities, widget):
+def verify_and_apply_identities(database, identities):
     """Return None if identities applied or a message for display if not."""
     if not database:
         return None
@@ -185,15 +185,9 @@ def verify_and_apply_identities(database, identities, widget):
         return None
     commit_flag = True
     report = _ApplyIdentitiesReport()
-    counter = 100
-    widget.update()
     database.start_transaction()
     try:
         for identity in identities:
-            counter -= 1
-            if counter < 1:
-                widget.update()
-                counter = 100
             name = _NameStatus(identity)
             report.append(name)
             name.classify_names(database)

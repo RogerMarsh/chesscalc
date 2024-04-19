@@ -42,7 +42,7 @@ class RuleShow(rule.Rule):
         self._mode_identity.configure(state=tkinter.NORMAL)
         self._event_identities.configure(state=tkinter.NORMAL)
 
-    def insert_rule(self):
+    def insert_rule(self, update_widget_and_join_loop):
         """Insert selection rule into database."""
         if not tkinter.messagebox.askyesno(
             parent=self.frame,
@@ -50,7 +50,7 @@ class RuleShow(rule.Rule):
             message="Do you want to insert a copy of this rule?",
         ):
             return False
-        return super().insert_rule()
+        return super().insert_rule(update_widget_and_join_loop)
 
     def update_rule(self):
         """Update selection rule on database."""

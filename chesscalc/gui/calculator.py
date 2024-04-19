@@ -9,6 +9,7 @@ import tkinter.ttk
 import tkinter.messagebox
 import tkinter.filedialog
 import multiprocessing
+from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 from solentware_bind.gui.exceptionhandler import ExceptionHandler
@@ -377,12 +378,24 @@ class Calculator(Bindings):
         self._notebook = notebook
 
     def _show_popup_menu(self):
-        """Do nothing replacement for datagris.show_popup_menu when locked.
+        """Do nothing replacement for datagrid.show_popup_menu when locked.
 
         Not sure how to disable the Button-3 bindings so replace the method
         temporarely instead.
 
         """
+
+    def _update_widget_and_join_loop(self, thread, interval=0.2):
+        """Update widget and check for thread completion every interval.
+
+        The default interval is 200 milliseconds.
+
+        """
+        while True:
+            self.widget.update()
+            thread.join(timeout=interval)
+            if not thread.is_alive():
+                return self._clear_lock
 
     def _clear_lock(self):
         """Set value of StringVars 'lock' and 'lock_value' to ''."""
@@ -561,14 +574,10 @@ class Calculator(Bindings):
             conf.convert_home_directory_to_tilde(os.path.dirname(import_file)),
         )
         self._apply_lock()
-        self.widget.after_idle(
-            self.try_command(
-                self._verify_and_apply_person_identities, self.widget
-            ),
-            import_file,
-            self._clear_lock,
-        )
-        self.widget.wait_variable(str(self._lock))
+        try:
+            self._verify_and_apply_person_identities(import_file)
+        finally:
+            self._clear_lock()
         return True
 
     def _database_mirror_identities(self):
@@ -613,15 +622,17 @@ class Calculator(Bindings):
             conf.convert_home_directory_to_tilde(os.path.dirname(import_file)),
         )
         self._apply_lock()
-        self.widget.after_idle(
-            self.try_command(
-                self._verify_and_mirror_person_identities, self.widget
-            ),
-            import_file,
-            self._clear_lock,
-        )
-        self.widget.wait_variable(str(self._lock))
+        try:
+            self._verify_and_mirror_person_identities(import_file)
+        finally:
+            self._clear_lock()
         return True
+
+    def _export_player_identities(self, database, answer):
+        """Prepare player data for export."""
+        exporter = export.ExportIdentities(database)
+        exporter.prepare_export_data()
+        answer["serialized_data"] = exporter.export_repr()
 
     def _database_export_identities(self):
         """Export player identifications."""
@@ -645,9 +656,13 @@ class Calculator(Bindings):
             )
             return None
         self._apply_lock()
-        exporter = export.ExportIdentities(self.database)
-        exporter.prepare_export_data(self.widget)
-        serialized_data = exporter.export_repr()
+        answer = {"serialized_data": None}
+        thread = dummy.DummyProcess(
+            target=self._export_player_identities,
+            args=(self.database, answer),
+        )
+        thread.start()
+        self._update_widget_and_join_loop(thread)
         conf = configuration.Configuration()
         initdir = conf.get_configuration_value(
             constants.RECENT_EXPORT_DIRECTORY
@@ -670,13 +685,13 @@ class Calculator(Bindings):
             constants.RECENT_EXPORT_DIRECTORY,
             conf.convert_home_directory_to_tilde(os.path.dirname(export_file)),
         )
-        self.widget.after_idle(
-            self.try_command(export.write_export_file, self.widget),
-            export_file,
-            serialized_data,
-            self._clear_lock,
+        thread = dummy.DummyProcess(
+            target=export.write_export_file,
+            args=(export_file, answer["serialized_data"]),
         )
-        self.widget.wait_variable(str(self._lock))
+        thread.start()
+        self._update_widget_and_join_loop(thread)
+        self._clear_lock()
         return True
 
     def _database_close(self):
@@ -1259,7 +1274,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._players.identify():
+            if self._players.identify(self._update_widget_and_join_loop):
                 self._players.players_grid.clear_selections()
                 self._players.players_grid.clear_bookmarks()
                 self._players.persons_grid.clear_selections()
@@ -1281,7 +1296,9 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._players.identify_by_name():
+            if self._players.identify_by_name(
+                self._update_widget_and_join_loop
+            ):
                 self._players.players_grid.clear_selections()
                 self._players.players_grid.clear_bookmarks()
                 self._players.persons_grid.clear_selections()
@@ -1303,7 +1320,9 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._players.match_players_by_name():
+            if self._players.match_players_by_name(
+                self._update_widget_and_join_loop
+            ):
                 self._players.players_grid.clear_selections()
                 self._players.players_grid.clear_bookmarks()
                 self._players.persons_grid.clear_selections()
@@ -1366,7 +1385,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._persons.break_selected():
+            if self._persons.break_selected(self._update_widget_and_join_loop):
                 self._players.persons_grid.clear_selections()
                 self._players.persons_grid.clear_bookmarks()
                 self._persons.data_grid.clear_selections()
@@ -1387,7 +1406,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._persons.split_all():
+            if self._persons.split_all(self._update_widget_and_join_loop):
                 self._players.persons_grid.clear_selections()
                 self._players.persons_grid.clear_bookmarks()
                 self._persons.data_grid.clear_selections()
@@ -1408,7 +1427,9 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._persons.change_identity():
+            if self._persons.change_identity(
+                self._update_widget_and_join_loop
+            ):
                 self._players.persons_grid.clear_selections()
                 self._players.persons_grid.clear_bookmarks()
                 self._persons.data_grid.clear_selections()
@@ -1428,7 +1449,9 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._persons.export_selected_players():
+            if self._persons.export_selected_players(
+                self._update_widget_and_join_loop
+            ):
                 self._players.persons_grid.clear_selections()
                 self._players.persons_grid.clear_bookmarks()
                 self._persons.data_grid.clear_selections()
@@ -1438,12 +1461,8 @@ class Calculator(Bindings):
         finally:
             self._clear_lock()
 
-    def _selectors_new(self):
-        """Define new rule to select games for performance calculation."""
-        if not self._set_lock_to_eventspec_name(EventSpec.menu_selectors_new):
-            return
-        if not self._selectors_availbable(EventSpec.menu_selectors_new):
-            return
+    def _populate_selectors_new(self):
+        """Populate new rule to select games with selected items."""
         persons_sel = self._persons.data_grid.selection
         events_sel = self._events.data_grid.selection
         events_bmk = self._events.data_grid.bookmarks
@@ -1451,11 +1470,9 @@ class Calculator(Bindings):
         modes_sel = self._modes.data_grid.selection
         frame = tkinter.ttk.Frame(master=self._notebook)
         tab = ruleinsert.RuleInsert(frame, self.database)
-        self._apply_lock()
         try:
             tab_from_selection.get_person(tab, persons_sel, self.database)
         except rule.PopulatePerson as exc:
-            self._clear_lock()
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_selectors_new[1],
@@ -1467,7 +1484,6 @@ class Calculator(Bindings):
                 tab, time_controls_sel, self.database
             )
         except rule.PopulateTimeControl as exc:
-            self._clear_lock()
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_selectors_new[1],
@@ -1477,7 +1493,6 @@ class Calculator(Bindings):
         try:
             tab_from_selection.get_mode(tab, modes_sel, self.database)
         except rule.PopulateMode as exc:
-            self._clear_lock()
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_selectors_new[1],
@@ -1489,14 +1504,12 @@ class Calculator(Bindings):
                 tab, events_sel, events_bmk, self.database
             )
         except rule.PopulateEvent as exc:
-            self._clear_lock()
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_selectors_new[1],
                 message=str(exc),
             )
             return
-        self._clear_lock()
         try:
             self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
         except tkinter.TclError as exc:
@@ -1519,12 +1532,20 @@ class Calculator(Bindings):
             self._modes.data_grid.clear_bookmarks()
             self._modes.data_grid.fill_view_with_top()
 
-    def _selectors_show(self):
-        """Show selected rule to select games for performance calculation."""
-        if not self._set_lock_to_eventspec_name(EventSpec.menu_selectors_show):
+    def _selectors_new(self):
+        """Define new rule to select games for performance calculation."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_selectors_new):
             return
-        if not self._selectors_choose(EventSpec.menu_selectors_show):
+        if not self._selectors_availbable(EventSpec.menu_selectors_new):
             return
+        self._apply_lock()
+        try:
+            self._populate_selectors_new()
+        finally:
+            self._clear_lock()
+
+    def _populate_selector_from_rule_on_database(self, displayclass, caption):
+        """Populate rule to select games with current rule definition."""
         selectors_sel = self._selectors.data_grid.selection
         if not selectors_sel:
             tkinter.messagebox.showinfo(
@@ -1534,20 +1555,32 @@ class Calculator(Bindings):
             )
             return
         frame = tkinter.ttk.Frame(master=self._notebook)
-        tab = ruleshow.RuleShow(frame, self.database)
-        self._apply_lock()
-        try:
-            tab_from_selection.get_rule(tab, selectors_sel, self.database)
-        finally:
-            self._clear_lock()
+        tab = displayclass(frame, self.database)
+        tab_from_selection.get_rule(tab, selectors_sel, self.database)
         try:
             self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
         except tkinter.TclError as exc:
             self._rule_tabs[workarounds.winfo_pathname(frame, exc)] = tab
-        self._notebook.add(frame, text="Show " + tab.get_rule_name_from_tab())
+        self._notebook.add(
+            frame, text=" ".join((caption, tab.get_rule_name_from_tab()))
+        )
         self._selectors.data_grid.clear_selections()
         self._selectors.data_grid.clear_bookmarks()
         self._selectors.data_grid.fill_view_with_top()
+
+    def _selectors_show(self):
+        """Show selected rule to select games for performance calculation."""
+        if not self._set_lock_to_eventspec_name(EventSpec.menu_selectors_show):
+            return
+        if not self._selectors_choose(EventSpec.menu_selectors_show):
+            return
+        self._apply_lock()
+        try:
+            self._populate_selector_from_rule_on_database(
+                ruleshow.RuleShow, "Show"
+            )
+        finally:
+            self._clear_lock()
 
     def _selectors_edit(self):
         """Edit selected rule to select games for performance calculation."""
@@ -1555,29 +1588,13 @@ class Calculator(Bindings):
             return
         if not self._selectors_choose(EventSpec.menu_selectors_edit):
             return
-        selectors_sel = self._selectors.data_grid.selection
-        if not selectors_sel:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                title=EventSpec.menu_selectors_edit[1],
-                message="Please select a calculation rule",
-            )
-            return
-        frame = tkinter.ttk.Frame(master=self._notebook)
-        tab = ruleedit.RuleEdit(frame, self.database)
         self._apply_lock()
         try:
-            tab_from_selection.get_rule(tab, selectors_sel, self.database)
+            self._populate_selector_from_rule_on_database(
+                ruleedit.RuleEdit, "Edit"
+            )
         finally:
             self._clear_lock()
-        try:
-            self._rule_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
-        except tkinter.TclError as exc:
-            self._rule_tabs[workarounds.winfo_pathname(frame, exc)] = tab
-        self._notebook.add(frame, text="Edit " + tab.get_rule_name_from_tab())
-        self._selectors.data_grid.clear_selections()
-        self._selectors.data_grid.clear_bookmarks()
-        self._selectors.data_grid.fill_view_with_top()
 
     def _selectors_choose(self, menu_event_spec):
         """Return True if the selection rule list tab is visible."""
@@ -1635,7 +1652,9 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._rule_tabs[tab].insert_rule():
+            if self._rule_tabs[tab].insert_rule(
+                self._update_widget_and_join_loop
+            ):
                 self._selectors.data_grid.clear_selections()
                 self._selectors.data_grid.clear_bookmarks()
                 self._selectors.data_grid.fill_view_with_top()
@@ -1653,7 +1672,9 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._rule_tabs[tab].update_rule():
+            if self._rule_tabs[tab].update_rule(
+                self._update_widget_and_join_loop
+            ):
                 self._selectors.data_grid.clear_selections()
                 self._selectors.data_grid.clear_bookmarks()
                 self._selectors.data_grid.fill_view_with_top()
@@ -1735,7 +1756,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._events.identify():
+            if self._events.identify(self._update_widget_and_join_loop):
                 self._events.data_grid.clear_selections()
                 self._events.data_grid.clear_bookmarks()
                 self._events.data_grid.fill_view_with_top()
@@ -1754,7 +1775,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._events.break_selected():
+            if self._events.break_selected(self._update_widget_and_join_loop):
                 self._events.data_grid.clear_selections()
                 self._events.data_grid.clear_bookmarks()
                 self._events.data_grid.fill_view_with_top()
@@ -1773,7 +1794,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._events.split_all():
+            if self._events.split_all(self._update_widget_and_join_loop):
                 self._events.data_grid.clear_selections()
                 self._events.data_grid.clear_bookmarks()
                 self._events.data_grid.fill_view_with_top()
@@ -1792,7 +1813,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._events.change_identity():
+            if self._events.change_identity(self._update_widget_and_join_loop):
                 self._events.data_grid.clear_selections()
                 self._events.data_grid.clear_bookmarks()
                 self._events.data_grid.fill_view_with_top()
@@ -1816,7 +1837,9 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._events.export_players_in_selected_events():
+            if self._events.export_players_in_selected_events(
+                self._update_widget_and_join_loop
+            ):
                 self._events.data_grid.clear_selections()
                 self._events.data_grid.clear_bookmarks()
                 self._events.data_grid.fill_view_with_top()
@@ -1845,7 +1868,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._time_controls.identify():
+            if self._time_controls.identify(self._update_widget_and_join_loop):
                 self._time_controls.data_grid.clear_selections()
                 self._time_controls.data_grid.clear_bookmarks()
                 self._time_controls.data_grid.fill_view_with_top()
@@ -1864,7 +1887,9 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._time_controls.break_selected():
+            if self._time_controls.break_selected(
+                self._update_widget_and_join_loop
+            ):
                 self._time_controls.data_grid.clear_selections()
                 self._time_controls.data_grid.clear_bookmarks()
                 self._time_controls.data_grid.fill_view_with_top()
@@ -1883,7 +1908,9 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._time_controls.split_all():
+            if self._time_controls.split_all(
+                self._update_widget_and_join_loop
+            ):
                 self._time_controls.data_grid.clear_selections()
                 self._time_controls.data_grid.clear_bookmarks()
                 self._time_controls.data_grid.fill_view_with_top()
@@ -1902,7 +1929,9 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._time_controls.change_identity():
+            if self._time_controls.change_identity(
+                self._update_widget_and_join_loop
+            ):
                 self._time_controls.data_grid.clear_selections()
                 self._time_controls.data_grid.clear_bookmarks()
                 self._time_controls.data_grid.fill_view_with_top()
@@ -1927,7 +1956,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._modes.identify():
+            if self._modes.identify(self._update_widget_and_join_loop):
                 self._modes.data_grid.clear_selections()
                 self._modes.data_grid.clear_bookmarks()
                 self._modes.data_grid.fill_view_with_top()
@@ -1946,7 +1975,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._modes.break_selected():
+            if self._modes.break_selected(self._update_widget_and_join_loop):
                 self._modes.data_grid.clear_selections()
                 self._modes.data_grid.clear_bookmarks()
                 self._modes.data_grid.fill_view_with_top()
@@ -1965,7 +1994,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._modes.split_all():
+            if self._modes.split_all(self._update_widget_and_join_loop):
                 self._modes.data_grid.clear_selections()
                 self._modes.data_grid.clear_bookmarks()
                 self._modes.data_grid.fill_view_with_top()
@@ -1984,7 +2013,7 @@ class Calculator(Bindings):
             return
         self._apply_lock()
         try:
-            if self._modes.change_identity():
+            if self._modes.change_identity(self._update_widget_and_join_loop):
                 self._modes.data_grid.clear_selections()
                 self._modes.data_grid.clear_bookmarks()
                 self._modes.data_grid.fill_view_with_top()
@@ -2001,10 +2030,9 @@ class Calculator(Bindings):
         if not tab:
             return
         self._apply_lock()
-        try:
-            self._rule_tabs[tab].calulate_performances_for_rule()
-        finally:
-            self._clear_lock()
+        self._rule_tabs[tab].calulate_performances_for_rule(
+            self._update_widget_and_join_loop
+        )
         return
 
     def _save(self):
@@ -2072,15 +2100,12 @@ class Calculator(Bindings):
             return False
         return tab
 
-    def _verify_and_apply_person_identities(self, import_file, clear_lock):
-        """Verify imported player identifications and apply if consistent."""
-        identities = export.read_export_file(import_file)
-        report = apply_identities.verify_and_apply_identities(
-            self.database, identities, self.widget
-        )
-        clear_lock()
+    def _add_report_to_notebook(
+        self, import_file, reportclass, answer, message, title
+    ):
+        """Set person identities from import file and put report in answer."""
         frame = tkinter.ttk.Frame(master=self._notebook)
-        tab = reportapply.ReportApply(frame, self.database)
+        tab = reportclass(frame, self.database)
         self._notebook.add(
             frame, text="Report " + os.path.basename(import_file)
         )
@@ -2088,36 +2113,61 @@ class Calculator(Bindings):
             self._report_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
         except tkinter.TclError as exc:
             self._report_tabs[workarounds.winfo_pathname(frame, exc)] = tab
-        tab.populate(report)
-        if report.messages_exist:
+        tab.populate(answer["report"])
+        if answer["report"].messages_exist:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
-                message="Identities not applied for reasons in report",
-                title=EventSpec.menu_database_apply_aliases[1],
+                message=message,
+                title=title,
             )
             return
 
-    def _verify_and_mirror_person_identities(self, import_file, clear_lock):
-        """Verify imported player identifications and apply if consistent."""
+    def _apply_person_identities_and_prepare_report(self, import_file, answer):
+        """Set person identities from import file and put report in answer."""
         identities = export.read_export_file(import_file)
-        report = mirror_identities.verify_and_mirror_identities(
-            self.database, identities, self.widget
+        answer["report"] = apply_identities.verify_and_apply_identities(
+            self.database, identities
         )
-        clear_lock()
-        frame = tkinter.ttk.Frame(master=self._notebook)
-        tab = reportmirror.ReportMirror(frame, self.database)
-        self._notebook.add(
-            frame, text="Report " + os.path.basename(import_file)
+
+    def _verify_and_apply_person_identities(self, import_file):
+        """Verify imported player identifications and apply if consistent."""
+        answer = {"report": None}
+        thread = dummy.DummyProcess(
+            target=self._apply_person_identities_and_prepare_report,
+            args=(import_file, answer),
         )
-        try:
-            self._report_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
-        except tkinter.TclError as exc:
-            self._report_tabs[workarounds.winfo_pathname(frame, exc)] = tab
-        tab.populate(report)
-        if report.messages_exist:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                message="Identities not mirrored for reasons in report",
-                title=EventSpec.menu_database_mirror_identities[1],
-            )
-            return
+        thread.start()
+        self._update_widget_and_join_loop(thread)
+        self._add_report_to_notebook(
+            import_file,
+            reportapply.ReportApply,
+            answer,
+            "Identities not applied for reasons in report",
+            EventSpec.menu_database_apply_aliases[1],
+        )
+
+    def _mirror_person_identities_and_prepare_report(
+        self, import_file, answer
+    ):
+        """Set person identities from import file and put report in answer."""
+        identities = export.read_export_file(import_file)
+        answer["report"] = mirror_identities.verify_and_mirror_identities(
+            self.database, identities
+        )
+
+    def _verify_and_mirror_person_identities(self, import_file):
+        """Verify imported player identifications and apply if consistent."""
+        answer = {"report": None}
+        thread = dummy.DummyProcess(
+            target=self._mirror_person_identities_and_prepare_report,
+            args=(import_file, answer),
+        )
+        thread.start()
+        self._update_widget_and_join_loop(thread)
+        self._add_report_to_notebook(
+            import_file,
+            reportmirror.ReportMirror,
+            answer,
+            "Identities not mirrored for reasons in report",
+            EventSpec.menu_database_mirror_identities[1],
+        )

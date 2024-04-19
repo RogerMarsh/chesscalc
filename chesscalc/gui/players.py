@@ -5,6 +5,7 @@
 """List the players in the database."""
 
 import tkinter
+from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
@@ -58,7 +59,7 @@ class Players(Bindings):
         """Return the persons grid."""
         return self._persons_grid
 
-    def identify(self):
+    def identify(self, update_widget_and_join_loop):
         """Identify selected new players as a person."""
         title = EventSpec.menu_player_identify[1]
         database = self.get_database(title)
@@ -122,10 +123,15 @@ class Players(Bindings):
         else:
             identified = players_sel
             new.difference_update(set(players_sel))
-        identify_person.identify_players_as_person(database, new, identified)
+        thread = dummy.DummyProcess(
+            target=identify_person.identify_players_as_person,
+            args=(database, new, identified),
+        )
+        thread.start()
+        update_widget_and_join_loop(thread)
         return True
 
-    def identify_by_name(self):
+    def identify_by_name(self, update_widget_and_join_loop):
         """Identify selected new players as persons matching on names."""
         title = EventSpec.menu_player_identify[1]
         database = self.get_database(title)
@@ -184,12 +190,15 @@ class Players(Bindings):
             identified = persons_sel
         else:
             identified = players_sel
-        identify_person.identify_players_by_name_as_person(
-            database, set(players_sel), identified
+        thread = dummy.DummyProcess(
+            target=identify_person.identify_players_by_name_as_person,
+            args=(database, set(players_sel), identified),
         )
+        thread.start()
+        update_widget_and_join_loop(thread)
         return True
 
-    def match_players_by_name(self):
+    def match_players_by_name(self, update_widget_and_join_loop):
         """Identify new players with same name as person for all names."""
         title = EventSpec.menu_match_players_by_name[1]
         database = self.get_database(title)
@@ -212,9 +221,12 @@ class Players(Bindings):
                 ),
             ):
                 return False
-        identify_person.identify_all_players_by_name_as_persons(
-            database, self._players
+        thread = dummy.DummyProcess(
+            target=identify_person.identify_all_players_by_name_as_persons,
+            args=(database,),
         )
+        thread.start()
+        update_widget_and_join_loop(thread)
         return True
 
     def get_database(self, title):

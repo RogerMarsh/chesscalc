@@ -314,7 +314,7 @@ def identify_players_by_name_as_person(database, players, person):
     database.commit()
 
 
-def identify_all_players_by_name_as_persons(database, widget):
+def identify_all_players_by_name_as_persons(database):
     """Make new players with same aliases of same person on database.
 
     Players are assumed to be the same if their names are the same.  Other
@@ -346,7 +346,6 @@ def identify_all_players_by_name_as_persons(database, widget):
             record = cursor.next()
             if record is None:
                 break
-            widget.update()
             record = database.get_primary_record(
                 filespec.PLAYER_FILE_DEF, record[0]
             )
@@ -391,7 +390,6 @@ def identify_all_players_by_name_as_persons(database, widget):
                 database.start_transaction()
                 counter = _RECORDS_PER_TRANSACTION
             counter -= 1
-            widget.update()
             record = database.get_primary_record(
                 filespec.PLAYER_FILE_DEF, record[0]
             )
@@ -489,7 +487,7 @@ def identify_all_players_by_name_as_persons(database, widget):
     database.commit()
 
 
-def split_person_into_all_players(database, person):
+def split_person_into_all_players(database, person, answer):
     """Split person into new player aliases on database.
 
     All aliases of person become separate new players.
@@ -516,7 +514,10 @@ def split_person_into_all_players(database, person):
         person_record.load_record(primary_record)
         if person_record.value.identity != person_record.value.alias:
             database.backout()
-            return "Cannot split: selection is not the identified person"
+            answer[
+                "message"
+            ] = "Cannot split: selection is not the identified person"
+            return
         identity = person_record.value.alias
         recordlist = database.recordlist_key(
             filespec.PLAYER_FILE_DEF,
@@ -545,7 +546,10 @@ def split_person_into_all_players(database, person):
                 alias_record.load_record(primary_record)
                 if identity != alias_record.value.alias:
                     database.backout()
-                    return "Cannot split: alias is not for identified person"
+                    answer[
+                        "message"
+                    ] = "Cannot split: selection is not for identified person"
+                    return
                 player_record = performancerecord.PlayerDBrecord()
                 player_record.load_record(primary_record)
                 player_record.value.alias = player_record.value.identity
@@ -567,10 +571,10 @@ def split_person_into_all_players(database, person):
         database.backout()
         raise
     database.commit()
-    return None
+    return
 
 
-def break_person_into_picked_players(database, person, aliases):
+def break_person_into_picked_players(database, person, aliases, answer):
     """Break aliases of person into new player aliases on database.
 
     The aliases of person become separate new players.
@@ -597,7 +601,10 @@ def break_person_into_picked_players(database, person, aliases):
         person_record.load_record(primary_record)
         if person_record.value.identity != person_record.value.alias:
             database.backout()
-            return "Cannot break: selection is not the identified person"
+            answer[
+                "message"
+            ] = "Cannot break: selection is not the identified person"
+            return
         identity = person_record.value.identity
         gamelist = database.recordlist_key(
             filespec.GAME_FILE_DEF,
@@ -624,13 +631,14 @@ def break_person_into_picked_players(database, person, aliases):
             player_record.load_record(primary_record)
             if identity != player_record.value.alias:
                 database.backout()
-                return "".join(
+                answer["message"] = "".join(
                     (
                         "One of the bookmarked players is not aliased ",
                         "to same player as selection player ",
                         "so no changes done",
                     )
                 )
+                return
             gamelist.remove_recordset(
                 database.recordlist_key(
                     filespec.GAME_FILE_DEF,
@@ -662,10 +670,10 @@ def break_person_into_picked_players(database, person, aliases):
         database.backout()
         raise
     database.commit()
-    return None
+    return
 
 
-def change_identified_person(database, player):
+def change_identified_person(database, player, answer):
     """Change identified person to player on database.
 
     All aliases of player have their alias changed to player identity.
@@ -692,7 +700,10 @@ def change_identified_person(database, player):
         selection_record.load_record(primary_record)
         if selection_record.value.identity == selection_record.value.alias:
             database.backout()
-            return "Not changed: selection is already the identified person"
+            answer[
+                "message"
+            ] = "Not changed: selection is already the identified person"
+            return
         recordlist = database.recordlist_key(
             filespec.PLAYER_FILE_DEF,
             filespec.PLAYER_LINKS_FIELD_DEF,
@@ -728,7 +739,10 @@ def change_identified_person(database, player):
                 )
                 if selection_record.value.alias != alias_record.value.alias:
                     database.backout()
-                    return "Cannot change: alias is not for identified person"
+                    answer[
+                        "message"
+                    ] = "Cannot change: alias is not for identified person"
+                    return
                 clone_record = alias_record.clone()
                 clone_record.value.alias = selection_record.value.identity
                 assert alias_record.srkey == clone_record.srkey
@@ -752,4 +766,4 @@ def change_identified_person(database, player):
         database.backout()
         raise
     database.commit()
-    return None
+    return

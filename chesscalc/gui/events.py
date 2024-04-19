@@ -6,6 +6,7 @@
 
 import tkinter
 import os
+from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
@@ -41,7 +42,7 @@ class Events(Bindings):
         """Return the events widget."""
         return self._events_grid
 
-    def identify(self):
+    def identify(self, update_widget_and_join_loop):
         """Identify bookmarked events as selected event."""
         title = EventSpec.menu_other_event_identify[1]
         database = self.get_database(title)
@@ -83,17 +84,23 @@ class Events(Bindings):
                 ),
             )
             return False
-        message = identify_event.identify(database, new, events_sel)
-        if message is not None:
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_event.identify,
+            args=(database, new, events_sel, answer),
+        )
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def break_selected(self):
+    def break_selected(self, update_widget_and_join_loop):
         """Undo identification of bookmarked events as selection event."""
         title = EventSpec.menu_other_event_break[1]
         database = self.get_database(title)
@@ -135,19 +142,23 @@ class Events(Bindings):
                 ),
             )
             return False
-        message = identify_event.break_bookmarked_aliases(
-            database, new, events_sel
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_event.break_bookmarked_aliases,
+            args=(database, new, events_sel, answer),
         )
-        if message is not None:
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def split_all(self):
+    def split_all(self, update_widget_and_join_loop):
         """Undo identification of all aliases of selected event."""
         title = EventSpec.menu_other_event_split[1]
         database = self.get_database(title)
@@ -169,17 +180,23 @@ class Events(Bindings):
                 message="Events are bookmarked so no changes done",
             )
             return False
-        message = identify_event.split_aliases(database, events_sel)
-        if message is not None:
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_event.split_aliases,
+            args=(database, events_sel, answer),
+        )
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def change_identity(self):
+    def change_identity(self, update_widget_and_join_loop):
         """Undo identification of all aliases of selected event."""
         title = EventSpec.menu_other_event_change[1]
         database = self.get_database(title)
@@ -201,17 +218,32 @@ class Events(Bindings):
                 message="Events are bookmarked so no changes done",
             )
             return False
-        message = identify_event.change_aliases(database, events_sel)
-        if message is not None:
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_event.change_aliases,
+            args=(database, events_sel, answer),
+        )
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def export_players_in_selected_events(self):
+    def _export_players_in_selected_events(
+        self, database, events_bmk, events_sel, answer
+    ):
+        """Prepare player data for export."""
+        exporter = export.ExportEventPersons(database, events_bmk, events_sel)
+        answer["status"] = exporter.prepare_export_data()
+        if answer["status"].error_message is None:
+            answer["serialized_data"] = exporter.export_repr()
+
+    def export_players_in_selected_events(self, update_widget_and_join_loop):
         """Export players for selection and bookmarked events."""
         title = EventSpec.menu_other_event_export_persons[1]
         database = self.get_database(title)
@@ -226,21 +258,37 @@ class Events(Bindings):
                 message="No events are selected or bookmarked",
             )
             return False
-        exporter = export.ExportEventPersons(database, events_bmk, events_sel)
-        status = exporter.prepare_export_data()
-        if status.error_message is not None:
+        answer = {"status": None, "serialized_data": None}
+        thread = dummy.DummyProcess(
+            target=self._export_players_in_selected_events,
+            args=(database, events_bmk, events_sel, answer),
+        )
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["status"] is None:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 message="\n\n".join(
                     (
                         "Export of event persons failed",
-                        status.error_message,
+                        "Unable to extract data",
                     )
                 ),
                 title=title,
             )
             return False
-        serialized_data = exporter.export_repr()
+        if answer["status"].error_message is not None:
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                message="\n\n".join(
+                    (
+                        "Export of event persons failed",
+                        answer["status"].error_message,
+                    )
+                ),
+                title=title,
+            )
+            return False
         conf = configuration.Configuration()
         initdir = conf.get_configuration_value(
             constants.RECENT_EXPORT_DIRECTORY
@@ -262,13 +310,12 @@ class Events(Bindings):
             constants.RECENT_EXPORT_DIRECTORY,
             conf.convert_home_directory_to_tilde(os.path.dirname(export_file)),
         )
-        # gives time for destruction of dialogue and widget refresh
-        # does nothing for obscuring and revealing application later
-        self.frame.after_idle(
-            self.try_command(export.write_export_file, self.frame),
-            export_file,
-            serialized_data,
+        thread = dummy.DummyProcess(
+            target=export.write_export_file,
+            args=(export_file, answer["serialized_data"]),
         )
+        thread.start()
+        update_widget_and_join_loop(thread)
         return True
 
     def get_database(self, title):

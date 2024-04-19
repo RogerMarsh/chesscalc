@@ -9,6 +9,7 @@ or 'online'.
 
 """
 import tkinter
+from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
@@ -41,7 +42,7 @@ class Modes(Bindings):
         """Return the modes widget."""
         return self._modes_grid
 
-    def identify(self):
+    def identify(self, update_widget_and_join_loop):
         """Identify bookmarked modes as selected mode."""
         title = EventSpec.menu_other_mode_identify[1]
         database = self.get_database(title)
@@ -83,17 +84,23 @@ class Modes(Bindings):
                 ),
             )
             return False
-        message = identify_mode.identify(database, new, modes_sel)
-        if message is not None:
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_mode.identify,
+            args=(database, new, modes_sel, answer),
+        )
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def break_selected(self):
+    def break_selected(self, update_widget_and_join_loop):
         """Undo identification of bookmarked modes as selection."""
         title = EventSpec.menu_other_mode_break[1]
         database = self.get_database(title)
@@ -135,19 +142,23 @@ class Modes(Bindings):
                 ),
             )
             return False
-        message = identify_mode.break_bookmarked_aliases(
-            database, new, modes_sel
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_mode.break_bookmarked_aliases,
+            args=(database, new, modes_sel, answer),
         )
-        if message is not None:
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def split_all(self):
+    def split_all(self, update_widget_and_join_loop):
         """Undo identification of all aliases of selected mode."""
         title = EventSpec.menu_other_mode_split[1]
         database = self.get_database(title)
@@ -169,17 +180,23 @@ class Modes(Bindings):
                 message="Modes are bookmarked so no changes done",
             )
             return False
-        message = identify_mode.split_aliases(database, modes_sel)
-        if message is not None:
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_mode.split_aliases,
+            args=(database, modes_sel, answer),
+        )
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True
 
-    def change_identity(self):
+    def change_identity(self, update_widget_and_join_loop):
         """Undo identification of all aliases of selected mode."""
         title = EventSpec.menu_other_mode_change[1]
         database = self.get_database(title)
@@ -201,12 +218,18 @@ class Modes(Bindings):
                 message="Modes are bookmarked so no changes done",
             )
             return False
-        message = identify_mode.change_aliases(database, modes_sel)
-        if message is not None:
+        answer = {"message": None}
+        thread = dummy.DummyProcess(
+            target=identify_mode.change_aliases,
+            args=(database, modes_sel, answer),
+        )
+        thread.start()
+        update_widget_and_join_loop(thread)
+        if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=title,
-                message=message,
+                message=answer["message"],
             )
             return False
         return True

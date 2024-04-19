@@ -7,6 +7,7 @@
 import tkinter
 import tkinter.ttk
 import ast
+from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
@@ -357,9 +358,10 @@ class Rule(Bindings):
 
         """
 
-    def insert_rule(self):
+    def insert_rule(self, update_widget_and_join_loop):
         """Insert selection rule into database."""
         valid_values = self._validate_rule(
+            update_widget_and_join_loop,
             *self.get_selection_values_from_widget()
         )
         if not valid_values:
@@ -378,7 +380,7 @@ class Rule(Bindings):
         )
         return False
 
-    def update_rule(self):
+    def update_rule(self, update_widget_and_join_loop):
         """Update selection rule on database."""
         if self._rule_record is None:
             tkinter.messagebox.showinfo(
@@ -388,7 +390,9 @@ class Rule(Bindings):
             )
             return False
         valid_values = self._validate_rule(
-            *self.get_selection_values_from_widget(), insert=False
+            update_widget_and_join_loop,
+            *self.get_selection_values_from_widget(),
+            insert=False
         )
         if not valid_values:
             return False
@@ -432,7 +436,22 @@ class Rule(Bindings):
         )
         return False
 
-    def calulate_performances_for_rule(self):
+    def _read_data_for_performance_calculation(self, valid_values, answer):
+        """Calculate performance from valid_values and put in answer."""
+        self._database.start_read_only_transaction()
+        try:
+            values = self._convert_player_identity_to_known_identity(
+                *valid_values
+            )
+        finally:
+            self._database.end_read_only_transaction()
+        if values:
+            answer["calculation"] = calculate.calculate(
+                self._database, *values
+            )
+            answer["values"] = values
+
+    def calulate_performances_for_rule(self, update_widget_and_join_loop):
         """Calculate performances for selection rule on database."""
         if self._rule_record is None:
             tkinter.messagebox.showinfo(
@@ -451,14 +470,21 @@ class Rule(Bindings):
                 message="Performances not calculated: rules not valid",
             )
             return False
-        self._database.start_read_only_transaction()
-        try:
-            valid_values = self._convert_player_identity_to_known_identity(
-                *valid_values
-            )
-        finally:
-            self._database.end_read_only_transaction()
-        if not valid_values:
+        answer = {"calculation": None, "values": False}
+        thread = dummy.DummyProcess(
+            target=self._read_data_for_performance_calculation,
+            args=(valid_values, answer),
+        )
+        thread.start()
+        self._perfcalc.configure(state=tkinter.NORMAL)
+        self._perfcalc.delete("1.0", tkinter.END)
+        self._perfcalc.insert(
+            tkinter.END,
+            "\n\n\t\tPlease wait while performances are calculated.\n\n",
+        )
+        self._perfcalc.configure(state=tkinter.DISABLED)
+        clear_lock = update_widget_and_join_loop(thread)
+        if not answer["values"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=EventSpec.menu_selectors_update[1],
@@ -469,25 +495,130 @@ class Rule(Bindings):
                     )
                 ),
             )
+            clear_lock()
             return False
-        calculation = calculate.calculate(self._database, *valid_values)
-        if calculation is None:
+        if answer["calculation"] is None:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 title=EventSpec.menu_selectors_update[1],
                 message="Performances not calculated",
             )
+            clear_lock()
             return False
-        generate_report(calculation, self._perfcalc, self._database)
+        generate_report(answer["calculation"], self._perfcalc, self._database)
         tkinter.messagebox.showinfo(
             parent=self.frame,
             title=EventSpec.menu_calculate_calculate[1],
             message="Performances calculated",
         )
+        clear_lock()
         return True
+
+    # This method is split out from _validate_rule because the event_names
+    # and event_identities lists could be quite large if each match in a team
+    # tournament is treated as a separate event.
+    def _validate_rule_against_database(
+        self,
+        messages,
+        event_identity_list,
+        event_name_list,
+        answer,
+        player_identity,
+        player_name,
+        time_control_identity,
+        time_control_name,
+        mode_identity,
+        mode_name,
+        event_identities,
+        event_names,
+    ):
+        """Populate arguments with values appropriate to database record.
+
+        The messages, event_identity_list, event_name_list, and answer,
+        arguments are containers and get populated.  The other arguments
+        are input arguments, including event_identities and event_names
+        which are lists.
+
+        """
+        if player_identity:
+            name = name_lookup.get_player_name_from_identity(
+                self._database, player_identity
+            )
+            answer["player_name"] = name
+            if name:
+                if name != player_name:
+                    messages.append("Player name changed")
+            if not name:
+                messages.append("Player name not found")
+                answer["validate"] = False
+            elif not player_name:
+                messages.append("Player name added")
+        else:
+            if player_name:
+                messages.append("No player identity for name")
+                answer["validate"] = False
+        if time_control_identity:
+            name = name_lookup.get_time_control_name_from_identity(
+                self._database, time_control_identity
+            )
+            answer["time_control_name"] = name
+            if name:
+                if name != time_control_name:
+                    messages.append("Time control name changed")
+            if not name:
+                messages.append("Time control name not found")
+                answer["validate"] = False
+            elif not time_control_name:
+                messages.append("Time control name added")
+        else:
+            if time_control_name:
+                messages.append("No time control identity for name")
+                answer["validate"] = False
+        if mode_identity:
+            name = name_lookup.get_mode_name_from_identity(
+                self._database, mode_identity
+            )
+            answer["mode_name"] = name
+            if name:
+                if name != mode_name:
+                    messages.append("Mode name changed")
+            if not name:
+                messages.append("Mode name not found")
+                answer["validate"] = False
+            elif not mode_name:
+                messages.append("Mode name added")
+        else:
+            if mode_name:
+                messages.append("No mode identity for name")
+                answer["validate"] = False
+        if event_identities:
+            for identity in event_identities.split():
+                name = name_lookup.get_event_name_from_identity(
+                    self._database, identity
+                )
+                if name is None:
+                    messages.append(
+                        identity.join(
+                            (
+                                "Name not found for identity '",
+                                "', perhaps it is not the alias too",
+                            )
+                        )
+                    )
+                    answer["validate"] = False
+                event_identity_list.append(identity)
+                event_name_list.append(name)
+            if event_name_list:
+                if event_name_list != event_names.strip("\n").split("\n"):
+                    messages.append("At least one event name changed")
+        else:
+            if event_names:
+                messages.append("No event identities for names")
+                answer["validate"] = False
 
     def _validate_rule(
         self,
+        update_widget_and_join_loop,
         rule,
         player_identity,
         from_date,
@@ -623,105 +754,78 @@ class Rule(Bindings):
                     ),
                 )
                 return False
-        validate = True
+        answer = {
+            "validate": True,
+            "player_name": None,
+            "time_control_name": None,
+            "mode_name": None,
+        }
         messages = []
+        event_identity_list = []
+        event_name_list = []
         # Assume rule name is unchanged if widget state is 'disabled'.
         if self._rule.cget("state") == tkinter.NORMAL:
             if rule != self._identity_values.rule:
                 messages.append("Rule name changed")
+        thread = dummy.DummyProcess(
+            target=self._validate_rule_against_database,
+            args=(
+                messages,
+                event_identity_list,
+                event_name_list,
+                answer,
+                player_identity,
+                player_name,
+                time_control_identity,
+                time_control_name,
+                mode_identity,
+                mode_name,
+                event_identities,
+                event_names,
+            ),
+        )
+        thread.start()
+        update_widget_and_join_loop(thread)
         if player_identity:
-            name = name_lookup.get_player_name_from_identity(
-                self._database, player_identity
-            )
             self._player_name.configure(state=tkinter.NORMAL)
             self._player_name.delete("0", tkinter.END)
+            name = answer["player_name"]
             if name:
-                if name != player_name:
-                    messages.append("Player name changed")
                 self._player_name.insert(tkinter.END, name)
             self._player_name.configure(state=tkinter.DISABLED)
-            if not name:
-                messages.append("Player name not found")
-                validate = False
-            elif not player_name:
-                messages.append("Player name added")
         else:
             self._player_name.configure(state=tkinter.NORMAL)
             self._player_name.delete("0", tkinter.END)
             self._player_name.configure(state=tkinter.DISABLED)
-            if player_name:
-                messages.append("No player identity for name")
-                validate = False
         if time_control_identity:
-            name = name_lookup.get_time_control_name_from_identity(
-                self._database, time_control_identity
-            )
+            name = answer["time_control_name"]
             self._time_control_name.configure(state=tkinter.NORMAL)
             self._time_control_name.delete("0", tkinter.END)
             if name:
-                if name != time_control_name:
-                    messages.append("Time control name changed")
                 self._time_control_name.insert(tkinter.END, name)
             self._time_control_name.configure(state=tkinter.DISABLED)
-            if not name:
-                messages.append("Time control name not found")
-                validate = False
-            elif not time_control_name:
-                messages.append("Time control name added")
         else:
             self._time_control_name.configure(state=tkinter.NORMAL)
             self._time_control_name.delete("0", tkinter.END)
             self._time_control_name.configure(state=tkinter.DISABLED)
-            if time_control_name:
-                messages.append("No time control identity for name")
-                validate = False
         if mode_identity:
             name = name_lookup.get_mode_name_from_identity(
                 self._database, mode_identity
             )
+            name = answer["mode_name"]
             self._mode_name.configure(state=tkinter.NORMAL)
             self._mode_name.delete("0", tkinter.END)
             if name:
-                if name != mode_name:
-                    messages.append("Mode name changed")
                 self._mode_name.insert(tkinter.END, name)
             self._mode_name.configure(state=tkinter.DISABLED)
-            if not name:
-                messages.append("Mode name not found")
-                validate = False
-            elif not mode_name:
-                messages.append("Mode name added")
         else:
             self._mode_name.configure(state=tkinter.NORMAL)
             self._mode_name.delete("0", tkinter.END)
             self._mode_name.configure(state=tkinter.DISABLED)
-            if mode_name:
-                messages.append("No mode identity for name")
-                validate = False
-        event_identity_list = []
-        event_name_list = []
         if event_identities:
-            for identity in event_identities.split():
-                name = name_lookup.get_event_name_from_identity(
-                    self._database, identity
-                )
-                if name is None:
-                    messages.append(
-                        identity.join(
-                            (
-                                "Name not found for identity '",
-                                "', perhaps it is not the alias too",
-                            )
-                        )
-                    )
-                    validate = False
-                event_identity_list.append(identity)
-                event_name_list.append(name)
             self._event_names.configure(state=tkinter.NORMAL)
             self._event_names.delete("1.0", tkinter.END)
             if event_name_list:
-                if event_name_list != event_names.strip("\n").split("\n"):
-                    messages.append("At least one event name changed")
                 self._event_names.insert(
                     tkinter.END, "\n".join(event_name_list)
                 )
@@ -730,10 +834,7 @@ class Rule(Bindings):
             self._event_names.configure(state=tkinter.NORMAL)
             self._event_names.delete("1.0", tkinter.END)
             self._event_names.configure(state=tkinter.DISABLED)
-            if event_names:
-                messages.append("No event identities for names")
-                validate = False
-        if not validate:
+        if not answer["validate"]:
             if len(messages) > 1:
                 messages.insert(
                     0, "At least one of the following indicates an error:\n"

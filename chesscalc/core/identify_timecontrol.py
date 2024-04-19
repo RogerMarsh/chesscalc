@@ -14,7 +14,7 @@ from . import filespec
 from . import identify_item
 
 
-def identify(database, bookmarks, selection):
+def identify(database, bookmarks, selection, answer):
     """Make bookmarked time controls aliases of selection time control.
 
     The bookmarked time controls must not be aliases already.
@@ -24,7 +24,7 @@ def identify(database, bookmarks, selection):
     The changes are applied to database.
 
     """
-    return identify_item.identify(
+    answer["message"] = identify_item.identify(
         database,
         bookmarks,
         selection,
@@ -38,7 +38,7 @@ def identify(database, bookmarks, selection):
     )
 
 
-def break_bookmarked_aliases(database, bookmarks, selection):
+def break_bookmarked_aliases(database, bookmarks, selection, answer):
     """Break aliases of selection time control in bookmarks.
 
     The bookmarked aliases of selection become separate time controls.
@@ -46,7 +46,7 @@ def break_bookmarked_aliases(database, bookmarks, selection):
     The changes are applied to database.
 
     """
-    return identify_item.break_bookmarked_aliases(
+    answer["message"] = identify_item.break_bookmarked_aliases(
         database,
         bookmarks,
         selection,
@@ -60,13 +60,13 @@ def break_bookmarked_aliases(database, bookmarks, selection):
     )
 
 
-def split_aliases(database, selection):
+def split_aliases(database, selection, answer):
     """Split aliases of selection time control into separate time controls.
 
     The changes are applied to database.
 
     """
-    return identify_item.split_aliases(
+    answer["message"] = identify_item.split_aliases(
         database,
         selection,
         performancerecord.TimeControlDBvalue,
@@ -79,7 +79,7 @@ def split_aliases(database, selection):
     )
 
 
-def change_aliases(database, selection):
+def change_aliases(database, selection, answer):
     """Change alias of all time controls with same alias as selection.
 
     All time controls with same alias as selection have their alias changed to
@@ -88,7 +88,7 @@ def change_aliases(database, selection):
     The changes are applied to database.
 
     """
-    return identify_item.change_aliases(
+    answer["message"] = identify_item.change_aliases(
         database,
         selection,
         performancerecord.TimeControlDBvalue,

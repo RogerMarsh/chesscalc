@@ -21,7 +21,7 @@ class ModeIdentity(Exception):
     """Raise if unable to change alias used as mode identity."""
 
 
-def identify(database, bookmarks, selection):
+def identify(database, bookmarks, selection, answer):
     """Make bookmarked modes aliases of selection mode.
 
     The bookmarked modes must not be aliases already.
@@ -31,7 +31,7 @@ def identify(database, bookmarks, selection):
     The changes are applied to database.
 
     """
-    return identify_item.identify(
+    answer["message"] = identify_item.identify(
         database,
         bookmarks,
         selection,
@@ -45,7 +45,7 @@ def identify(database, bookmarks, selection):
     )
 
 
-def break_bookmarked_aliases(database, bookmarks, selection):
+def break_bookmarked_aliases(database, bookmarks, selection, answer):
     """Break aliases of selection mode in bookmarks.
 
     The bookmarked aliases of selection become separate modes.
@@ -53,7 +53,7 @@ def break_bookmarked_aliases(database, bookmarks, selection):
     The changes are applied to database.
 
     """
-    return identify_item.break_bookmarked_aliases(
+    answer["message"] = identify_item.break_bookmarked_aliases(
         database,
         bookmarks,
         selection,
@@ -67,13 +67,13 @@ def break_bookmarked_aliases(database, bookmarks, selection):
     )
 
 
-def split_aliases(database, selection):
+def split_aliases(database, selection, answer):
     """Split aliases of selection mode into separate modes.
 
     The changes are applied to database.
 
     """
-    return identify_item.split_aliases(
+    answer["message"] = identify_item.split_aliases(
         database,
         selection,
         performancerecord.ModeDBvalue,
@@ -86,7 +86,7 @@ def split_aliases(database, selection):
     )
 
 
-def change_aliases(database, selection):
+def change_aliases(database, selection, answer):
     """Change alias of all modes with same alias as selection.
 
     All modes with same alias as selection have their alias changed
@@ -95,7 +95,7 @@ def change_aliases(database, selection):
     The changes are applied to database.
 
     """
-    return identify_item.change_aliases(
+    answer["message"] = identify_item.change_aliases(
         database,
         selection,
         performancerecord.ModeDBvalue,
