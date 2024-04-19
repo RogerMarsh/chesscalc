@@ -158,10 +158,7 @@ class Calculator(Bindings):
         self._modes = None
         self._selectors = None
         self.widget = tkinter.Tk()
-        self._lock = tkinter.StringVar(master=self.widget)  # , name="lock")
-        self._lock_value = tkinter.StringVar(
-            master=self.widget  # , name="lock_value"
-        )
+        self._lock = ""
         self._masktab = None
         self._maskscroll = {}
         self._maskpopup = {}
@@ -398,9 +395,8 @@ class Calculator(Bindings):
                 return self._clear_lock
 
     def _clear_lock(self):
-        """Set value of StringVars 'lock' and 'lock_value' to ''."""
-        self._lock_value.set("")
-        self._lock.set("")
+        """Set value of _lock to ''."""
+        self._lock = ""
         self._notebook.state(statespec=["!" + tkinter.DISABLED])
         for subject in (
             self._games,
@@ -443,9 +439,8 @@ class Calculator(Bindings):
         self.widget.wm_resizable(*self._maskresizeable)
 
     def _apply_lock(self):
-        """Set value of StringVar 'lock' to 'locked' and note old value."""
-        self._lock_value.set(self._lock.get())
-        self._lock.set("locked")
+        """Set value of _lock to 'locked'."""
+        self._lock = "locked"
         self._maskresizeable = self.widget.wm_resizable()
         self.widget.wm_resizable(width=False, height=False)
         select = self._notebook.index(self._notebook.select())
@@ -503,11 +498,10 @@ class Calculator(Bindings):
         self._notebook.state(statespec=[tkinter.DISABLED])
 
     def _set_lock_to_eventspec_name(self, name):
-        """Set value of StringVar 'lock' to eventspec menu item name."""
-        if self._lock.get() == "locked":
+        """Set value of _lock to eventspec menu item name."""
+        if self._lock == "locked":
             return False
-        self._lock_value.set("")
-        self._lock.set(name[1])
+        self._lock = name[1]
         return True
 
     def _help_widget(self):
