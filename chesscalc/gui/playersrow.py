@@ -23,9 +23,9 @@ class PlayersRow(performancerecord.PlayerDBrecord, datarow.DataRow):
     header_specification = [
         {
             datarow.WIDGET: tkinter.Label,
-            datarow.WIDGET_CONFIGURE: dict(text=text, anchor=tkinter.CENTER),
-            datarow.GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
-            datarow.GRID_COLUMNCONFIGURE: dict(weight=0, uniform=uniform),
+            datarow.WIDGET_CONFIGURE: {"text": text, "anchor": tkinter.CENTER},
+            datarow.GRID_CONFIGURE: {"column": column, "sticky": tkinter.EW},
+            datarow.GRID_COLUMNCONFIGURE: {"weight": 0, "uniform": uniform},
             datarow.ROW: 0,
         }
         for column, text, uniform in (
@@ -46,8 +46,11 @@ class PlayersRow(performancerecord.PlayerDBrecord, datarow.DataRow):
         self.row_specification = [
             {
                 datarow.WIDGET: tkinter.Label,
-                datarow.WIDGET_CONFIGURE: dict(anchor=anchor),
-                datarow.GRID_CONFIGURE: dict(column=column, sticky=tkinter.EW),
+                datarow.WIDGET_CONFIGURE: {"anchor": anchor},
+                datarow.GRID_CONFIGURE: {
+                    "column": column,
+                    "sticky": tkinter.EW,
+                },
                 datarow.ROW: 0,
             }
             for column, anchor in (

@@ -69,11 +69,11 @@ class GameDBvalue(ValueList):
     class.
     """
 
-    attributes = dict(
-        reference=None,  # dict of PGN file name and game number within file.
-        headers=None,  # dict of PGN tag name and value pairs for game.
-        # status=None,  # set of import actions not yet done.
-    )
+    attributes = {
+        "reference": None,  # dict of PGN file name and game number within file.
+        "headers": None,  # dict of PGN tag name and value pairs for game.
+        # "status": None,  # set of import actions not yet done.
+    }
     _attribute_order = ("headers", "reference")  # , "status")
     assert set(_attribute_order) == set(attributes)
 
@@ -761,15 +761,15 @@ class _PlayerValue(ValueList):
     database records.
     """
 
-    attributes = dict(
-        name=None,  # TAG_BLACK or TAG_WHITE.
-        event=None,  # TAG_EVENT.
-        eventdate=None,  # TAG_EVENTDATE.
-        section=None,  # TAG_SECTION.
-        stage=None,  # TAG_STAGE.
-        team=None,  # TAG_BLACKTEAM or TAG_WHITETEAM.
-        fideid=None,  # TAG_BLACKFIDEID or TAG_WHITEFIDEID.
-    )
+    attributes = {
+        "name": None,  # TAG_BLACK or TAG_WHITE.
+        "event": None,  # TAG_EVENT.
+        "eventdate": None,  # TAG_EVENTDATE.
+        "section": None,  # TAG_SECTION.
+        "stage": None,  # TAG_STAGE.
+        "team": None,  # TAG_BLACKTEAM or TAG_WHITETEAM.
+        "fideid": None,  # TAG_BLACKFIDEID or TAG_WHITEFIDEID.
+    }
     _attribute_order = (
         "name",
         "event",
@@ -867,10 +867,7 @@ class _PlayerDBvalue(_PlayerValue):
     suitable pack() method.
     """
 
-    attributes = dict(
-        alias=None,
-        identity=None,
-    )
+    attributes = {"alias": None, "identity": None}
     attributes.update(_PlayerValue.attributes)
     _attribute_order = _PlayerValue._attribute_order + (
         "alias",
@@ -1177,15 +1174,15 @@ class SelectorDBkey(KeyData):
 class SelectorDBvalue(ValueList):
     """Game Selector data."""
 
-    attributes = dict(
-        name=None,
-        from_date=None,
-        to_date=None,
-        person_identity=None,
-        event_identities=None,
-        time_control_identity=None,
-        mode_identity=None,
-    )
+    attributes = {
+        "name": None,
+        "from_date": None,
+        "to_date": None,
+        "person_identity": None,
+        "event_identities": None,
+        "time_control_identity": None,
+        "mode_identity": None,
+    }
     _attribute_order = (
         "person_identity",
         "name",
@@ -1258,14 +1255,14 @@ class EventDBkey(KeyData):
 class EventDBvalue(ValueList):
     """Event data."""
 
-    attributes = dict(
-        event=None,  # TAG_EVENT.
-        eventdate=None,  # TAG_EVENTDATE.
-        section=None,  # TAG_SECTION.
-        stage=None,  # TAG_STAGE.
-        alias=None,
-        identity=None,
-    )
+    attributes = {
+        "event": None,  # TAG_EVENT.
+        "eventdate": None,  # TAG_EVENTDATE.
+        "section": None,  # TAG_SECTION.
+        "stage": None,  # TAG_STAGE.
+        "alias": None,
+        "identity": None,
+    }
     _attribute_order = (
         "event",
         "eventdate",
@@ -1545,16 +1542,12 @@ class TimeControlDBkey(KeyData):
 class TimeControlDBvalue(ValueList):
     """Time control data."""
 
-    attributes = dict(
-        timecontrol=None,  # TAG_TIMECONTROL.
-        alias=None,
-        identity=None,
-    )
-    _attribute_order = (
-        "timecontrol",
-        "alias",
-        "identity",
-    )
+    attributes = {
+        "timecontrol": None,  # TAG_TIMECONTROL.
+        "alias": None,
+        "identity": None,
+    }
+    _attribute_order = ("timecontrol", "alias", "identity")
     assert set(_attribute_order) == set(attributes)
 
     def __init__(self):
@@ -1800,16 +1793,12 @@ class ModeDBkey(KeyData):
 class ModeDBvalue(ValueList):
     """Playing mode data."""
 
-    attributes = dict(
-        mode=None,  # TAG_MODE.
-        alias=None,
-        identity=None,
-    )
-    _attribute_order = (
-        "mode",
-        "alias",
-        "identity",
-    )
+    attributes = {
+        "mode": None,  # TAG_MODE.
+        "alias": None,
+        "identity": None,
+    }
+    _attribute_order = ("mode", "alias", "identity")
     assert set(_attribute_order) == set(attributes)
 
     def __init__(self):

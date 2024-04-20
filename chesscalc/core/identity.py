@@ -39,10 +39,7 @@ class _IdentityDBvalue(ValueList):
     suitable pack() method.
     """
 
-    attributes = dict(
-        code=None,
-        type_=None,
-    )
+    attributes = {"code": None, "type_": None}
     _attribute_order = ("type_", "code")
     assert set(_attribute_order) == set(attributes)
 
