@@ -61,8 +61,18 @@ class GameDBvalue(ValueList):
     The PGN file name and game number within file are recorded.
 
     All the PGN tag name and value pairs are recorded.  The tag names
-    of interest for game selection are: Result, Date, Round, TimeControl,
-    and Mode.
+    of interest for game selection are: Result, Date, TimeControl, Mode,
+    Termination, BlackType, and WhiteType.
+
+    Result and Date are in the Seven Tag Roster and games are rejected if
+    these are missing.
+
+    The others are usually absent but are critical to deciding if a game
+    should be included in a performance calculation.  They determine if a
+    game is standard, rapid, or blitz; 'over the board' or online, a
+    ratable result or a bye or default, human or computer players.  A copy
+    of these PGN tags is kept, along with the game value, for modification
+    as needed for calculation control.
 
     Other tag names are relevant for identifying the event and players
     of the white and black pieces.  These are listed in the PlayerDBvalue
@@ -70,11 +80,12 @@ class GameDBvalue(ValueList):
     """
 
     attributes = {
-        "reference": None,  # dict of PGN file name and game number within file.
+        "reference": None,  # dict of PGN file name and game number in file.
         "headers": None,  # dict of PGN tag name and value pairs for game.
+        "ratingtype": None,  # dict of classifiers for rating eligibility.
         # "status": None,  # set of import actions not yet done.
     }
-    _attribute_order = ("headers", "reference")  # , "status")
+    _attribute_order = ("headers", "reference", "ratingtype")  # , "status")
     assert set(_attribute_order) == set(attributes)
 
     def pack(self):
@@ -580,6 +591,9 @@ class GameDBImporter(GameDBrecord):
                     number_games.close()
                 seen_number += 1
                 self.value.headers = collected_game.pgn_tags
+                self.value.ratingtype = {}
+                # Should games be discarded for following reason if rating
+                # type is set up and adjustable?
                 message = self._is_game_not_ratable_between_two_humans()
                 if message:
                     if reporter is not None:

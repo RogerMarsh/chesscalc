@@ -78,6 +78,9 @@ GAME_EVENT_FIELD_DEF = "gameevent"
 GAME_STATUS_FIELD_DEF = "gamestatus"
 GAME_PERSON_FIELD_DEF = "gameperson"
 GAME_NAME_FIELD_DEF = "gamename"
+GAME_TERMINATION_FIELD_DEF = "gametermination"
+GAME_BLACKTYPE_FIELD_DEF = "gameblacktype"
+GAME_WHITETYPE_FIELD_DEF = "gamewhitetype"
 
 # player file fields.
 PLAYER_FIELD_DEF = PLAYER_FILE_DEF
@@ -151,6 +154,9 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         GAME_STATUS_FIELD_DEF: None,
                         GAME_PERSON_FIELD_DEF: None,
                         GAME_NAME_FIELD_DEF: None,
+                        GAME_TERMINATION_FIELD_DEF: None,
+                        GAME_BLACKTYPE_FIELD_DEF: None,
+                        GAME_WHITETYPE_FIELD_DEF: None,
                     },
                     FIELDS: {
                         fld(GAME_FIELD_DEF): None,
@@ -167,6 +173,12 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         fld(GAME_STATUS_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_PERSON_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_NAME_FIELD_DEF): {INV: True, ORD: True},
+                        fld(GAME_TERMINATION_FIELD_DEF): {
+                            INV: True,
+                            ORD: True,
+                        },
+                        fld(GAME_BLACKTYPE_FIELD_DEF): {INV: True, ORD: True},
+                        fld(GAME_WHITETYPE_FIELD_DEF): {INV: True, ORD: True},
                     },
                 },
                 PLAYER_FILE_DEF: {
