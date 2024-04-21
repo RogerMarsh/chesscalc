@@ -31,6 +31,8 @@ from . import persons
 from . import events
 from . import timecontrols
 from . import modes
+from . import terminations
+from . import playertypes
 from . import selectors
 from . import rule
 from . import ruleedit
@@ -66,8 +68,8 @@ _HELP_TEXT = "".join(
         "performance calculations are added to the 'Events', 'Time ",
         "controls', and 'Modes' tabs.\n\n",
         "The available performance calculation rules are listed on the ",
-        "'Calculations' tab.  New rules are added by the 'Selectors | "
-        "New Rule' action: a blank 'New Rule' tab is shown by default, ",
+        "'Queries' tab.  New rules are added by the 'Selectors | New Rule' ",
+        "action: a blank 'New Rule' tab is shown by default, ",
         "but values can be set by selecting and bookmarking entries ",
         "on the 'Known players', 'Events', 'Time controls', and ",
         "'Mode' tabs.\n\n\n",
@@ -147,6 +149,8 @@ class Calculator(Bindings):
         self._events_tab = None
         self._time_limits_tab = None
         self._modes_tab = None
+        self._terminations_tab = None
+        self._player_types_tab = None
         self._calculations_tab = None
         self._rule_tabs = {}
         self._report_tabs = {}
@@ -156,6 +160,8 @@ class Calculator(Bindings):
         self._events = None
         self._time_controls = None
         self._modes = None
+        self._terminations = None
+        self._player_types = None
         self._selectors = None
         self.widget = tkinter.Tk()
         self._lock = ""
@@ -359,9 +365,27 @@ class Calculator(Bindings):
         self._modes_tab.grid_columnconfigure(0, weight=1)
         self._modes = modes.Modes(self._modes_tab, self.database)
 
-        # Seventh tab: will be a list of performance calculation queries.
+        # Seventh tab: will be a list of game termination reasons.
+        self._terminations_tab = tkinter.ttk.Frame(master=notebook)
+        notebook.add(self._terminations_tab, text="Terminations", underline=4)
+        self._terminations_tab.grid_rowconfigure(0, weight=1)
+        self._terminations_tab.grid_columnconfigure(0, weight=1)
+        self._terminations = terminations.Terminations(
+            self._terminations_tab, self.database
+        )
+
+        # Eighth tab: will be a list of player types.
+        self._player_types_tab = tkinter.ttk.Frame(master=notebook)
+        notebook.add(self._player_types_tab, text="Player types", underline=3)
+        self._player_types_tab.grid_rowconfigure(0, weight=1)
+        self._player_types_tab.grid_columnconfigure(0, weight=1)
+        self._player_types = playertypes.PlayerTypes(
+            self._player_types_tab, self.database
+        )
+
+        # Ninth tab: will be a list of performance calculation queries.
         self._calculations_tab = tkinter.ttk.Frame(master=notebook)
-        notebook.add(self._calculations_tab, text="Calculations", underline=0)
+        notebook.add(self._calculations_tab, text="Queries", underline=0)
         self._calculations_tab.grid_rowconfigure(0, weight=1)
         self._calculations_tab.grid_columnconfigure(0, weight=1)
         self._selectors = selectors.Selectors(
@@ -1081,6 +1105,12 @@ class Calculator(Bindings):
         identity.create_event_identity_record_if_not_exists(self.database)
         identity.create_time_limit_identity_record_if_not_exists(self.database)
         identity.create_playing_mode_identity_record_if_not_exists(
+            self.database
+        )
+        identity.create_termination_identity_record_if_not_exists(
+            self.database
+        )
+        identity.create_player_type_identity_record_if_not_exists(
             self.database
         )
         self.database_folder = database_folder

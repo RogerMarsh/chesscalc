@@ -493,6 +493,132 @@ def do_modes_deferred_update(
         reporter.append_text_only("")
 
 
+def terminations_du_copy(
+    cdb,
+    file=None,
+    reporter=None,
+    quit_event=None,
+    increases=None,
+):
+    """Import games from files in pgn_directory into open database cdb."""
+    importer = performancerecord.TerminationDBImporter()
+    for key in cdb.table.keys():
+        if key == file:
+            if increases is None:
+                counts = [0, 0]
+            else:
+                counts = [increases[0], increases[1]]
+            cdb.increase_database_record_capacity(files={key: counts})
+            _du_report_increases(reporter, key, counts)
+            break
+    else:
+        if reporter is not None:
+            reporter.append_text_only("")
+            reporter.append_text(
+                repr(file).join(
+                    ("Unable to copy to '", "': not found in database.")
+                )
+            )
+            reporter.append_text_only("")
+        return
+    # cdb.set_defer_update()
+    cdb.start_transaction()
+    try:
+        if not importer.copy_termination_names_from_games(
+            cdb,
+            reporter=reporter,
+            quit_event=quit_event,
+        ):
+            cdb.backout()
+            return
+        if reporter is not None:
+            reporter.append_text("Finishing copy: please wait.")
+            reporter.append_text_only("")
+        # cdb.do_final_segment_deferred_updates()
+    except Exception as exc:
+        _report_exception(cdb, reporter, exc)
+        raise
+    # cdb.unset_defer_update()
+    cdb.commit()
+
+
+def do_terminations_deferred_update(
+    cdb, pgn_directory, *args, file=None, **kwargs
+):
+    """Open database, delegate to terminations_du_copy, and close database.
+
+    Argument pgn_directory is supplied but not used in the events_du_copy()
+    call.
+
+    """
+    cdb.open_database()
+    terminations_du_copy(cdb, *args, file=file, **kwargs)
+    cdb.close_database()
+
+
+def player_types_du_copy(
+    cdb,
+    file=None,
+    reporter=None,
+    quit_event=None,
+    increases=None,
+):
+    """Import games from files in pgn_directory into open database cdb."""
+    importer = performancerecord.PlayerTypeDBImporter()
+    for key in cdb.table.keys():
+        if key == file:
+            if increases is None:
+                counts = [0, 0]
+            else:
+                counts = [increases[0], increases[1]]
+            cdb.increase_database_record_capacity(files={key: counts})
+            _du_report_increases(reporter, key, counts)
+            break
+    else:
+        if reporter is not None:
+            reporter.append_text_only("")
+            reporter.append_text(
+                repr(file).join(
+                    ("Unable to copy to '", "': not found in database.")
+                )
+            )
+            reporter.append_text_only("")
+        return
+    # cdb.set_defer_update()
+    cdb.start_transaction()
+    try:
+        if not importer.copy_player_type_names_from_games(
+            cdb,
+            reporter=reporter,
+            quit_event=quit_event,
+        ):
+            cdb.backout()
+            return
+        if reporter is not None:
+            reporter.append_text("Finishing copy: please wait.")
+            reporter.append_text_only("")
+        # cdb.do_final_segment_deferred_updates()
+    except Exception as exc:
+        _report_exception(cdb, reporter, exc)
+        raise
+    # cdb.unset_defer_update()
+    cdb.commit()
+
+
+def do_player_types_deferred_update(
+    cdb, pgn_directory, *args, file=None, **kwargs
+):
+    """Open database, delegate to player_types_du_copy, and close database.
+
+    Argument pgn_directory is supplied but not used in the events_du_copy()
+    call.
+
+    """
+    cdb.open_database()
+    player_types_du_copy(cdb, *args, file=file, **kwargs)
+    cdb.close_database()
+
+
 def _du_report_increases(reporter, file, size_increases):
     """Report size increases for file if any and there is a reporter.
 

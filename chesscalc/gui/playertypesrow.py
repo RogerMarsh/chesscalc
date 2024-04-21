@@ -1,19 +1,18 @@
-# modesrow.py
-# Copyright 2023 Roger Marsh
+# playertypesrow.py
+# Copyright 2024 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""Create widgets that display playing modes of games from PGN files."""
+"""Create widgets that display player types of games from PGN files."""
 
 import tkinter
 
 from solentware_grid.gui import datarow
 
 from ..core import performancerecord
-from ..core import constants
 
 
-class ModesRow(performancerecord.ModeDBrecord, datarow.DataRow):
-    """Display a playing mode record detail in playing mode name order."""
+class PlayerTypesRow(performancerecord.PlayerTypeDBrecord, datarow.DataRow):
+    """Display a player type record detail in player type name order."""
 
     header_specification = [
         {
@@ -24,14 +23,14 @@ class ModesRow(performancerecord.ModeDBrecord, datarow.DataRow):
             datarow.ROW: 0,
         }
         for column, text, uniform in (
-            (0, constants.TAG_MODE, "u0"),
+            (0, "Player type", "u0"),
             (4, "Alias", "u1"),
             (5, "Identity", "u2"),
         )
     ]
 
     def __init__(self, database=None):
-        """Extend, define the data displayed from the playing Mode record."""
+        """Extend, define the data displayed from the player type record."""
         super().__init__()
         self.set_database(database)
         self.row_specification = [
@@ -54,13 +53,13 @@ class ModesRow(performancerecord.ModeDBrecord, datarow.DataRow):
     def grid_row(self, **kargs):
         """Return tuple of instructions to create row.
 
-        Create textitems argument for ModesRow instance.
+        Create textitems argument for PlayerTypesRow instance.
 
         """
         value = self.value
         return super().grid_row(
             textitems=(
-                value.mode if value.mode is not None else "",
+                value.playertype if value.playertype is not None else "",
                 value.alias if value.alias is not None else "",
                 value.identity if value.identity is not None else "",
             ),

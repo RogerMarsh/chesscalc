@@ -27,6 +27,14 @@ class NoModeIdentity(Exception):
     """Raise if unable to allocate playing mode identity code."""
 
 
+class NoTerminationIdentity(Exception):
+    """Raise if unable to allocate termination reason identity code."""
+
+
+class NoPlayerTypeIdentity(Exception):
+    """Raise if unable to allocate player type identity code."""
+
+
 class IdentityDBkey(KeyData):
     """Primary key of identity code."""
 
@@ -157,6 +165,20 @@ def create_playing_mode_identity_record_if_not_exists(database):
     )
 
 
+def create_termination_identity_record_if_not_exists(database):
+    """Delegate to _create_identity_record_if_not_exists for terminations."""
+    _create_identity_record_if_not_exists(
+        database, constants.TERMINATION_IDENTITY_KEY
+    )
+
+
+def create_player_type_identity_record_if_not_exists(database):
+    """Delegate to _create_identity_record_if_not_exists for player types."""
+    _create_identity_record_if_not_exists(
+        database, constants.PLAYERTYPE_IDENTITY_KEY
+    )
+
+
 def _get_next_identity_value_after_allocation(database, keytype, exception):
     """Allocate and return next identity code for keytype.
 
@@ -238,4 +260,26 @@ def get_next_mode_identity_value_after_allocation(database):
     """
     return _get_next_identity_value_after_allocation(
         database, constants.MODE_IDENTITY_KEY, NoModeIdentity
+    )
+
+
+def get_next_playertype_identity_value_after_allocation(database):
+    """Allocate and return next time control identity code.
+
+    Raise NoPlayerTypeIdentity if next identity cannot be allocated.
+
+    """
+    return _get_next_identity_value_after_allocation(
+        database, constants.PLAYERTYPE_IDENTITY_KEY, NoPlayerTypeIdentity
+    )
+
+
+def get_next_termination_identity_value_after_allocation(database):
+    """Allocate and return next time control identity code.
+
+    Raise NoTerminationIdentity if next identity cannot be allocated.
+
+    """
+    return _get_next_identity_value_after_allocation(
+        database, constants.TERMINATION_IDENTITY_KEY, NoTerminationIdentity
     )

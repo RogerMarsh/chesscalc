@@ -1,28 +1,28 @@
-# modesgrid.py
-# Copyright 2023 Roger Marsh
+# terminationsgrid.py
+# Copyright 2024 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""Chess performance database datagrid class for modes."""
+"""Chess performance database datagrid class for termination reasons."""
 
 from solentware_grid.core import dataclient
 
-from . import modesrow
+from . import terminationsrow
 from . import gridlocator
 from ..core import filespec
 
 
-class ModesGrid(gridlocator.GridLocator):
-    """Grid for list of playing modes of games from PGN files."""
+class TerminationsGrid(gridlocator.GridLocator):
+    """Grid for list of termination reasons of games from PGN files."""
 
     def __init__(self, database=None, **kwargs):
         """Extend and note sibling grids."""
         super().__init__(**kwargs)
-        self.make_header(modesrow.ModesRow.header_specification)
+        self.make_header(terminationsrow.TerminationsRow.header_specification)
         source = dataclient.DataSource(
             database,
-            filespec.MODE_FILE_DEF,
-            filespec.MODE_ALIAS_FIELD_DEF,
-            modesrow.ModesRow,
+            filespec.TERMINATION_FILE_DEF,
+            filespec.TERMINATION_ALIAS_FIELD_DEF,
+            terminationsrow.TerminationsRow,
         )
         self.set_data_source(source)
 

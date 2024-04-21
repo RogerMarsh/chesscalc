@@ -66,6 +66,20 @@ def modes_su(dbpath, *args, **kwargs):
     )
 
 
+def terminations_su(dbpath, *args, **kwargs):
+    """Open database, copy termination names from games and close database."""
+    alldu.do_terminations_deferred_update(
+        DatabaseSU(dbpath, allowcreate=True), *args, **kwargs
+    )
+
+
+def player_types_su(dbpath, *args, **kwargs):
+    """Open database, copy player type names from games and close database."""
+    alldu.do_player_types_deferred_update(
+        DatabaseSU(dbpath, allowcreate=True), *args, **kwargs
+    )
+
+
 class Database(alldu.Alldu, dbdu.Dbdu, bsddb3du_database.Database):
     """Provide custom deferred update for chess performance database."""
 

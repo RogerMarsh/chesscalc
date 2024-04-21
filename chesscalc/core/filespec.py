@@ -65,6 +65,8 @@ SELECTION_FILE_DEF = "selection"
 EVENT_FILE_DEF = "event"
 TIME_FILE_DEF = "time"
 MODE_FILE_DEF = "mode"
+TERMINATION_FILE_DEF = "termination"
+PLAYERTYPE_FILE_DEF = "playertype"
 
 # game file fields.
 GAME_FIELD_DEF = GAME_FILE_DEF
@@ -75,12 +77,10 @@ GAME_TIMECONTROL_FIELD_DEF = "gametimecontrol"
 GAME_MODE_FIELD_DEF = "gamemode"
 GAME_PLAYER_FIELD_DEF = "gameplayer"
 GAME_EVENT_FIELD_DEF = "gameevent"
-GAME_STATUS_FIELD_DEF = "gamestatus"
 GAME_PERSON_FIELD_DEF = "gameperson"
 GAME_NAME_FIELD_DEF = "gamename"
 GAME_TERMINATION_FIELD_DEF = "gametermination"
-GAME_BLACKTYPE_FIELD_DEF = "gameblacktype"
-GAME_WHITETYPE_FIELD_DEF = "gamewhitetype"
+GAME_PLAYERTYPE_FIELD_DEF = "gameplayertype"
 
 # player file fields.
 PLAYER_FIELD_DEF = PLAYER_FILE_DEF
@@ -115,6 +115,16 @@ TIME_ALIAS_FIELD_DEF = "timealias"
 MODE_FIELD_DEF = MODE_FILE_DEF
 MODE_IDENTITY_FIELD_DEF = "modeidentity"
 MODE_ALIAS_FIELD_DEF = "modealias"
+
+# termination (Default, Bye, ...) file fields.
+TERMINATION_FIELD_DEF = TERMINATION_FILE_DEF
+TERMINATION_IDENTITY_FIELD_DEF = "terminationidentity"
+TERMINATION_ALIAS_FIELD_DEF = "terminationalias"
+
+# playertype (human, computer, ...) file fields.
+PLAYERTYPE_FIELD_DEF = PLAYERTYPE_FILE_DEF
+PLAYERTYPE_IDENTITY_FIELD_DEF = "playertypeidentity"
+PLAYERTYPE_ALIAS_FIELD_DEF = "playertypealias"
 
 
 class FileSpec(solentware_base.core.filespec.FileSpec):
@@ -151,12 +161,10 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         GAME_MODE_FIELD_DEF: None,
                         GAME_PLAYER_FIELD_DEF: None,
                         GAME_EVENT_FIELD_DEF: None,
-                        GAME_STATUS_FIELD_DEF: None,
                         GAME_PERSON_FIELD_DEF: None,
                         GAME_NAME_FIELD_DEF: None,
                         GAME_TERMINATION_FIELD_DEF: None,
-                        GAME_BLACKTYPE_FIELD_DEF: None,
-                        GAME_WHITETYPE_FIELD_DEF: None,
+                        GAME_PLAYERTYPE_FIELD_DEF: None,
                     },
                     FIELDS: {
                         fld(GAME_FIELD_DEF): None,
@@ -170,15 +178,13 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         fld(GAME_MODE_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_PLAYER_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_EVENT_FIELD_DEF): {INV: True, ORD: True},
-                        fld(GAME_STATUS_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_PERSON_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_NAME_FIELD_DEF): {INV: True, ORD: True},
                         fld(GAME_TERMINATION_FIELD_DEF): {
                             INV: True,
                             ORD: True,
                         },
-                        fld(GAME_BLACKTYPE_FIELD_DEF): {INV: True, ORD: True},
-                        fld(GAME_WHITETYPE_FIELD_DEF): {INV: True, ORD: True},
+                        fld(GAME_PLAYERTYPE_FIELD_DEF): {INV: True, ORD: True},
                     },
                 },
                 PLAYER_FILE_DEF: {
@@ -323,6 +329,62 @@ class FileSpec(solentware_base.core.filespec.FileSpec):
                         fld(MODE_FIELD_DEF): None,
                         fld(MODE_IDENTITY_FIELD_DEF): {INV: True, ORD: True},
                         fld(MODE_ALIAS_FIELD_DEF): {INV: True, ORD: True},
+                    },
+                },
+                TERMINATION_FILE_DEF: {
+                    DDNAME: "TERMINTE",
+                    FILE: dptfn(TERMINATION_FILE_DEF),
+                    FILEDESC: {
+                        BRECPPG: 80,
+                        FILEORG: RRN,
+                    },
+                    BTOD_FACTOR: 2.0,
+                    BTOD_CONSTANT: 50,
+                    DEFAULT_RECORDS: 100,
+                    DEFAULT_INCREASE_FACTOR: 0.01,
+                    PRIMARY: fld(TERMINATION_FIELD_DEF),
+                    SECONDARY: {
+                        TERMINATION_IDENTITY_FIELD_DEF: None,
+                        TERMINATION_ALIAS_FIELD_DEF: None,
+                    },
+                    FIELDS: {
+                        fld(TERMINATION_FIELD_DEF): None,
+                        fld(TERMINATION_IDENTITY_FIELD_DEF): {
+                            INV: True,
+                            ORD: True,
+                        },
+                        fld(TERMINATION_ALIAS_FIELD_DEF): {
+                            INV: True,
+                            ORD: True,
+                        },
+                    },
+                },
+                PLAYERTYPE_FILE_DEF: {
+                    DDNAME: "PLAYTYPE",
+                    FILE: dptfn(PLAYERTYPE_FILE_DEF),
+                    FILEDESC: {
+                        BRECPPG: 80,
+                        FILEORG: RRN,
+                    },
+                    BTOD_FACTOR: 2.0,
+                    BTOD_CONSTANT: 50,
+                    DEFAULT_RECORDS: 100,
+                    DEFAULT_INCREASE_FACTOR: 0.01,
+                    PRIMARY: fld(PLAYERTYPE_FIELD_DEF),
+                    SECONDARY: {
+                        PLAYERTYPE_IDENTITY_FIELD_DEF: None,
+                        PLAYERTYPE_ALIAS_FIELD_DEF: None,
+                    },
+                    FIELDS: {
+                        fld(PLAYERTYPE_FIELD_DEF): None,
+                        fld(PLAYERTYPE_IDENTITY_FIELD_DEF): {
+                            INV: True,
+                            ORD: True,
+                        },
+                        fld(PLAYERTYPE_ALIAS_FIELD_DEF): {
+                            INV: True,
+                            ORD: True,
+                        },
                     },
                 },
             }

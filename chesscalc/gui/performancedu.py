@@ -669,6 +669,54 @@ class DeferredUpdate(Bindings):
         quit_thread.start()
 
     def _deferred_update_copy_time_controls_join(self):
+        """Delegate to _deferred_update_stage_join then copy terminations."""
+        self._deferred_update_stage_join()
+
+        # Populate player file with mode names from imported games.
+        self._allow_task = False
+        self._task_name = "copy terminations"
+        self.quit_event.clear()
+        self.du_task = DeferredUpdateProcess(
+            self.database,
+            self.deferred_update_module.terminations_su,
+            self.report_queue,
+            self.quit_event,
+            self.increases,
+            self.home_directory,
+            self.pgn_directory,
+            filespec.TERMINATION_FILE_DEF,
+        )
+        self.du_task.process.start()
+        quit_thread = multiprocessing.dummy.DummyProcess(
+            target=self._deferred_update_copy_terminations_join
+        )
+        quit_thread.start()
+
+    def _deferred_update_copy_terminations_join(self):
+        """Delegate to _deferred_update_stage_join then copy player types."""
+        self._deferred_update_stage_join()
+
+        # Populate player file with mode names from imported games.
+        self._allow_task = False
+        self._task_name = "copy player types"
+        self.quit_event.clear()
+        self.du_task = DeferredUpdateProcess(
+            self.database,
+            self.deferred_update_module.player_types_su,
+            self.report_queue,
+            self.quit_event,
+            self.increases,
+            self.home_directory,
+            self.pgn_directory,
+            filespec.PLAYERTYPE_FILE_DEF,
+        )
+        self.du_task.process.start()
+        quit_thread = multiprocessing.dummy.DummyProcess(
+            target=self._deferred_update_copy_player_types_join
+        )
+        quit_thread.start()
+
+    def _deferred_update_copy_player_types_join(self):
         """Delegate to _deferred_update_stage_join then copy modes."""
         self._deferred_update_stage_join()
 

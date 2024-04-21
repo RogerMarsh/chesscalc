@@ -17,32 +17,17 @@ from . import filespec
 from . import constants
 from . import identity
 
-# The sets of values reserved for processing status in GAME_STATUS_FIELD_DEF
-# index.
-_FILE_NAMES_TO_BE_POPULATED = (
-    filespec.PLAYER_FILE_DEF,
-    filespec.EVENT_FILE_DEF,
-    filespec.TIME_FILE_DEF,
-    filespec.MODE_FILE_DEF,
-)
-_FIELD_NAMES_TO_BE_POPULATED = (
-    filespec.GAME_PGNFILE_FIELD_DEF,
-    filespec.GAME_NUMBER_FIELD_DEF,
-    filespec.GAME_DATE_FIELD_DEF,
-    filespec.GAME_TIMECONTROL_FIELD_DEF,
-    filespec.GAME_MODE_FIELD_DEF,
-    filespec.GAME_PLAYER_FIELD_DEF,
-    filespec.GAME_EVENT_FIELD_DEF,
-    filespec.GAME_STATUS_FIELD_DEF,
-)
-_NAMES_NOT_ALLOWED_IN_STATUS = set(_FILE_NAMES_TO_BE_POPULATED).union(
-    _FIELD_NAMES_TO_BE_POPULATED
-)
-_FILE_AND_FIELD_NAMES_TO_BE_POPULATED = tuple(_NAMES_NOT_ALLOWED_IN_STATUS)
 _NO_OPPONENT = frozenset(
     (constants.BYE_TERMINATION, constants.DEFAULT_TERMINATION)
 )
 _NO_PLAYER = frozenset((constants.UNKNOWN_VALUE, constants.NO_VALUE))
+_RATINGTYPE = {
+    constants.TAG_TIMECONTROL: filespec.GAME_TIMECONTROL_FIELD_DEF,
+    constants.TAG_MODE: filespec.GAME_MODE_FIELD_DEF,
+    constants.TAG_TERMINATION: filespec.GAME_TERMINATION_FIELD_DEF,
+    constants.TAG_WHITETYPE: filespec.GAME_PLAYERTYPE_FIELD_DEF,
+    constants.TAG_BLACKTYPE: filespec.GAME_PLAYERTYPE_FIELD_DEF,
+}
 
 
 class GameDBvalueError(Exception):
@@ -83,9 +68,8 @@ class GameDBvalue(ValueList):
         "reference": None,  # dict of PGN file name and game number in file.
         "headers": None,  # dict of PGN tag name and value pairs for game.
         "ratingtype": None,  # dict of classifiers for rating eligibility.
-        # "status": None,  # set of import actions not yet done.
     }
-    _attribute_order = ("headers", "reference", "ratingtype")  # , "status")
+    _attribute_order = ("headers", "reference", "ratingtype")
     assert set(_attribute_order) == set(attributes)
 
     def pack(self):
@@ -93,20 +77,6 @@ class GameDBvalue(ValueList):
         val = super().pack()
         self.pack_detail(val[1])
         return val
-
-    def verify_status_values(self):
-        """Raise GameDBvalueError if certain values supplied for status.
-
-        These values are the names of the Player, Event, Time, and Mode,
-        files.
-
-        """
-        # if self.status and self.status.intersection(
-        #    _NAMES_NOT_ALLOWED_IN_STATUS
-        # ):
-        #    raise GameDBvalueError(
-        #        "One or more file names is in 'status' attribute"
-        #    )
 
     def pack_detail(self, index):
         """Fill index with detail from value.
@@ -117,7 +87,6 @@ class GameDBvalue(ValueList):
         these references.
 
         """
-        # self.verify_status_values()
         for attr, defn in (
             (constants.FILE, filespec.GAME_PGNFILE_FIELD_DEF),
             (constants.GAME, filespec.GAME_NUMBER_FIELD_DEF),
@@ -129,15 +98,20 @@ class GameDBvalue(ValueList):
                 index[defn] = []
         headers = self.headers
         for attr, defn in (
-            (constants.TAG_DATE, filespec.GAME_DATE_FIELD_DEF),
             (constants.TAG_TIMECONTROL, filespec.GAME_TIMECONTROL_FIELD_DEF),
             (constants.TAG_MODE, filespec.GAME_MODE_FIELD_DEF),
+            (constants.TAG_TERMINATION, filespec.GAME_TERMINATION_FIELD_DEF),
         ):
             data = headers.get(attr)
             if data is not None:
                 index[defn] = [data]
             else:
                 index[defn] = []
+        index[filespec.GAME_PLAYERTYPE_FIELD_DEF] = []
+        for attr in (constants.TAG_BLACKTYPE, constants.TAG_WHITETYPE):
+            data = headers.get(attr)
+            if data is not None:
+                index[filespec.GAME_PLAYERTYPE_FIELD_DEF].append(data)
         index[filespec.GAME_PLAYER_FIELD_DEF] = [
             self.black_key(),
             self.white_key(),
@@ -155,9 +129,7 @@ class GameDBvalue(ValueList):
         index[filespec.GAME_NAME_FIELD_DEF] = [
             headers.get(constants.TAG_EVENT)
         ]
-        # index[filespec.GAME_STATUS_FIELD_DEF] = list(
-        #    _FILE_NAMES_TO_BE_POPULATED
-        # )
+        index[filespec.GAME_DATE_FIELD_DEF] = [headers.get(constants.TAG_DATE)]
 
     def black_key(self):
         """Return the black key for the gameplayer index."""
@@ -234,25 +206,6 @@ class GameDBvalue(ValueList):
             if sdict[item] != odict[item]:
                 return True
         return False
-
-
-class GameDBImportvalue(GameDBvalue):
-    """Customise GameDBvalue to store stages to be done.
-
-    All import stages are indexed.
-    """
-
-    def pack_detail(self, index):
-        """Override, fill index with detail from value.
-
-        Game record is indexed by game identifier (PGN file and number
-        within file) and import status only.
-
-        """
-        # self.verify_status_values()
-        index[filespec.GAME_STATUS_FIELD_DEF] = list(
-            _FILE_AND_FIELD_NAMES_TO_BE_POPULATED
-        )
 
 
 class GameDBrecord(Record):
@@ -2042,5 +1995,511 @@ class ModeDBImporter(ModeDBrecord):
         if reporter is not None:
             reporter.append_text(
                 str(count) + " mode names to be copied from games."
+            )
+        return count
+
+
+class TerminationDBkey(KeyData):
+    """Primary key of playing mode."""
+
+
+class TerminationDBvalue(ValueList):
+    """Playing mode data."""
+
+    attributes = {
+        "termination": None,  # TAG_TERMINATION.
+        "alias": None,
+        "identity": None,
+    }
+    _attribute_order = ("termination", "alias", "identity")
+    assert set(_attribute_order) == set(attributes)
+
+    def __init__(self):
+        """Customise ValueList for playing termination data."""
+        super().__init__()
+        self.termination = None
+        self.alias = None
+        self.identity = None
+
+    def empty(self):
+        """(Re)Initialize value attribute."""
+        self.termination = None
+        self.alias = None
+        self.identity = None
+
+    def alias_index_key(self):
+        """Return the key for the terminationalias index."""
+        return repr(self.termination)
+
+    def load_alias_index_key(self, value):
+        """Bind attributes for the terminationalias index to items in value."""
+        (self.termination,) = literal_eval(value)
+
+    def pack(self):
+        """Delegate to generate termination data then add index data.
+
+        The terminationalias index will have the termination name and other
+        descriptive detail as it's value, from the alias_index_key() method.
+
+        The terminationidentity index will have either the identity number
+        given when the record was created (identity attribute), or the
+        identity number of the playing mode record which this record currently
+        aliases (alias attribute).
+
+        """
+        val = super().pack()
+        index = val[1]
+        index[filespec.TERMINATION_ALIAS_FIELD_DEF] = [self.alias_index_key()]
+        index[filespec.TERMINATION_IDENTITY_FIELD_DEF] = [self.alias]
+        return val
+
+
+class TerminationDBrecord(Record):
+    """Customise Record with TerminationDBkey and TerminationDBvalue.
+
+    Arguments keyclass and keyvalue enable overrides.
+    """
+
+    def __init__(
+        self, keyclass=TerminationDBkey, valueclass=TerminationDBvalue
+    ):
+        """Delegate with keyclass and valueclass arguments."""
+        super().__init__(keyclass, valueclass)
+
+    def get_keys(self, datasource=None, partial=None):
+        """Override, return [(key, value)] for datasource or []."""
+        try:
+            if partial is not None:
+                return []
+            srkey = datasource.dbhome.encode_record_number(self.key.pack())
+            if datasource.primary:
+                return [(srkey, self.srvalue)]
+            dbname = datasource.dbname
+            if dbname == filespec.TERMINATION_ALIAS_FIELD_DEF:
+                return [(self.value.alias_index_key(), srkey)]
+            if dbname == filespec.TERMINATION_IDENTITY_FIELD_DEF:
+                return [(self.value.alias, srkey)]
+            return []
+        except:  # pycodestyle E722: pylint is happy with following 'raise'.
+            if datasource is None:
+                return []
+            raise
+
+
+class TerminationDBImporter(TerminationDBrecord):
+    """Extend with methods to import multiple game headers from PGN files."""
+
+    def copy_termination_names_from_games(
+        self,
+        database,
+        reporter=None,
+        quit_event=None,
+        **kwargs,
+    ):
+        """Return True if copy termination names from games file succeeds.
+
+        quit_event allows the import to be interrupted by passing an Event
+        instance which get queried after processing each game.
+        kwargs soaks up arguments not used in this method.
+
+        """
+        del kwargs
+        if reporter is not None:
+            reporter.append_text("Copy termination names from games.")
+        cursor = database.database_cursor(
+            filespec.GAME_FILE_DEF, filespec.GAME_TERMINATION_FIELD_DEF
+        )
+        value = self.value
+        db_segment_size = SegmentSize.db_segment_size
+        game_count = 0
+        onfile_count = 0
+        copy_count = 0
+        prev_record = None
+        while True:
+            record = cursor.next()
+            if record is None:
+                break
+            this_record = record[0]
+            if prev_record == this_record:
+                continue
+            game_count += 1
+            prev_record = this_record
+            value.termination = this_record
+            alias = value.alias_index_key()
+            if quit_event and quit_event.is_set():
+                if reporter is not None:
+                    reporter.append_text_only("")
+                    reporter.append_text("Copy stopped.")
+                return False
+            if database.recordlist_key(
+                filespec.TERMINATION_FILE_DEF,
+                filespec.TERMINATION_ALIAS_FIELD_DEF,
+                key=database.encode_record_selector(alias),
+            ).count_records():
+                onfile_count += 1
+                continue
+            copy_count += 1
+            pid = (
+                identity.get_next_termination_identity_value_after_allocation(
+                    database
+                )
+            )
+            value.alias = pid
+            value.identity = pid
+            self.key.recno = None
+            self.put_record(database, filespec.TERMINATION_FILE_DEF)
+            if int(pid) % db_segment_size == 0:
+                # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
+                # and lmdb too.
+                cursor.close()
+                database.commit()
+                database.deferred_update_housekeeping()
+                database.start_transaction()
+                cursor = database.database_cursor(
+                    filespec.GAME_FILE_DEF, filespec.GAME_TERMINATION_FIELD_DEF
+                )
+                cursor.setat(record)
+
+                if reporter is not None:
+                    reporter.append_text(
+                        "".join(
+                            (
+                                "Termination ",
+                                value.termination,
+                                " is record ",
+                                str(self.key.recno),
+                            )
+                        )
+                    )
+        if reporter is not None:
+            reporter.append_text_only("")
+            reporter.append_text(
+                "".join(
+                    (
+                        str(copy_count),
+                        " terminations added to database.",
+                    )
+                )
+            )
+            reporter.append_text_only(
+                "".join(
+                    (
+                        str(onfile_count),
+                        " terminations already on database.",
+                    )
+                )
+            )
+            reporter.append_text_only(
+                "".join(
+                    (
+                        str(game_count),
+                        " game references processed.",
+                    )
+                )
+            )
+            reporter.append_text_only("")
+        return True
+
+    def count_termination_names_to_be_copied_from_games(
+        self,
+        database,
+        reporter=None,
+        quit_event=None,
+        **kwargs,
+    ):
+        """Return count of termination names in games not in termination file.
+
+        quit_event allows the import to be interrupted by passing an Event
+        instance which get queried after processing each game.
+        kwargs soaks up arguments not used in this method.
+
+        """
+        del kwargs
+        if reporter is not None:
+            reporter.append_text(
+                "Count termination names to be copied from games."
+            )
+        cursor = database.database_cursor(
+            filespec.GAME_FILE_DEF, filespec.GAME_TERMINATION_FIELD_DEF
+        )
+        value = self.value
+        prev_record = None
+        count = 0
+        while True:
+            record = cursor.next()
+            if record is None:
+                break
+            this_record = literal_eval(record[0])
+            if prev_record == this_record:
+                continue
+            prev_record = this_record
+            (value.termination,) = this_record
+            alias = value.alias_index_key()
+            if quit_event and quit_event.is_set():
+                if reporter is not None:
+                    reporter.append_text_only("")
+                    reporter.append_text("Count stopped.")
+                return None
+            if database.recordlist_key(
+                filespec.TERMINATION_FILE_DEF,
+                filespec.TERMINATION_ALIAS_FIELD_DEF,
+                key=database.encode_record_selector(alias),
+            ).count_records():
+                continue
+            count += 1
+        if reporter is not None:
+            reporter.append_text(
+                str(count) + " termination names to be copied from games."
+            )
+        return count
+
+
+class PlayerTypeDBkey(KeyData):
+    """Primary key of playing mode."""
+
+
+class PlayerTypeDBvalue(ValueList):
+    """Player type data."""
+
+    attributes = {
+        "playertype": None,  # TAG_BLACKTYPE or TAG_WHITETYPE.
+        "alias": None,
+        "identity": None,
+    }
+    _attribute_order = ("playertype", "alias", "identity")
+    assert set(_attribute_order) == set(attributes)
+
+    def __init__(self):
+        """Customise ValueList for playing mode data."""
+        super().__init__()
+        self.playertype = None
+        self.alias = None
+        self.identity = None
+
+    def empty(self):
+        """(Re)Initialize value attribute."""
+        self.playertype = None
+        self.alias = None
+        self.identity = None
+
+    def alias_index_key(self):
+        """Return the key for the playertypealias index."""
+        return repr(self.playertype)
+
+    def load_alias_index_key(self, value):
+        """Bind attributes for the playertypealias index to items in value."""
+        (self.playertype,) = literal_eval(value)
+
+    def pack(self):
+        """Delegate to generate player type data then add index data.
+
+        The playertypealias index will have the playertype name and other
+        descriptive detail as it's value, from the alias_index_key() method.
+
+        The playertypeidentity index will have either the identity number given
+        when the record was created (identity attribute), or the identity
+        number of the player type record which this record currently
+        aliases (alias attribute).
+
+        """
+        val = super().pack()
+        index = val[1]
+        index[filespec.PLAYERTYPE_ALIAS_FIELD_DEF] = [self.alias_index_key()]
+        index[filespec.PLAYERTYPE_IDENTITY_FIELD_DEF] = [self.alias]
+        return val
+
+
+class PlayerTypeDBrecord(Record):
+    """Customise Record with PlayerTypeDBkey and PlayerTypeDBvalue.
+
+    Arguments keyclass and keyvalue enable overrides.
+    """
+
+    def __init__(self, keyclass=PlayerTypeDBkey, valueclass=PlayerTypeDBvalue):
+        """Delegate with keyclass and valueclass arguments."""
+        super().__init__(keyclass, valueclass)
+
+    def get_keys(self, datasource=None, partial=None):
+        """Override, return [(key, value)] for datasource or []."""
+        try:
+            if partial is not None:
+                return []
+            srkey = datasource.dbhome.encode_record_number(self.key.pack())
+            if datasource.primary:
+                return [(srkey, self.srvalue)]
+            dbname = datasource.dbname
+            if dbname == filespec.PLAYERTYPE_ALIAS_FIELD_DEF:
+                return [(self.value.alias_index_key(), srkey)]
+            if dbname == filespec.PLAYERTYPE_IDENTITY_FIELD_DEF:
+                return [(self.value.alias, srkey)]
+            return []
+        except:  # pycodestyle E722: pylint is happy with following 'raise'.
+            if datasource is None:
+                return []
+            raise
+
+
+class PlayerTypeDBImporter(PlayerTypeDBrecord):
+    """Extend with methods to import multiple game headers from PGN files."""
+
+    def copy_player_type_names_from_games(
+        self,
+        database,
+        reporter=None,
+        quit_event=None,
+        **kwargs,
+    ):
+        """Return True if copy playertype names from games file succeeds.
+
+        quit_event allows the import to be interrupted by passing an Event
+        instance which get queried after processing each game.
+        kwargs soaks up arguments not used in this method.
+
+        """
+        del kwargs
+        if reporter is not None:
+            reporter.append_text("Copy player type names from games.")
+        cursor = database.database_cursor(
+            filespec.GAME_FILE_DEF, filespec.GAME_PLAYERTYPE_FIELD_DEF
+        )
+        value = self.value
+        db_segment_size = SegmentSize.db_segment_size
+        game_count = 0
+        onfile_count = 0
+        copy_count = 0
+        prev_record = None
+        while True:
+            record = cursor.next()
+            if record is None:
+                break
+            this_record = record[0]
+            if prev_record == this_record:
+                continue
+            game_count += 1
+            prev_record = this_record
+            value.playertype = this_record
+            alias = value.alias_index_key()
+            if quit_event and quit_event.is_set():
+                if reporter is not None:
+                    reporter.append_text_only("")
+                    reporter.append_text("Copy stopped.")
+                return False
+            if database.recordlist_key(
+                filespec.PLAYERTYPE_FILE_DEF,
+                filespec.PLAYERTYPE_ALIAS_FIELD_DEF,
+                key=database.encode_record_selector(alias),
+            ).count_records():
+                onfile_count += 1
+                continue
+            copy_count += 1
+            pid = identity.get_next_playertype_identity_value_after_allocation(
+                database
+            )
+            value.alias = pid
+            value.identity = pid
+            self.key.recno = None
+            self.put_record(database, filespec.PLAYERTYPE_FILE_DEF)
+            if int(pid) % db_segment_size == 0:
+                # Need the cursor wrapping in berkeleydb, bsddb3, db_tkinter
+                # and lmdb too.
+                cursor.close()
+                database.commit()
+                database.deferred_update_housekeeping()
+                database.start_transaction()
+                cursor = database.database_cursor(
+                    filespec.GAME_FILE_DEF, filespec.GAME_PLAYERTYPE_FIELD_DEF
+                )
+                cursor.setat(record)
+
+                if reporter is not None:
+                    reporter.append_text(
+                        "".join(
+                            (
+                                "Player type ",
+                                value.playertype,
+                                " is record ",
+                                str(self.key.recno),
+                            )
+                        )
+                    )
+        if reporter is not None:
+            reporter.append_text_only("")
+            reporter.append_text(
+                "".join(
+                    (
+                        str(copy_count),
+                        " playertypes added to database.",
+                    )
+                )
+            )
+            reporter.append_text_only(
+                "".join(
+                    (
+                        str(onfile_count),
+                        " playertypes already on database.",
+                    )
+                )
+            )
+            reporter.append_text_only(
+                "".join(
+                    (
+                        str(game_count),
+                        " game references processed.",
+                    )
+                )
+            )
+            reporter.append_text_only("")
+        return True
+
+    def count_player_type_names_to_be_copied_from_games(
+        self,
+        database,
+        reporter=None,
+        quit_event=None,
+        **kwargs,
+    ):
+        """Return count playertype names in games but not playertype file.
+
+        quit_event allows the import to be interrupted by passing an Event
+        instance which get queried after processing each game.
+        kwargs soaks up arguments not used in this method.
+
+        """
+        del kwargs
+        if reporter is not None:
+            reporter.append_text(
+                "Count playertype names to be copied from games."
+            )
+        cursor = database.database_cursor(
+            filespec.GAME_FILE_DEF, filespec.GAME_PLAYERTYPE_FIELD_DEF
+        )
+        value = self.value
+        prev_record = None
+        count = 0
+        while True:
+            record = cursor.next()
+            if record is None:
+                break
+            this_record = literal_eval(record[0])
+            if prev_record == this_record:
+                continue
+            prev_record = this_record
+            (value.playertype,) = this_record
+            alias = value.alias_index_key()
+            if quit_event and quit_event.is_set():
+                if reporter is not None:
+                    reporter.append_text_only("")
+                    reporter.append_text("Count stopped.")
+                return None
+            if database.recordlist_key(
+                filespec.PLAYERTYPE_FILE_DEF,
+                filespec.PLAYERTYPE_ALIAS_FIELD_DEF,
+                key=database.encode_record_selector(alias),
+            ).count_records():
+                continue
+            count += 1
+        if reporter is not None:
+            reporter.append_text(
+                str(count) + " playertype names to be copied from games."
             )
         return count
