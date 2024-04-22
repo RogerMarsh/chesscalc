@@ -30,6 +30,8 @@ class RuleShow(rule.Rule):
         self._to_date.configure(state=tkinter.DISABLED)
         self._time_control_identity.configure(state=tkinter.DISABLED)
         self._mode_identity.configure(state=tkinter.DISABLED)
+        self._termination_identity.configure(state=tkinter.DISABLED)
+        self._player_type_identity.configure(state=tkinter.DISABLED)
         self._event_identities.configure(state=tkinter.DISABLED)
 
     def _enable_entry_widgets(self):
@@ -40,6 +42,8 @@ class RuleShow(rule.Rule):
         self._to_date.configure(state=tkinter.NORMAL)
         self._time_control_identity.configure(state=tkinter.NORMAL)
         self._mode_identity.configure(state=tkinter.NORMAL)
+        self._termination_identity.configure(state=tkinter.NORMAL)
+        self._player_type_identity.configure(state=tkinter.NORMAL)
         self._event_identities.configure(state=tkinter.NORMAL)
 
     def insert_rule(self, update_widget_and_join_loop):

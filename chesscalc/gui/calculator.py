@@ -196,6 +196,8 @@ class Calculator(Bindings):
         menubar.add_cascade(label="Other identities", menu=menu3, underline=0)
         menu31 = tkinter.Menu(menu3, tearoff=False)
         menu32 = tkinter.Menu(menu3, tearoff=False)
+        menu33 = tkinter.Menu(menu3, tearoff=False)
+        menu34 = tkinter.Menu(menu3, tearoff=False)
         menu4 = tkinter.Menu(menubar, tearoff=False)
         menubar.add_cascade(label="Selectors", menu=menu4, underline=0)
         menu5 = tkinter.Menu(menubar, tearoff=False)
@@ -274,6 +276,52 @@ class Calculator(Bindings):
             (menu32, EventSpec.menu_other_mode_split, self._mode_split),
             (menu32, EventSpec.menu_other_mode_change, self._mode_change),
             (menu32,) + _MENU_SEPARATOR,
+            (menu33,) + _MENU_SEPARATOR,
+            (
+                menu33,
+                EventSpec.menu_other_termination_identify,
+                self._termination_identify,
+            ),
+            (menu33,) + _MENU_SEPARATOR,
+            (
+                menu33,
+                EventSpec.menu_other_termination_break,
+                self._termination_break,
+            ),
+            (
+                menu33,
+                EventSpec.menu_other_termination_split,
+                self._termination_split,
+            ),
+            (
+                menu33,
+                EventSpec.menu_other_termination_change,
+                self._termination_change,
+            ),
+            (menu33,) + _MENU_SEPARATOR,
+            (menu34,) + _MENU_SEPARATOR,
+            (
+                menu34,
+                EventSpec.menu_other_playertype_identify,
+                self._player_type_identify,
+            ),
+            (menu34,) + _MENU_SEPARATOR,
+            (
+                menu34,
+                EventSpec.menu_other_playertype_break,
+                self._player_type_break,
+            ),
+            (
+                menu34,
+                EventSpec.menu_other_playertype_split,
+                self._player_type_split,
+            ),
+            (
+                menu34,
+                EventSpec.menu_other_playertype_change,
+                self._player_type_change,
+            ),
+            (menu34,) + _MENU_SEPARATOR,
             (menu4,) + _MENU_SEPARATOR,
             (menu4, EventSpec.menu_selectors_new, self._selectors_new),
             (menu4, EventSpec.menu_selectors_show, self._selectors_show),
@@ -310,6 +358,10 @@ class Calculator(Bindings):
         menu3.add_cascade(label="Time controls", menu=menu31, underline=0)
         menu3.add_separator()
         menu3.add_cascade(label="Modes", menu=menu32, underline=0)
+        menu3.add_separator()
+        menu3.add_cascade(label="Terminations", menu=menu33, underline=1)
+        menu3.add_separator()
+        menu3.add_cascade(label="Player types", menu=menu34, underline=0)
         menu3.add_separator()
 
     def _initialize_database_interface(self):
@@ -1492,6 +1544,8 @@ class Calculator(Bindings):
         events_bmk = self._events.data_grid.bookmarks
         time_controls_sel = self._time_controls.data_grid.selection
         modes_sel = self._modes.data_grid.selection
+        terminations_sel = self._terminations.data_grid.selection
+        player_types_sel = self._player_types.data_grid.selection
         frame = tkinter.ttk.Frame(master=self._notebook)
         tab = ruleinsert.RuleInsert(frame, self.database)
         try:
@@ -1517,6 +1571,28 @@ class Calculator(Bindings):
         try:
             tab_from_selection.get_mode(tab, modes_sel, self.database)
         except rule.PopulateMode as exc:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=EventSpec.menu_selectors_new[1],
+                message=str(exc),
+            )
+            return
+        try:
+            tab_from_selection.get_termination(
+                tab, terminations_sel, self.database
+            )
+        except rule.PopulateTermination as exc:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=EventSpec.menu_selectors_new[1],
+                message=str(exc),
+            )
+            return
+        try:
+            tab_from_selection.get_player_type(
+                tab, player_types_sel, self.database
+            )
+        except rule.PopulatePlayerType as exc:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=EventSpec.menu_selectors_new[1],
@@ -2041,6 +2117,192 @@ class Calculator(Bindings):
                 self._modes.data_grid.clear_selections()
                 self._modes.data_grid.clear_bookmarks()
                 self._modes.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
+
+    def _is_termination_tab_visible(self, title, prefix):
+        """Return True if termination tab is visible or False if not."""
+        return self._is_instance_tab_visible(
+            self._terminations,
+            self._terminations_tab,
+            "terminations",
+            title,
+            prefix,
+        )
+
+    def _termination_identify(self):
+        """Identify bookmarked terminations as selected termination."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_termination_identify
+        ):
+            return
+        if not self._is_termination_tab_visible(
+            EventSpec.menu_other_termination_identify[1],
+            "Identify playing termination",
+        ):
+            return
+        self._apply_lock()
+        try:
+            if self._terminations.identify(self._update_widget_and_join_loop):
+                self._terminations.data_grid.clear_selections()
+                self._terminations.data_grid.clear_bookmarks()
+                self._terminations.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
+
+    def _termination_break(self):
+        """Break indentity of selected and bookmarked termination aliases."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_termination_break
+        ):
+            return
+        if not self._is_termination_tab_visible(
+            EventSpec.menu_other_termination_break[1],
+            "Break termination aliases",
+        ):
+            return
+        self._apply_lock()
+        try:
+            if self._terminations.break_selected(
+                self._update_widget_and_join_loop
+            ):
+                self._terminations.data_grid.clear_selections()
+                self._terminations.data_grid.clear_bookmarks()
+                self._terminations.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
+
+    def _termination_split(self):
+        """Split indentity of terminations of selected termination alias."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_termination_split
+        ):
+            return
+        if not self._is_termination_tab_visible(
+            EventSpec.menu_other_termination_split[1], "Split all terminations"
+        ):
+            return
+        self._apply_lock()
+        try:
+            if self._terminations.split_all(self._update_widget_and_join_loop):
+                self._terminations.data_grid.clear_selections()
+                self._terminations.data_grid.clear_bookmarks()
+                self._terminations.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
+
+    def _termination_change(self):
+        """Change termination alias used as termination identity."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_termination_change
+        ):
+            return
+        if not self._is_termination_tab_visible(
+            EventSpec.menu_other_termination_change[1],
+            "Change termination identity",
+        ):
+            return
+        self._apply_lock()
+        try:
+            if self._terminations.change_identity(
+                self._update_widget_and_join_loop
+            ):
+                self._terminations.data_grid.clear_selections()
+                self._terminations.data_grid.clear_bookmarks()
+                self._terminations.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
+
+    def _is_player_type_tab_visible(self, title, prefix):
+        """Return True if player type tab is visible or False if not."""
+        return self._is_instance_tab_visible(
+            self._player_types,
+            self._player_types_tab,
+            "player_types",
+            title,
+            prefix,
+        )
+
+    def _player_type_identify(self):
+        """Identify bookmarked player types as selected player type."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_playertype_identify
+        ):
+            return
+        if not self._is_player_type_tab_visible(
+            EventSpec.menu_other_playertype_identify[1],
+            "Identify playing player type",
+        ):
+            return
+        self._apply_lock()
+        try:
+            if self._player_types.identify(self._update_widget_and_join_loop):
+                self._player_types.data_grid.clear_selections()
+                self._player_types.data_grid.clear_bookmarks()
+                self._player_types.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
+
+    def _player_type_break(self):
+        """Break indentity of selected and bookmarked player type aliases."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_playertype_break
+        ):
+            return
+        if not self._is_player_type_tab_visible(
+            EventSpec.menu_other_playertype_break[1],
+            "Break player type aliases",
+        ):
+            return
+        self._apply_lock()
+        try:
+            if self._player_types.break_selected(
+                self._update_widget_and_join_loop
+            ):
+                self._player_types.data_grid.clear_selections()
+                self._player_types.data_grid.clear_bookmarks()
+                self._player_types.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
+
+    def _player_type_split(self):
+        """Split indentity of player types of selected player type alias."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_playertype_split
+        ):
+            return
+        if not self._is_player_type_tab_visible(
+            EventSpec.menu_other_playertype_split[1], "Split all player types"
+        ):
+            return
+        self._apply_lock()
+        try:
+            if self._player_types.split_all(self._update_widget_and_join_loop):
+                self._player_types.data_grid.clear_selections()
+                self._player_types.data_grid.clear_bookmarks()
+                self._player_types.data_grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
+
+    def _player_type_change(self):
+        """Change player type alias used as player type identity."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_other_playertype_change
+        ):
+            return
+        if not self._is_player_type_tab_visible(
+            EventSpec.menu_other_playertype_change[1],
+            "Change player type identity",
+        ):
+            return
+        self._apply_lock()
+        try:
+            if self._player_types.change_identity(
+                self._update_widget_and_join_loop
+            ):
+                self._player_types.data_grid.clear_selections()
+                self._player_types.data_grid.clear_bookmarks()
+                self._player_types.data_grid.fill_view_with_top()
         finally:
             self._clear_lock()
 

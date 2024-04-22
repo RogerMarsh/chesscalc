@@ -132,6 +132,72 @@ def get_mode_record_from_identity(database, identity):
     return mode_record
 
 
+def get_termination_name_from_identity(database, identity):
+    """Return termination name for identity or None."""
+    mode_record = None
+    database.start_read_only_transaction()
+    try:
+        mode_record = get_termination_record_from_identity(database, identity)
+    finally:
+        database.end_read_only_transaction()
+    if mode_record is None:
+        return None
+    return mode_record.value.alias_index_key()
+
+
+def get_termination_record_from_identity(database, identity):
+    """Return termination record for identity or None."""
+    recordlist = database.recordlist_key(
+        filespec.TERMINATION_FILE_DEF,
+        filespec.TERMINATION_IDENTITY_FIELD_DEF,
+        key=database.encode_record_selector(identity),
+    )
+    primary_record = identify_item.get_identity_item_on_recordlist(
+        performancerecord.TerminationDBvalue,
+        database,
+        recordlist,
+        filespec.TERMINATION_FILE_DEF,
+    )
+    if primary_record is None:
+        return None
+    mode_record = performancerecord.TerminationDBrecord()
+    mode_record.load_record(primary_record)
+    return mode_record
+
+
+def get_player_type_name_from_identity(database, identity):
+    """Return player type name for identity or None."""
+    mode_record = None
+    database.start_read_only_transaction()
+    try:
+        mode_record = get_player_type_record_from_identity(database, identity)
+    finally:
+        database.end_read_only_transaction()
+    if mode_record is None:
+        return None
+    return mode_record.value.alias_index_key()
+
+
+def get_player_type_record_from_identity(database, identity):
+    """Return player type record for identity or None."""
+    recordlist = database.recordlist_key(
+        filespec.PLAYERTYPE_FILE_DEF,
+        filespec.PLAYERTYPE_IDENTITY_FIELD_DEF,
+        key=database.encode_record_selector(identity),
+    )
+    primary_record = identify_item.get_identity_item_on_recordlist(
+        performancerecord.PlayerTypeDBvalue,
+        database,
+        recordlist,
+        filespec.PLAYERTYPE_FILE_DEF,
+    )
+    if primary_record is None:
+        return None
+    mode_record = performancerecord.PlayerTypeDBrecord()
+    mode_record.load_record(primary_record)
+    return mode_record
+
+
 def get_event_name_from_identity(database, identity):
     """Return event name for identity or None."""
     event_record = None

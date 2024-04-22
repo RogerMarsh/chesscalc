@@ -16,6 +16,8 @@ def insert_record(
     to_date,
     time_control_identity,
     mode_identity,
+    termination_identity,
+    player_type_identity,
     event_list,
 ):
     """Insert record for rule, and details, into database.
@@ -41,6 +43,8 @@ def insert_record(
     value.person_identity = player_identity
     value.time_control_identity = time_control_identity
     value.mode_identity = mode_identity
+    value.termination_identity = termination_identity
+    value.player_type_identity = player_type_identity
     value.event_identities.extend(event_list)
     record.key.recno = None
     database.start_transaction()
@@ -62,6 +66,8 @@ def update_record(
     to_date,
     time_control_identity,
     mode_identity,
+    termination_identity,
+    player_type_identity,
     event_list,
 ):
     """Update record for rule, and details, on database.
@@ -103,6 +109,8 @@ def update_record(
         value.person_identity = player_identity
         value.time_control_identity = time_control_identity
         value.mode_identity = mode_identity
+        value.termination_identity = termination_identity
+        value.player_type_identity = player_type_identity
         value.event_identities = event_list
         assert dbrecord.srkey == clone_record.srkey
         dbrecord.edit_record(

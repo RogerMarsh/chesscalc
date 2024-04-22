@@ -32,6 +32,14 @@ class PopulateMode(Exception):
     """Raise exception if no record for mode identity."""
 
 
+class PopulateTermination(Exception):
+    """Raise exception if no record for termination identity."""
+
+
+class PopulatePlayerType(Exception):
+    """Raise exception if no record for player type identity."""
+
+
 class PopulateEvent(Exception):
     """Raise exception if no record for event identity."""
 
@@ -56,10 +64,14 @@ class RuleIdentityValuesDisplayed:
         self.time_control = None
         self.mode = None
         self.event = None
+        self.termination = None
+        self.player_type = None
         self.player_name = None
         self.time_control_name = None
         self.mode_name = None
         self.event_names = None
+        self.termination_name = None
+        self.player_type_name = None
 
     def set_values(self, *args):
         """Set state to values in *args.
@@ -81,10 +93,14 @@ class RuleIdentityValuesDisplayed:
             self.to_date,
             self.time_control,
             self.mode,
+            self.termination,
+            self.player_type,
             self.event,
             self.player_name,
             self.time_control_name,
             self.mode_name,
+            self.termination_name,
+            self.player_type_name,
             self.event_names,
         ) = args
 
@@ -108,10 +124,14 @@ class RuleIdentityValuesDisplayed:
             self.to_date,
             self.time_control,
             self.mode,
+            self.termination,
+            self.player_type,
             self.event,
             self.player_name,
             self.time_control_name,
             self.mode_name,
+            self.termination_name,
+            self.player_type_name,
             self.event_names,
         ) != args
 
@@ -135,14 +155,20 @@ class Rule(Bindings):
         self._time_control_name = _create_entry_widget(2, 3, 4, master)
         self._mode_identity = _create_entry_widget(1, 1, 5, master)
         self._mode_name = _create_entry_widget(2, 3, 5, master)
+        self._termination_identity = _create_entry_widget(1, 1, 6, master)
+        self._termination_name = _create_entry_widget(2, 3, 6, master)
+        self._player_type_identity = _create_entry_widget(1, 1, 7, master)
+        self._player_type_name = _create_entry_widget(2, 3, 7, master)
         self._player_name.configure(state=tkinter.DISABLED)
         self._time_control_name.configure(state=tkinter.DISABLED)
         self._mode_name.configure(state=tkinter.DISABLED)
+        self._termination_name.configure(state=tkinter.DISABLED)
+        self._player_type_name.configure(state=tkinter.DISABLED)
         self._event_identities = tkinter.Text(
             master=master, height=5, width=10, wrap=tkinter.WORD
         )
         self._event_identities.grid_configure(
-            column=1, columnspan=1, row=6, sticky=tkinter.EW
+            column=1, columnspan=1, row=8, sticky=tkinter.EW
         )
         self._event_names = tkinter.Text(
             master=master,
@@ -153,7 +179,7 @@ class Rule(Bindings):
             wrap=tkinter.WORD,
         )
         self._event_names.grid_configure(
-            column=3, columnspan=2, row=6, sticky=tkinter.EW
+            column=3, columnspan=2, row=8, sticky=tkinter.EW
         )
         self._perfcalc = tkinter.Text(
             master=master,
@@ -163,7 +189,7 @@ class Rule(Bindings):
             state=tkinter.DISABLED,
         )
         self._perfcalc.grid_configure(
-            column=0, columnspan=5, row=8, sticky=tkinter.NSEW
+            column=0, columnspan=5, row=10, sticky=tkinter.NSEW
         )
         for text, column, row in (
             ("Rule", 0, 0),
@@ -175,8 +201,12 @@ class Rule(Bindings):
             ("Time control name", 2, 4),
             ("Mode identity", 0, 5),
             ("Mode name", 2, 5),
-            ("Event identities", 0, 6),
-            ("Event names", 2, 6),
+            ("Termination identity", 0, 6),
+            ("Termination name", 2, 6),
+            ("Player type identity", 0, 7),
+            ("Player type name", 2, 7),
+            ("Event identities", 0, 8),
+            ("Event names", 2, 8),
         ):
             tkinter.ttk.Label(master=master, text=text).grid_configure(
                 column=column, row=row, padx=5
@@ -186,12 +216,12 @@ class Rule(Bindings):
             text="Performance Calculation",
             anchor=tkinter.CENTER,
         ).grid_configure(
-            column=0, columnspan=5, row=7, sticky=tkinter.EW, pady=(5, 0)
+            column=0, columnspan=5, row=9, sticky=tkinter.EW, pady=(5, 0)
         )
         master.grid_columnconfigure(0, uniform="u0")
         master.grid_columnconfigure(2, uniform="u0")
         master.grid_columnconfigure(4, weight=1, uniform="u1")
-        master.grid_rowconfigure(8, weight=1, uniform="u2")
+        master.grid_rowconfigure(10, weight=1, uniform="u2")
 
     @property
     def frame(self):
@@ -221,6 +251,14 @@ class Rule(Bindings):
         )
         self._mode_identity.delete("0", tkinter.END)
         self._mode_identity.insert(tkinter.END, value.mode_identity)
+        self._termination_identity.delete("0", tkinter.END)
+        self._termination_identity.insert(
+            tkinter.END, value.termination_identity
+        )
+        self._player_type_identity.delete("0", tkinter.END)
+        self._player_type_identity.insert(
+            tkinter.END, value.player_type_identity
+        )
         self._event_identities.delete("1.0", tkinter.END)
         self._event_identities.insert(
             tkinter.END, "\n".join(value.event_identities)
@@ -258,6 +296,28 @@ class Rule(Bindings):
                     tkinter.END, detail.value.alias_index_key()
                 )
                 self._mode_name.configure(state=tkinter.DISABLED)
+        if value.termination_identity:
+            detail = name_lookup.get_termination_record_from_identity(
+                self._database, value.termination_identity
+            )
+            if detail is not None:
+                self._termination_name.configure(state=tkinter.NORMAL)
+                self._termination_name.delete("0", tkinter.END)
+                self._termination_name.insert(
+                    tkinter.END, detail.value.alias_index_key()
+                )
+                self._termination_name.configure(state=tkinter.DISABLED)
+        if value.player_type_identity:
+            detail = name_lookup.get_player_type_record_from_identity(
+                self._database, value.player_type_identity
+            )
+            if detail is not None:
+                self._player_type_name.configure(state=tkinter.NORMAL)
+                self._player_type_name.delete("0", tkinter.END)
+                self._player_type_name.insert(
+                    tkinter.END, detail.value.alias_index_key()
+                )
+                self._player_type_name.configure(state=tkinter.DISABLED)
         if value.event_identities:
             self._event_names.configure(state=tkinter.NORMAL)
             self._event_names.delete("1.0", tkinter.END)
@@ -325,6 +385,30 @@ class Rule(Bindings):
         self._mode_name.insert(tkinter.END, value.alias_index_key())
         self._mode_name.configure(state=tkinter.DISABLED)
 
+    def populate_rule_termination_from_record(self, record):
+        """Populate rule widget termination with values from record."""
+        if record is None:
+            raise PopulateTermination("No termination record")
+        value = record.value
+        self._termination_identity.delete("0", tkinter.END)
+        self._termination_identity.insert(tkinter.END, value.identity)
+        self._termination_name.configure(state=tkinter.NORMAL)
+        self._termination_name.delete("0", tkinter.END)
+        self._termination_name.insert(tkinter.END, value.alias_index_key())
+        self._termination_name.configure(state=tkinter.DISABLED)
+
+    def populate_rule_player_type_from_record(self, record):
+        """Populate rule widget player type with values from record."""
+        if record is None:
+            raise PopulatePlayerType("No player type record")
+        value = record.value
+        self._player_type_identity.delete("0", tkinter.END)
+        self._player_type_identity.insert(tkinter.END, value.identity)
+        self._player_type_name.configure(state=tkinter.NORMAL)
+        self._player_type_name.delete("0", tkinter.END)
+        self._player_type_name.insert(tkinter.END, value.alias_index_key())
+        self._player_type_name.configure(state=tkinter.DISABLED)
+
     def get_selection_values_from_widget(self):
         """Return values in rule widget excluding performance calculation."""
         return (
@@ -334,10 +418,14 @@ class Rule(Bindings):
             self._to_date.get().strip(),
             self._time_control_identity.get().strip(),
             self._mode_identity.get().strip(),
+            self._termination_identity.get().strip(),
+            self._player_type_identity.get().strip(),
             self._event_identities.get("1.0", tkinter.END).strip(),
             self._player_name.get().strip(),
             self._time_control_name.get().strip(),
             self._mode_name.get().strip(),
+            self._termination_name.get().strip(),
+            self._player_type_name.get().strip(),
             self._event_names.get("1.0", tkinter.END).strip(),
         )
 
@@ -533,6 +621,10 @@ class Rule(Bindings):
         time_control_name,
         mode_identity,
         mode_name,
+        termination_identity,
+        termination_name,
+        player_type_identity,
+        player_type_name,
         event_identities,
         event_names,
     ):
@@ -595,6 +687,40 @@ class Rule(Bindings):
             if mode_name:
                 messages.append("No mode identity for name")
                 answer["validate"] = False
+        if termination_identity:
+            name = name_lookup.get_termination_name_from_identity(
+                self._database, termination_identity
+            )
+            answer["termination_name"] = name
+            if name:
+                if name != termination_name:
+                    messages.append("Termination name changed")
+            if not name:
+                messages.append("Termination name not found")
+                answer["validate"] = False
+            elif not termination_name:
+                messages.append("Termination name added")
+        else:
+            if termination_name:
+                messages.append("No termination identity for name")
+                answer["validate"] = False
+        if player_type_identity:
+            name = name_lookup.get_player_type_name_from_identity(
+                self._database, player_type_identity
+            )
+            answer["player_type_name"] = name
+            if name:
+                if name != player_type_name:
+                    messages.append("Player type name changed")
+            if not name:
+                messages.append("Player type name not found")
+                answer["validate"] = False
+            elif not player_type_name:
+                messages.append("Player type name added")
+        else:
+            if player_type_name:
+                messages.append("No player type identity for name")
+                answer["validate"] = False
         if event_identities:
             for identity in event_identities.split():
                 name = name_lookup.get_event_name_from_identity(
@@ -630,10 +756,14 @@ class Rule(Bindings):
         to_date,
         time_control_identity,
         mode_identity,
+        termination_identity,
+        player_type_identity,
         event_identities,
         player_name,
         time_control_name,
         mode_name,
+        termination_name,
+        player_type_name,
         event_names,
         event_identity_list,
         event_name_list,
@@ -750,6 +880,10 @@ class Rule(Bindings):
                 time_control_name,
                 mode_identity,
                 mode_name,
+                termination_identity,
+                termination_name,
+                player_type_identity,
+                player_type_name,
                 event_identities,
                 event_names,
             ),
@@ -819,10 +953,14 @@ class Rule(Bindings):
             to_date,
             time_control_identity,
             mode_identity,
+            termination_identity,
+            player_type_identity,
             event_identity_list,
             self._player_name.get().strip(),
             self._time_control_name.get().strip(),
             self._mode_name.get().strip(),
+            self._termination_name.get().strip(),
+            self._player_type_name.get().strip(),
             self._event_names.get("1.0", tkinter.END).strip(),
         )
         self._identity_values.set_values(
@@ -832,10 +970,14 @@ class Rule(Bindings):
             to_date,
             time_control_identity,
             mode_identity,
+            termination_identity,
+            player_type_identity,
             event_identity_list,
             self._player_name.get().strip(),
             self._time_control_name.get().strip(),
             self._mode_name.get().strip(),
+            self._termination_name.get().strip(),
+            self._player_type_name.get().strip(),
             self._event_names.get("1.0", tkinter.END).strip(),
         )
         return True
@@ -849,10 +991,14 @@ class Rule(Bindings):
         to_date,
         time_control_identity,
         mode_identity,
+        termination_identity,
+        player_type_identity,
         event_identities,
         player_name,
         time_control_name,
         mode_name,
+        termination_name,
+        player_type_name,
         event_names,
         insert=True,
     ):
@@ -892,6 +1038,8 @@ class Rule(Bindings):
             "player_name": None,
             "time_control_name": None,
             "mode_name": None,
+            "termination_name": None,
+            "player_type_name": None,
             "changed": False,
         }
         event_identity_list = []
@@ -905,10 +1053,14 @@ class Rule(Bindings):
             to_date,
             time_control_identity,
             mode_identity,
+            termination_identity,
+            player_type_identity,
             event_identities,
             player_name,
             time_control_name,
             mode_name,
+            termination_name,
+            player_type_name,
             event_names,
             event_identity_list,
             event_name_list,
@@ -944,6 +1096,8 @@ class Rule(Bindings):
             to_date,
             time_control_identity,
             mode_identity,
+            termination_identity,
+            player_type_identity,
             [
                 item[-1]
                 for item in sorted(zip(event_name_list, event_identity_list))
@@ -959,10 +1113,14 @@ class Rule(Bindings):
         to_date,
         time_control_identity,
         mode_identity,
+        termination_identity,
+        player_type_identity,
         event_identities,
         player_name,
         time_control_name,
         mode_name,
+        termination_name,
+        player_type_name,
         event_names,
     ):
         """Return valid values for insert or update, or False."""
@@ -987,6 +1145,8 @@ class Rule(Bindings):
             "player_name": None,
             "time_control_name": None,
             "mode_name": None,
+            "termination_name": None,
+            "player_type_name": None,
             "changed": False,
         }
         event_identity_list = []
@@ -1000,10 +1160,14 @@ class Rule(Bindings):
             to_date,
             time_control_identity,
             mode_identity,
+            termination_identity,
+            player_type_identity,
             event_identities,
             player_name,
             time_control_name,
             mode_name,
+            termination_name,
+            player_type_name,
             event_names,
             event_identity_list,
             event_name_list,
@@ -1028,6 +1192,8 @@ class Rule(Bindings):
             to_date,
             time_control_identity,
             mode_identity,
+            termination_identity,
+            player_type_identity,
             [
                 item[-1]
                 for item in sorted(zip(event_name_list, event_identity_list))

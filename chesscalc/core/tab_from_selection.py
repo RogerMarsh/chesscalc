@@ -124,3 +124,49 @@ def get_mode_detail(key, database):
         database.get_primary_record(filespec.MODE_FILE_DEF, key)
     )
     return record
+
+
+def get_termination(tab, selection, database):
+    """Populate tab with database values from termination in selection."""
+    if not tab or not selection or not database:
+        return
+    database.start_read_only_transaction()
+    try:
+        tab.populate_rule_termination_from_record(
+            get_termination_detail(selection[0][1], database)
+        )
+    finally:
+        database.end_read_only_transaction()
+    return
+
+
+def get_termination_detail(key, database):
+    """Return record for termination referenced by key in database."""
+    record = performancerecord.TerminationDBrecord()
+    record.load_record(
+        database.get_primary_record(filespec.TERMINATION_FILE_DEF, key)
+    )
+    return record
+
+
+def get_player_type(tab, selection, database):
+    """Populate tab with database values from player type in selection."""
+    if not tab or not selection or not database:
+        return
+    database.start_read_only_transaction()
+    try:
+        tab.populate_rule_player_type_from_record(
+            get_player_type_detail(selection[0][1], database)
+        )
+    finally:
+        database.end_read_only_transaction()
+    return
+
+
+def get_player_type_detail(key, database):
+    """Return record for player type referenced by key in database."""
+    record = performancerecord.PlayerTypeDBrecord()
+    record.load_record(
+        database.get_primary_record(filespec.PLAYERTYPE_FILE_DEF, key)
+    )
+    return record

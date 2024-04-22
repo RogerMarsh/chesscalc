@@ -1149,6 +1149,8 @@ class SelectorDBvalue(ValueList):
         "event_identities": None,
         "time_control_identity": None,
         "mode_identity": None,
+        "termination_identity": None,
+        "player_type_identity": None,
     }
     _attribute_order = (
         "person_identity",
@@ -1158,6 +1160,8 @@ class SelectorDBvalue(ValueList):
         "event_identities",
         "time_control_identity",
         "mode_identity",
+        "termination_identity",
+        "player_type_identity",
     )
     assert set(_attribute_order) == set(attributes)
 
@@ -1170,6 +1174,8 @@ class SelectorDBvalue(ValueList):
         self.person_identity = None
         self.time_control_identity = None
         self.mode_identity = None
+        self.termination_identity = None
+        self.player_type_identity = None
         self.event_identities = []
 
     def empty(self):
@@ -1180,6 +1186,8 @@ class SelectorDBvalue(ValueList):
         self.person_identity = None
         self.time_control_identity = None
         self.mode_identity = None
+        self.termination_identity = None
+        self.player_type_identity = None
         self.event_identities = []
 
     def pack(self):
@@ -1536,7 +1544,7 @@ class TimeControlDBvalue(ValueList):
 
     def load_alias_index_key(self, value):
         """Bind attributes for the timealias index to items in value."""
-        (self.timecontrol,) = literal_eval(value)
+        self.timecontrol = literal_eval(value)
 
     def pack(self):
         """Delegate to generate time control data then add index data.
@@ -1787,7 +1795,7 @@ class ModeDBvalue(ValueList):
 
     def load_alias_index_key(self, value):
         """Bind attributes for the modealias index to items in value."""
-        (self.mode,) = literal_eval(value)
+        self.mode = literal_eval(value)
 
     def pack(self):
         """Delegate to generate playing mode data then add index data.
@@ -2033,7 +2041,7 @@ class TerminationDBvalue(ValueList):
 
     def load_alias_index_key(self, value):
         """Bind attributes for the terminationalias index to items in value."""
-        (self.termination,) = literal_eval(value)
+        self.termination = literal_eval(value)
 
     def pack(self):
         """Delegate to generate termination data then add index data.
@@ -2288,7 +2296,7 @@ class PlayerTypeDBvalue(ValueList):
 
     def load_alias_index_key(self, value):
         """Bind attributes for the playertypealias index to items in value."""
-        (self.playertype,) = literal_eval(value)
+        self.playertype = literal_eval(value)
 
     def pack(self):
         """Delegate to generate player type data then add index data.
