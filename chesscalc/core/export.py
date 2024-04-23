@@ -10,7 +10,9 @@ by selecting one or more events and taking all the players in the events.
 """
 import ast
 
-from . import performancerecord
+from . import eventrecord
+from . import gamerecord
+from . import playerrecord
 from . import filespec
 from . import identify_item
 
@@ -66,9 +68,9 @@ class ExportPersons(_ExportSelected):
         export_data = self.export_data
         database = self._database
         encode_record_selector = database.encode_record_selector
-        value = performancerecord.PersonDBvalue()
-        person_record = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        value = playerrecord.PersonDBvalue()
+        person_record = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
         database.start_read_only_transaction()
         try:
@@ -119,11 +121,11 @@ class ExportEventPersons(_ExportSelected):
         export_data = self.export_data
         database = self._database
         encode_record_selector = database.encode_record_selector
-        eventvalue = performancerecord.EventDBvalue()
-        value = performancerecord.PersonDBvalue()
-        gamevalue = performancerecord.GameDBvalue()
-        person_record = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        eventvalue = eventrecord.EventDBvalue()
+        value = playerrecord.PersonDBvalue()
+        gamevalue = gamerecord.GameDBvalue()
+        person_record = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
         database.start_read_only_transaction()
         try:
@@ -200,7 +202,7 @@ class ExportIdentities(_Export):
         self.export_data = []
         export_data = self.export_data
         database = self._database
-        value = performancerecord.PersonDBvalue()
+        value = playerrecord.PersonDBvalue()
         database.start_read_only_transaction()
         try:
             persons = database.recordlist_all(

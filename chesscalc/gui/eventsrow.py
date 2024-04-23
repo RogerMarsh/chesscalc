@@ -8,11 +8,11 @@ import tkinter
 
 from solentware_grid.gui import datarow
 
-from ..core import performancerecord
+from ..core import eventrecord
 from ..core import constants
 
 
-class EventsRow(performancerecord.EventDBrecord, datarow.DataRow):
+class EventsRow(eventrecord.EventDBrecord, datarow.DataRow):
     """Display an Event record event detail in event name order."""
 
     header_specification = [

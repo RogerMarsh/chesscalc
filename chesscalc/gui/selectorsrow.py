@@ -8,10 +8,10 @@ import tkinter
 
 from solentware_grid.gui import datarow
 
-from ..core import performancerecord
+from ..core import selectorrecord
 
 
-class SelectorsRow(performancerecord.SelectorDBrecord, datarow.DataRow):
+class SelectorsRow(selectorrecord.SelectorDBrecord, datarow.DataRow):
     """Display a Game Selector record."""
 
     header_specification = [
@@ -35,7 +35,7 @@ class SelectorsRow(performancerecord.SelectorDBrecord, datarow.DataRow):
 
     def __init__(self, database=None):
         """Extend, define the data displayed from the Game Selector record."""
-        super().__init__(valueclass=performancerecord.SelectorDBvalue)
+        super().__init__(valueclass=selectorrecord.SelectorDBvalue)
         self.set_database(database)
         self.row_specification = [
             {

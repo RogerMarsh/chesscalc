@@ -9,7 +9,7 @@ for consistency and applied to a database if consistent.
 
 """
 
-from . import performancerecord
+from . import playerrecord
 from . import filespec
 
 
@@ -50,9 +50,9 @@ class _NameStatus:
         not_identified = self.not_identified
         identified_primary = self.identified_primary
         identified_alias = self.identified_alias
-        value = performancerecord.PersonValue()
-        person_record = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        value = playerrecord.PersonValue()
+        person_record = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
         encode_record_selector = database.encode_record_selector
         for name in self.names:
@@ -110,13 +110,13 @@ class _NameStatus:
         in chosen_name.
 
         """
-        value = performancerecord.PersonValue()
-        packer = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        value = playerrecord.PersonValue()
+        packer = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
-        player_record = performancerecord.PlayerDBrecord()
-        person_record = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        player_record = playerrecord.PlayerDBrecord()
+        person_record = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
         encode_record_selector = database.encode_record_selector
         names = self.not_identified.copy()

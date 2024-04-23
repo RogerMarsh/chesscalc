@@ -8,11 +8,11 @@ import tkinter
 
 from solentware_grid.gui import datarow
 
-from ..core import performancerecord
+from ..core import timecontrolrecord
 from ..core import constants
 
 
-class TimeControlsRow(performancerecord.TimeControlDBrecord, datarow.DataRow):
+class TimeControlsRow(timecontrolrecord.TimeControlDBrecord, datarow.DataRow):
     """Display a time control record detail in time control name order."""
 
     header_specification = [

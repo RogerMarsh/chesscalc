@@ -11,7 +11,7 @@ on the database, or as separate player type, and undoing these
 identifications too.
 
 """
-from . import performancerecord
+from . import playertyperecord
 from . import filespec
 from . import identify_item
 
@@ -34,8 +34,8 @@ def identify(database, bookmarks, selection, answer):
         database,
         bookmarks,
         selection,
-        performancerecord.PlayerTypeDBvalue,
-        performancerecord.PlayerTypeDBrecord,
+        playertyperecord.PlayerTypeDBvalue,
+        playertyperecord.PlayerTypeDBrecord,
         filespec.PLAYERTYPE_FILE_DEF,
         filespec.PLAYERTYPE_FIELD_DEF,
         filespec.PLAYERTYPE_ALIAS_FIELD_DEF,
@@ -56,8 +56,8 @@ def break_bookmarked_aliases(database, bookmarks, selection, answer):
         database,
         bookmarks,
         selection,
-        performancerecord.PlayerTypeDBvalue,
-        performancerecord.PlayerTypeDBrecord,
+        playertyperecord.PlayerTypeDBvalue,
+        playertyperecord.PlayerTypeDBrecord,
         filespec.PLAYERTYPE_FILE_DEF,
         filespec.PLAYERTYPE_FIELD_DEF,
         filespec.PLAYERTYPE_ALIAS_FIELD_DEF,
@@ -75,8 +75,8 @@ def split_aliases(database, selection, answer):
     answer["message"] = identify_item.split_aliases(
         database,
         selection,
-        performancerecord.PlayerTypeDBvalue,
-        performancerecord.PlayerTypeDBrecord,
+        playertyperecord.PlayerTypeDBvalue,
+        playertyperecord.PlayerTypeDBrecord,
         filespec.PLAYERTYPE_FILE_DEF,
         filespec.PLAYERTYPE_FIELD_DEF,
         filespec.PLAYERTYPE_ALIAS_FIELD_DEF,
@@ -97,8 +97,8 @@ def change_aliases(database, selection, answer):
     answer["message"] = identify_item.change_aliases(
         database,
         selection,
-        performancerecord.PlayerTypeDBvalue,
-        performancerecord.PlayerTypeDBrecord,
+        playertyperecord.PlayerTypeDBvalue,
+        playertyperecord.PlayerTypeDBrecord,
         filespec.PLAYERTYPE_FILE_DEF,
         filespec.PLAYERTYPE_FIELD_DEF,
         filespec.PLAYERTYPE_ALIAS_FIELD_DEF,

@@ -13,11 +13,11 @@ import tkinter
 
 from solentware_grid.gui import datarow
 
-from ..core import performancerecord
+from ..core import playerrecord
 from ..core import constants
 
 
-class PlayersRow(performancerecord.PlayerDBrecord, datarow.DataRow):
+class PlayersRow(playerrecord.PlayerDBrecord, datarow.DataRow):
     """Display a Person record."""
 
     header_specification = [

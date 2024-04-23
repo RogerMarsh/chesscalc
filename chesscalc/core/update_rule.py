@@ -4,7 +4,7 @@
 
 """This module provides functions to update a calculation rule record."""
 
-from . import performancerecord
+from . import selectorrecord
 from . import filespec
 
 
@@ -35,7 +35,7 @@ def insert_record(
         return False
     if (from_date and not to_date) or (not from_date and to_date):
         return False
-    record = performancerecord.SelectorDBrecord()
+    record = selectorrecord.SelectorDBrecord()
     value = record.value
     value.name = rule
     value.from_date = from_date
@@ -79,7 +79,7 @@ def update_record(
         return False
     if not record:
         return False
-    assert isinstance(record, performancerecord.SelectorDBrecord)
+    assert isinstance(record, selectorrecord.SelectorDBrecord)
     if not rule:
         return False
     if (player_identity and event_list) or (
@@ -96,7 +96,7 @@ def update_record(
         if existing is None:
             database.backout()
             return False
-        dbrecord = performancerecord.SelectorDBrecord()
+        dbrecord = selectorrecord.SelectorDBrecord()
         dbrecord.load_record(existing)
         if dbrecord != record:
             database.backout()
@@ -133,7 +133,7 @@ def delete_record(database, record):
         return False
     if not record:
         return False
-    assert isinstance(record, performancerecord.SelectorDBrecord)
+    assert isinstance(record, selectorrecord.SelectorDBrecord)
     database.start_transaction()
     try:
         existing = database.get_primary_record(
@@ -142,7 +142,7 @@ def delete_record(database, record):
         if existing is None:
             database.backout()
             return False
-        dbrecord = performancerecord.SelectorDBrecord()
+        dbrecord = selectorrecord.SelectorDBrecord()
         dbrecord.load_record(existing)
         if dbrecord != record:
             database.backout()

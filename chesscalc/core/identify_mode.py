@@ -12,7 +12,7 @@ on the database, or as separate mode, and undoing these
 identifications too.
 
 """
-from . import performancerecord
+from . import moderecord
 from . import filespec
 from . import identify_item
 
@@ -35,8 +35,8 @@ def identify(database, bookmarks, selection, answer):
         database,
         bookmarks,
         selection,
-        performancerecord.ModeDBvalue,
-        performancerecord.ModeDBrecord,
+        moderecord.ModeDBvalue,
+        moderecord.ModeDBrecord,
         filespec.MODE_FILE_DEF,
         filespec.MODE_FIELD_DEF,
         filespec.MODE_ALIAS_FIELD_DEF,
@@ -57,8 +57,8 @@ def break_bookmarked_aliases(database, bookmarks, selection, answer):
         database,
         bookmarks,
         selection,
-        performancerecord.ModeDBvalue,
-        performancerecord.ModeDBrecord,
+        moderecord.ModeDBvalue,
+        moderecord.ModeDBrecord,
         filespec.MODE_FILE_DEF,
         filespec.MODE_FIELD_DEF,
         filespec.MODE_ALIAS_FIELD_DEF,
@@ -76,8 +76,8 @@ def split_aliases(database, selection, answer):
     answer["message"] = identify_item.split_aliases(
         database,
         selection,
-        performancerecord.ModeDBvalue,
-        performancerecord.ModeDBrecord,
+        moderecord.ModeDBvalue,
+        moderecord.ModeDBrecord,
         filespec.MODE_FILE_DEF,
         filespec.MODE_FIELD_DEF,
         filespec.MODE_ALIAS_FIELD_DEF,
@@ -98,8 +98,8 @@ def change_aliases(database, selection, answer):
     answer["message"] = identify_item.change_aliases(
         database,
         selection,
-        performancerecord.ModeDBvalue,
-        performancerecord.ModeDBrecord,
+        moderecord.ModeDBvalue,
+        moderecord.ModeDBrecord,
         filespec.MODE_FILE_DEF,
         filespec.MODE_FIELD_DEF,
         filespec.MODE_ALIAS_FIELD_DEF,

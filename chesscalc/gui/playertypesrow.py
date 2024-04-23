@@ -8,10 +8,10 @@ import tkinter
 
 from solentware_grid.gui import datarow
 
-from ..core import performancerecord
+from ..core import playertyperecord
 
 
-class PlayerTypesRow(performancerecord.PlayerTypeDBrecord, datarow.DataRow):
+class PlayerTypesRow(playertyperecord.PlayerTypeDBrecord, datarow.DataRow):
     """Display a player type record detail in player type name order."""
 
     header_specification = [

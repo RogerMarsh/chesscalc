@@ -15,7 +15,7 @@ database identity is on the 'known' list.
 
 """
 
-from . import performancerecord
+from . import playerrecord
 from . import filespec
 
 
@@ -56,9 +56,9 @@ class _NameStatus:
         not_identified = self.not_identified
         identified_primary = self.identified_primary
         identified_alias = self.identified_alias
-        value = performancerecord.PersonValue()
-        person_record = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        value = playerrecord.PersonValue()
+        person_record = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
         encode_record_selector = database.encode_record_selector
         name = self.name
@@ -117,8 +117,8 @@ class _NameStatus:
         in chosen_name.
 
         """
-        person_record = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        person_record = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
         encode_record_selector = database.encode_record_selector
         chosen_alias, name = list(self.identified_alias.items())[0]
@@ -139,9 +139,9 @@ class _NameStatus:
             persongames,
             key=encode_record_selector(person_record.value.identity),
         )
-        value = performancerecord.PersonValue()
-        player_record = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        value = playerrecord.PersonValue()
+        player_record = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
         for namemap in self.identified_alias.values():
             for name, record in namemap.items():

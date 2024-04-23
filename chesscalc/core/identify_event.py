@@ -8,7 +8,7 @@ The functions support identifying an event as an existing event on the
 database, or as separate event, and undoing these identifications too.
 
 """
-from . import performancerecord
+from . import eventrecord
 from . import filespec
 from . import identify_item
 
@@ -27,8 +27,8 @@ def identify(database, bookmarks, selection, answer):
         database,
         bookmarks,
         selection,
-        performancerecord.EventDBvalue,
-        performancerecord.EventDBrecord,
+        eventrecord.EventDBvalue,
+        eventrecord.EventDBrecord,
         filespec.EVENT_FILE_DEF,
         filespec.EVENT_FIELD_DEF,
         filespec.EVENT_ALIAS_FIELD_DEF,
@@ -49,8 +49,8 @@ def break_bookmarked_aliases(database, bookmarks, selection, answer):
         database,
         bookmarks,
         selection,
-        performancerecord.EventDBvalue,
-        performancerecord.EventDBrecord,
+        eventrecord.EventDBvalue,
+        eventrecord.EventDBrecord,
         filespec.EVENT_FILE_DEF,
         filespec.EVENT_FIELD_DEF,
         filespec.EVENT_ALIAS_FIELD_DEF,
@@ -68,8 +68,8 @@ def split_aliases(database, selection, answer):
     answer["message"] = identify_item.split_aliases(
         database,
         selection,
-        performancerecord.EventDBvalue,
-        performancerecord.EventDBrecord,
+        eventrecord.EventDBvalue,
+        eventrecord.EventDBrecord,
         filespec.EVENT_FILE_DEF,
         filespec.EVENT_FIELD_DEF,
         filespec.EVENT_ALIAS_FIELD_DEF,
@@ -90,8 +90,8 @@ def change_aliases(database, selection, answer):
     answer["message"] = identify_item.change_aliases(
         database,
         selection,
-        performancerecord.EventDBvalue,
-        performancerecord.EventDBrecord,
+        eventrecord.EventDBvalue,
+        eventrecord.EventDBrecord,
         filespec.EVENT_FILE_DEF,
         filespec.EVENT_FIELD_DEF,
         filespec.EVENT_ALIAS_FIELD_DEF,

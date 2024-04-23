@@ -8,11 +8,11 @@ import tkinter
 
 from solentware_grid.gui import datarow
 
-from ..core import performancerecord
+from ..core import terminationrecord
 from ..core import constants
 
 
-class TerminationsRow(performancerecord.TerminationDBrecord, datarow.DataRow):
+class TerminationsRow(terminationrecord.TerminationDBrecord, datarow.DataRow):
     """Display a termination record detail in playing mode name order."""
 
     header_specification = [

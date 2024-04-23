@@ -8,7 +8,7 @@ The functions support identifying a new player as an existing or new
 person on the database, and undoing these identifications too.
 
 """
-from . import performancerecord
+from . import playerrecord
 from . import filespec
 from . import identify_item
 
@@ -52,7 +52,7 @@ def identify_players_as_person(database, players, person):
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
         )
-        player_record = performancerecord.PlayerDBrecord()
+        player_record = playerrecord.PlayerDBrecord()
         player_record.load_record(primary_record)
         alias = player_record.value.alias
         selector = database.encode_record_selector(
@@ -97,8 +97,8 @@ def identify_players_as_person(database, players, person):
                 )
             )
         if count == 0:
-            person_record = performancerecord.PlayerDBrecord(
-                valueclass=performancerecord.PersonDBvalue
+            person_record = playerrecord.PlayerDBrecord(
+                valueclass=playerrecord.PersonDBvalue
             )
             person_record.load_record(primary_record)
 
@@ -121,7 +121,7 @@ def identify_players_as_person(database, players, person):
             primary_record = identify_item.get_first_item_on_recordlist(
                 database, recordlist, filespec.PLAYER_FILE_DEF
             )
-            player_record = performancerecord.PlayerDBrecord()
+            player_record = playerrecord.PlayerDBrecord()
             player_record.load_record(primary_record)
             gamelist |= database.recordlist_key(
                 filespec.GAME_FILE_DEF,
@@ -130,8 +130,8 @@ def identify_players_as_person(database, players, person):
                     player_record.value.alias_index_key()
                 ),
             )
-            person_record = performancerecord.PlayerDBrecord(
-                valueclass=performancerecord.PersonDBvalue
+            person_record = playerrecord.PlayerDBrecord(
+                valueclass=playerrecord.PersonDBvalue
             )
             person_record.load_record(primary_record)
             person_record.value.alias = alias
@@ -185,7 +185,7 @@ def identify_players_by_name_as_person(database, players, person):
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
         )
-        player_record = performancerecord.PlayerDBrecord()
+        player_record = playerrecord.PlayerDBrecord()
         player_record.load_record(primary_record)
         if player_record.value.alias != player_record.value.identity:
             # person is alias on identified players list so find known player.
@@ -252,8 +252,8 @@ def identify_players_by_name_as_person(database, players, person):
             # player list becomes a known player and all the other entries
             # on the new list with the same same become aliases of it.
             # Even if entries with the same name exist on the known list.
-            person_record = performancerecord.PlayerDBrecord(
-                valueclass=performancerecord.PersonDBvalue
+            person_record = playerrecord.PlayerDBrecord(
+                valueclass=playerrecord.PersonDBvalue
             )
             person_record.load_record(primary_record)
 
@@ -265,8 +265,8 @@ def identify_players_by_name_as_person(database, players, person):
             )
         alias = player_record.value.alias
         player_value = player_record.value
-        person_record = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        person_record = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
         for player in players:
             recordlist = database.recordlist_key(
@@ -330,9 +330,9 @@ def identify_all_players_by_name_as_persons(database):
 
     """
     encode_record_selector = database.encode_record_selector
-    player_record = performancerecord.PlayerDBrecord()
-    person_record = performancerecord.PlayerDBrecord(
-        valueclass=performancerecord.PersonDBvalue
+    player_record = playerrecord.PlayerDBrecord()
+    person_record = playerrecord.PlayerDBrecord(
+        valueclass=playerrecord.PersonDBvalue
     )
     value = player_record.value
     name_known_map = {}
@@ -508,8 +508,8 @@ def split_person_into_all_players(database, person, answer):
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
         )
-        person_record = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        person_record = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
         person_record.load_record(primary_record)
         if person_record.value.identity != person_record.value.alias:
@@ -540,8 +540,8 @@ def split_person_into_all_players(database, person, answer):
                 primary_record = database.get_primary_record(
                     filespec.PLAYER_FILE_DEF, record[0]
                 )
-                alias_record = performancerecord.PlayerDBrecord(
-                    valueclass=performancerecord.PersonDBvalue
+                alias_record = playerrecord.PlayerDBrecord(
+                    valueclass=playerrecord.PersonDBvalue
                 )
                 alias_record.load_record(primary_record)
                 if identity != alias_record.value.alias:
@@ -550,7 +550,7 @@ def split_person_into_all_players(database, person, answer):
                         "message"
                     ] = "Cannot split: selection is not for identified person"
                     return
-                player_record = performancerecord.PlayerDBrecord()
+                player_record = playerrecord.PlayerDBrecord()
                 player_record.load_record(primary_record)
                 player_record.value.alias = player_record.value.identity
 
@@ -595,8 +595,8 @@ def break_person_into_picked_players(database, person, aliases, answer):
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
         )
-        person_record = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        person_record = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
         person_record.load_record(primary_record)
         if person_record.value.identity != person_record.value.alias:
@@ -627,7 +627,7 @@ def break_person_into_picked_players(database, person, aliases, answer):
                 recordlist,
                 filespec.PLAYER_FILE_DEF,
             )
-            player_record = performancerecord.PlayerDBrecord()
+            player_record = playerrecord.PlayerDBrecord()
             player_record.load_record(primary_record)
             if identity != player_record.value.alias:
                 database.backout()
@@ -648,8 +648,8 @@ def break_person_into_picked_players(database, person, aliases, answer):
                     ),
                 )
             )
-            alias_record = performancerecord.PlayerDBrecord(
-                valueclass=performancerecord.PersonDBvalue
+            alias_record = playerrecord.PlayerDBrecord(
+                valueclass=playerrecord.PersonDBvalue
             )
             alias_record.load_record(primary_record)
             player_record.value.alias = player_record.value.identity
@@ -694,8 +694,8 @@ def change_identified_person(database, player, answer):
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
         )
-        selection_record = performancerecord.PlayerDBrecord(
-            valueclass=performancerecord.PersonDBvalue
+        selection_record = playerrecord.PlayerDBrecord(
+            valueclass=playerrecord.PersonDBvalue
         )
         selection_record.load_record(primary_record)
         if selection_record.value.identity == selection_record.value.alias:
@@ -729,8 +729,8 @@ def change_identified_person(database, player, answer):
                 record = cursor.next()
                 if not record:
                     break
-                alias_record = performancerecord.PlayerDBrecord(
-                    valueclass=performancerecord.PersonDBvalue
+                alias_record = playerrecord.PlayerDBrecord(
+                    valueclass=playerrecord.PersonDBvalue
                 )
                 alias_record.load_record(
                     database.get_primary_record(

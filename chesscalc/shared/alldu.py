@@ -14,7 +14,14 @@ from solentware_base.core.segmentsize import SegmentSize
 from solentware_base.core.constants import FILEDESC
 
 from ..core.filespec import FileSpec
-from ..core import performancerecord
+from ..core import eventrecord
+from ..core import gamerecord
+from ..core import moderecord
+from ..core import playerrecord
+from ..core import playertyperecord
+from ..core import selectorrecord
+from ..core import terminationrecord
+from ..core import timecontrolrecord
 from .. import ERROR_LOG, APPLICATION_NAME
 from ..core import pgnheaders
 
@@ -55,7 +62,7 @@ def du_import(
                 being updated.
 
     """
-    importer = performancerecord.GameDBImporter()
+    importer = gamerecord.GameDBImporter()
     for key in cdb.table.keys():
         if key == file:
             # if hasattr(cdb.__class__, "segment_size_bytes"):
@@ -243,7 +250,7 @@ def players_du_copy(
     increases=None,
 ):
     """Import games from files in pgn_directory into open database cdb."""
-    importer = performancerecord.PlayerDBImporter()
+    importer = playerrecord.PlayerDBImporter()
     for key in cdb.table.keys():
         if key == file:
             if increases is None:
@@ -304,7 +311,7 @@ def events_du_copy(
     increases=None,
 ):
     """Import games from files in pgn_directory into open database cdb."""
-    importer = performancerecord.EventDBImporter()
+    importer = eventrecord.EventDBImporter()
     for key in cdb.table.keys():
         if key == file:
             if increases is None:
@@ -365,7 +372,7 @@ def time_controls_du_copy(
     increases=None,
 ):
     """Import games from files in pgn_directory into open database cdb."""
-    importer = performancerecord.TimeControlDBImporter()
+    importer = timecontrolrecord.TimeControlDBImporter()
     for key in cdb.table.keys():
         if key == file:
             if increases is None:
@@ -428,7 +435,7 @@ def modes_du_copy(
     increases=None,
 ):
     """Import games from files in pgn_directory into open database cdb."""
-    importer = performancerecord.ModeDBImporter()
+    importer = moderecord.ModeDBImporter()
     for key in cdb.table.keys():
         if key == file:
             if increases is None:
@@ -501,7 +508,7 @@ def terminations_du_copy(
     increases=None,
 ):
     """Import games from files in pgn_directory into open database cdb."""
-    importer = performancerecord.TerminationDBImporter()
+    importer = terminationrecord.TerminationDBImporter()
     for key in cdb.table.keys():
         if key == file:
             if increases is None:
@@ -564,7 +571,7 @@ def player_types_du_copy(
     increases=None,
 ):
     """Import games from files in pgn_directory into open database cdb."""
-    importer = performancerecord.PlayerTypeDBImporter()
+    importer = playertyperecord.PlayerTypeDBImporter()
     for key in cdb.table.keys():
         if key == file:
             if increases is None:

@@ -6,7 +6,11 @@
 
 import copy
 
-from . import performancerecord
+from . import eventrecord
+from . import gamerecord
+from . import moderecord
+from . import playerrecord
+from . import timecontrolrecord
 from . import filespec
 from . import utilities
 from . import population
@@ -208,7 +212,7 @@ class Calculate:
             self._time_control_identity,
             filespec.TIME_FILE_DEF,
             filespec.TIME_IDENTITY_FIELD_DEF,
-            performancerecord.TimeControlDBrecord,
+            timecontrolrecord.TimeControlDBrecord,
             filespec.GAME_TIMECONTROL_FIELD_DEF,
         )
 
@@ -227,7 +231,7 @@ class Calculate:
             self._mode_identity,
             filespec.MODE_FILE_DEF,
             filespec.MODE_IDENTITY_FIELD_DEF,
-            performancerecord.ModeDBrecord,
+            moderecord.ModeDBrecord,
             filespec.GAME_MODE_FIELD_DEF,
         )
 
@@ -249,7 +253,7 @@ class Calculate:
                 identity,
                 filespec.EVENT_FILE_DEF,
                 filespec.EVENT_IDENTITY_FIELD_DEF,
-                performancerecord.EventDBrecord,
+                eventrecord.EventDBrecord,
                 filespec.GAME_EVENT_FIELD_DEF,
             )
             games |= event_games
@@ -269,8 +273,8 @@ class Calculate:
         """Bind self.selected_players to players in self.selected_games."""
         database = self._database
         person_list = database.recordlist_nil(filespec.PLAYER_FILE_DEF)
-        game = performancerecord.GameDBrecord()
-        player = performancerecord.PlayerDBrecord()
+        game = gamerecord.GameDBrecord()
+        player = playerrecord.PlayerDBrecord()
         cursor = self.selected_games.create_recordsetbase_cursor()
         while True:
             record = cursor.next()
@@ -352,8 +356,8 @@ class Calculate:
             self.playersets = None
             return
         selected_games = self.selected_games
-        person_record = performancerecord.PlayerDBrecord()
-        game_record = performancerecord.GameDBrecord()
+        person_record = playerrecord.PlayerDBrecord()
+        game_record = gamerecord.GameDBrecord()
         person_cursor = self.selected_players.create_recordsetbase_cursor()
         while True:
             record = person_cursor.next()
@@ -423,8 +427,8 @@ class Calculate:
 
         """
         selected_games = self.selected_games
-        person_record = performancerecord.PlayerDBrecord()
-        game_record = performancerecord.GameDBrecord()
+        person_record = playerrecord.PlayerDBrecord()
+        game_record = gamerecord.GameDBrecord()
         database = self._database
         encode_record_selector = database.encode_record_selector
         recordlist_key = database.recordlist_key
@@ -578,8 +582,8 @@ class Calculate:
 
         """
         selected_games = self.selected_games
-        person_record = performancerecord.PlayerDBrecord()
-        game_record = performancerecord.GameDBrecord()
+        person_record = playerrecord.PlayerDBrecord()
+        game_record = gamerecord.GameDBrecord()
         database = self._database
         encode_record_selector = database.encode_record_selector
         recordlist_key = database.recordlist_key

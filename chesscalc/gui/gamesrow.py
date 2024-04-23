@@ -8,11 +8,11 @@ import tkinter
 
 from solentware_grid.gui import datarow
 
-from ..core import performancerecord
+from ..core import gamerecord
 from ..core import constants
 
 
-class GamesRow(performancerecord.GameDBrecord, datarow.DataRow):
+class GamesRow(gamerecord.GameDBrecord, datarow.DataRow):
     """Display a Game record."""
 
     header_specification = [
@@ -32,18 +32,18 @@ class GamesRow(performancerecord.GameDBrecord, datarow.DataRow):
             (5, constants.TAG_WHITE, "u5"),
             (6, constants.TAG_WHITEFIDEID, "u6"),
             (7, constants.TAG_WHITETEAM, "u7"),
-            (8, constants.TAG_RESULT, "u8"),
-            (9, constants.TAG_BLACK, "u9"),
-            (10, constants.TAG_BLACKFIDEID, "ua"),
-            (11, constants.TAG_BLACKTEAM, "ub"),
-            (12, constants.TAG_SITE, "uc"),
-            (13, constants.TAG_ROUND, "ud"),
-            (14, constants.TAG_BOARD, "ue"),
-            (15, constants.TAG_TIMECONTROL, "ui"),
-            (16, constants.TAG_MODE, "uh"),
-            (17, constants.TAG_TERMINATION, "uj"),
-            (18, constants.TAG_WHITETYPE, "uf"),
-            (19, constants.TAG_BLACKTYPE, "ug"),
+            (8, constants.TAG_WHITETYPE, "u8"),
+            (9, constants.TAG_RESULT, "u9"),
+            (10, constants.TAG_TERMINATION, "ua"),
+            (11, constants.TAG_BLACK, "ub"),
+            (12, constants.TAG_BLACKFIDEID, "uc"),
+            (13, constants.TAG_BLACKTEAM, "ud"),
+            (14, constants.TAG_BLACKTYPE, "ue"),
+            (15, constants.TAG_SITE, "uf"),
+            (16, constants.TAG_ROUND, "ug"),
+            (17, constants.TAG_BOARD, "uh"),
+            (18, constants.TAG_TIMECONTROL, "ui"),
+            (19, constants.TAG_MODE, "uj"),
             (20, constants.FILE, "uk"),
             (21, constants.GAME, "ul"),
         )
@@ -107,18 +107,18 @@ class GamesRow(performancerecord.GameDBrecord, datarow.DataRow):
                 pgn_headers.get(constants.TAG_WHITE, ""),
                 pgn_headers.get(constants.TAG_WHITEFIDEID, ""),
                 pgn_headers.get(constants.TAG_WHITETEAM, ""),
+                pgn_headers.get(constants.TAG_WHITETYPE, ""),
                 pgn_headers.get(constants.TAG_RESULT, ""),
+                pgn_headers.get(constants.TAG_TERMINATION, ""),
                 pgn_headers.get(constants.TAG_BLACK, ""),
                 pgn_headers.get(constants.TAG_BLACKFIDEID, ""),
                 pgn_headers.get(constants.TAG_BLACKTEAM, ""),
+                pgn_headers.get(constants.TAG_BLACKTYPE, ""),
                 pgn_headers.get(constants.TAG_SITE, ""),
                 pgn_headers.get(constants.TAG_ROUND, ""),
                 pgn_headers.get(constants.TAG_BOARD, ""),
                 pgn_headers.get(constants.TAG_TIMECONTROL, ""),
                 pgn_headers.get(constants.TAG_MODE, ""),
-                pgn_headers.get(constants.TAG_TERMINATION, ""),
-                pgn_headers.get(constants.TAG_WHITETYPE, ""),
-                pgn_headers.get(constants.TAG_BLACKTYPE, ""),
                 reference.get(constants.FILE, ""),
                 reference.get(constants.GAME, ""),
             ),

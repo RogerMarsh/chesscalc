@@ -7,7 +7,12 @@
 The names must be suitable as the text of a tkinter.ttk.Entry widget.
 """
 
-from . import performancerecord
+from . import eventrecord
+from . import moderecord
+from . import playerrecord
+from . import playertyperecord
+from . import terminationrecord
+from . import timecontrolrecord
 from . import filespec
 from . import identify_item
 
@@ -39,7 +44,7 @@ def get_player_record_from_identity(database, identity):
     )
     if primary_record is None:
         return None
-    person_record = performancerecord.PlayerDBrecord()
+    person_record = playerrecord.PlayerDBrecord()
     person_record.load_record(primary_record)
     return person_record
 
@@ -52,14 +57,14 @@ def get_known_player_record_from_identity(database, identity):
         key=database.encode_record_selector(identity),
     )
     primary_record = identify_item.get_identity_item_on_recordlist(
-        performancerecord.PersonDBvalue,
+        playerrecord.PersonDBvalue,
         database,
         recordlist,
         filespec.PLAYER_FILE_DEF,
     )
     if primary_record is None:
         return None
-    person_record = performancerecord.PlayerDBrecord()
+    person_record = playerrecord.PlayerDBrecord()
     person_record.load_record(primary_record)
     return person_record
 
@@ -87,14 +92,14 @@ def get_time_control_record_from_identity(database, identity):
         key=database.encode_record_selector(identity),
     )
     primary_record = identify_item.get_identity_item_on_recordlist(
-        performancerecord.TimeControlDBvalue,
+        timecontrolrecord.TimeControlDBvalue,
         database,
         recordlist,
         filespec.TIME_FILE_DEF,
     )
     if primary_record is None:
         return None
-    time_control_record = performancerecord.TimeControlDBrecord()
+    time_control_record = timecontrolrecord.TimeControlDBrecord()
     time_control_record.load_record(primary_record)
     return time_control_record
 
@@ -120,14 +125,14 @@ def get_mode_record_from_identity(database, identity):
         key=database.encode_record_selector(identity),
     )
     primary_record = identify_item.get_identity_item_on_recordlist(
-        performancerecord.ModeDBvalue,
+        moderecord.ModeDBvalue,
         database,
         recordlist,
         filespec.MODE_FILE_DEF,
     )
     if primary_record is None:
         return None
-    mode_record = performancerecord.ModeDBrecord()
+    mode_record = moderecord.ModeDBrecord()
     mode_record.load_record(primary_record)
     return mode_record
 
@@ -153,14 +158,14 @@ def get_termination_record_from_identity(database, identity):
         key=database.encode_record_selector(identity),
     )
     primary_record = identify_item.get_identity_item_on_recordlist(
-        performancerecord.TerminationDBvalue,
+        terminationrecord.TerminationDBvalue,
         database,
         recordlist,
         filespec.TERMINATION_FILE_DEF,
     )
     if primary_record is None:
         return None
-    mode_record = performancerecord.TerminationDBrecord()
+    mode_record = terminationrecord.TerminationDBrecord()
     mode_record.load_record(primary_record)
     return mode_record
 
@@ -186,14 +191,14 @@ def get_player_type_record_from_identity(database, identity):
         key=database.encode_record_selector(identity),
     )
     primary_record = identify_item.get_identity_item_on_recordlist(
-        performancerecord.PlayerTypeDBvalue,
+        playertyperecord.PlayerTypeDBvalue,
         database,
         recordlist,
         filespec.PLAYERTYPE_FILE_DEF,
     )
     if primary_record is None:
         return None
-    mode_record = performancerecord.PlayerTypeDBrecord()
+    mode_record = playertyperecord.PlayerTypeDBrecord()
     mode_record.load_record(primary_record)
     return mode_record
 
@@ -219,13 +224,13 @@ def get_event_record_from_identity(database, identity):
         key=database.encode_record_selector(identity),
     )
     primary_record = identify_item.get_identity_item_on_recordlist(
-        performancerecord.EventDBvalue,
+        eventrecord.EventDBvalue,
         database,
         recordlist,
         filespec.EVENT_FILE_DEF,
     )
     if primary_record is None:
         return None
-    event_record = performancerecord.EventDBrecord()
+    event_record = eventrecord.EventDBrecord()
     event_record.load_record(primary_record)
     return event_record

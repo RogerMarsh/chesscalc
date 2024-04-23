@@ -9,7 +9,8 @@ Derived from performances.py in version 1.3.4 of chesscalc.
 """
 import copy
 
-from . import performancerecord
+from . import gamerecord
+from . import playerrecord
 from . import filespec
 from . import person
 from . import constants
@@ -39,8 +40,8 @@ class Population:
         persons = self.persons
         encode_record_selector = database.encode_record_selector
         recordlist_key = database.recordlist_key
-        person_record = performancerecord.PlayerDBrecord()
-        game_record = performancerecord.GameDBrecord()
+        person_record = playerrecord.PlayerDBrecord()
+        game_record = gamerecord.GameDBrecord()
         person_cursor = playerset.create_recordsetbase_cursor()
         while True:
             record = person_cursor.next()

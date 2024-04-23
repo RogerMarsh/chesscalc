@@ -4,7 +4,13 @@
 
 """This module provides functions to populate a rule tab from a selection."""
 
-from . import performancerecord
+from . import eventrecord
+from . import moderecord
+from . import playerrecord
+from . import playertyperecord
+from . import selectorrecord
+from . import terminationrecord
+from . import timecontrolrecord
 from . import filespec
 
 
@@ -12,7 +18,7 @@ def get_rule(tab, selection, database):
     """Populate tab with database values from rule in selection."""
     if not tab or not selection or not database:
         return
-    record = performancerecord.SelectorDBrecord()
+    record = selectorrecord.SelectorDBrecord()
     database.start_read_only_transaction()
     try:
         record.load_record(
@@ -42,9 +48,7 @@ def get_person(tab, selection, database):
 
 def get_person_detail(key, database):
     """Return record for person referenced by key in database."""
-    record = performancerecord.PlayerDBrecord(
-        valueclass=performancerecord.PersonDBvalue
-    )
+    record = playerrecord.PlayerDBrecord(valueclass=playerrecord.PersonDBvalue)
     record.load_record(
         database.get_primary_record(filespec.PLAYER_FILE_DEF, key)
     )
@@ -72,7 +76,7 @@ def get_event_details(keys, database):
     """Return records for events referenced by keys in database."""
     records = []
     for key in keys:
-        record = performancerecord.EventDBrecord()
+        record = eventrecord.EventDBrecord()
         record.load_record(
             database.get_primary_record(filespec.EVENT_FILE_DEF, key)
         )
@@ -96,7 +100,7 @@ def get_time_control(tab, selection, database):
 
 def get_time_control_detail(key, database):
     """Return record for time control referenced by key in database."""
-    record = performancerecord.TimeControlDBrecord()
+    record = timecontrolrecord.TimeControlDBrecord()
     record.load_record(
         database.get_primary_record(filespec.TIME_FILE_DEF, key)
     )
@@ -119,7 +123,7 @@ def get_mode(tab, selection, database):
 
 def get_mode_detail(key, database):
     """Return record for mode referenced by key in database."""
-    record = performancerecord.ModeDBrecord()
+    record = moderecord.ModeDBrecord()
     record.load_record(
         database.get_primary_record(filespec.MODE_FILE_DEF, key)
     )
@@ -142,7 +146,7 @@ def get_termination(tab, selection, database):
 
 def get_termination_detail(key, database):
     """Return record for termination referenced by key in database."""
-    record = performancerecord.TerminationDBrecord()
+    record = terminationrecord.TerminationDBrecord()
     record.load_record(
         database.get_primary_record(filespec.TERMINATION_FILE_DEF, key)
     )
@@ -165,7 +169,7 @@ def get_player_type(tab, selection, database):
 
 def get_player_type_detail(key, database):
     """Return record for player type referenced by key in database."""
-    record = performancerecord.PlayerTypeDBrecord()
+    record = playertyperecord.PlayerTypeDBrecord()
     record.load_record(
         database.get_primary_record(filespec.PLAYERTYPE_FILE_DEF, key)
     )

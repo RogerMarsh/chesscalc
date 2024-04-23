@@ -8,11 +8,11 @@ import tkinter
 
 from solentware_grid.gui import datarow
 
-from ..core import performancerecord
+from ..core import moderecord
 from ..core import constants
 
 
-class ModesRow(performancerecord.ModeDBrecord, datarow.DataRow):
+class ModesRow(moderecord.ModeDBrecord, datarow.DataRow):
     """Display a playing mode record detail in playing mode name order."""
 
     header_specification = [

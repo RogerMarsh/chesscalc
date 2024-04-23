@@ -17,7 +17,7 @@ from ..core import update_rule
 from ..core import name_lookup
 from ..core import calculate
 from ..core import filespec
-from ..core import performancerecord
+from ..core import playerrecord
 
 
 class PopulatePerson(Exception):
@@ -1459,7 +1459,7 @@ def _non_calculable_sort_key(player, database, lookup):
     The value in lookup is put in the report (by the caller).
 
     """
-    person_record = performancerecord.PlayerDBrecord()
+    person_record = playerrecord.PlayerDBrecord()
     playerset = database.recordlist_key(
         filespec.PLAYER_FILE_DEF,
         filespec.PLAYER_KNOWN_FIELD_DEF,
