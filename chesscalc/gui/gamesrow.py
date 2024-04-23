@@ -39,10 +39,13 @@ class GamesRow(performancerecord.GameDBrecord, datarow.DataRow):
             (12, constants.TAG_SITE, "uc"),
             (13, constants.TAG_ROUND, "ud"),
             (14, constants.TAG_BOARD, "ue"),
-            (15, constants.TAG_WHITEELO, "uf"),
-            (16, constants.TAG_BLACKELO, "ug"),
-            (17, constants.FILE, "uh"),
-            (18, constants.GAME, "ui"),
+            (15, constants.TAG_TIMECONTROL, "ui"),
+            (16, constants.TAG_MODE, "uh"),
+            (17, constants.TAG_TERMINATION, "uj"),
+            (18, constants.TAG_WHITETYPE, "uf"),
+            (19, constants.TAG_BLACKTYPE, "ug"),
+            (20, constants.FILE, "uk"),
+            (21, constants.GAME, "ul"),
         )
     ]
 
@@ -80,6 +83,9 @@ class GamesRow(performancerecord.GameDBrecord, datarow.DataRow):
                 (16, tkinter.CENTER),
                 (17, tkinter.CENTER),
                 (18, tkinter.CENTER),
+                (19, tkinter.CENTER),
+                (20, tkinter.CENTER),
+                (21, tkinter.CENTER),
             )
         ]
 
@@ -108,8 +114,11 @@ class GamesRow(performancerecord.GameDBrecord, datarow.DataRow):
                 pgn_headers.get(constants.TAG_SITE, ""),
                 pgn_headers.get(constants.TAG_ROUND, ""),
                 pgn_headers.get(constants.TAG_BOARD, ""),
-                pgn_headers.get(constants.TAG_WHITEELO, ""),
-                pgn_headers.get(constants.TAG_BLACKELO, ""),
+                pgn_headers.get(constants.TAG_TIMECONTROL, ""),
+                pgn_headers.get(constants.TAG_MODE, ""),
+                pgn_headers.get(constants.TAG_TERMINATION, ""),
+                pgn_headers.get(constants.TAG_WHITETYPE, ""),
+                pgn_headers.get(constants.TAG_BLACKTYPE, ""),
                 reference.get(constants.FILE, ""),
                 reference.get(constants.GAME, ""),
             ),
