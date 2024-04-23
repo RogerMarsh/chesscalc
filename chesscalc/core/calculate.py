@@ -785,6 +785,8 @@ def _all_cycle_patches_are_equivalent(player_population):
         del normal["b"]
         del normal["c"]
         cycle.append(normal)
+    if not cycle:
+        return False
     base = cycle.pop()
     while cycle:
         item = cycle.pop()

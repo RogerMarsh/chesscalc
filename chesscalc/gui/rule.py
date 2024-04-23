@@ -1208,6 +1208,8 @@ class Rule(Bindings):
         to_date,
         time_control_identity,
         mode_identity,
+        termination_identity,
+        player_type_identity,
         event_list,
     ):
         """Convert player_identity to associated known player identity.
@@ -1218,6 +1220,7 @@ class Rule(Bindings):
         the rule is created.
 
         """
+        del termination_identity, player_type_identity
         if player_identity:
             player_record = name_lookup.get_player_record_from_identity(
                 self._database, player_identity
