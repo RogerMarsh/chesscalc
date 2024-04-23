@@ -67,9 +67,8 @@ class GameDBvalue(ValueList):
     attributes = {
         "reference": None,  # dict of PGN file name and game number in file.
         "headers": None,  # dict of PGN tag name and value pairs for game.
-        "ratingtype": None,  # dict of classifiers for rating eligibility.
     }
-    _attribute_order = ("headers", "reference", "ratingtype")
+    _attribute_order = ("headers", "reference")
     assert set(_attribute_order) == set(attributes)
 
     def pack(self):
@@ -544,9 +543,8 @@ class GameDBImporter(GameDBrecord):
                     number_games.close()
                 seen_number += 1
                 self.value.headers = collected_game.pgn_tags
-                self.value.ratingtype = {}
-                # Should games be discarded for following reason if rating
-                # type is set up and adjustable?
+                # Should games be discarded for following reason if player
+                # type is held?
                 message = self._is_game_not_ratable_between_two_humans()
                 if message:
                     if reporter is not None:
