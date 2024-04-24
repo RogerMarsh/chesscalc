@@ -140,6 +140,7 @@ class GameDBvalue(ValueList):
                 headers.get(constants.TAG_STAGE),
                 headers.get(constants.TAG_BLACKTEAM),
                 headers.get(constants.TAG_BLACKFIDEID),
+                headers.get(constants.TAG_BLACKTYPE),
             )
         )
 
@@ -155,6 +156,7 @@ class GameDBvalue(ValueList):
                 headers.get(constants.TAG_STAGE),
                 headers.get(constants.TAG_WHITETEAM),
                 headers.get(constants.TAG_WHITEFIDEID),
+                headers.get(constants.TAG_WHITETYPE),
             )
         )
 

@@ -39,6 +39,7 @@ class _PlayerValue(ValueList):
         "stage": None,  # TAG_STAGE.
         "team": None,  # TAG_BLACKTEAM or TAG_WHITETEAM.
         "fideid": None,  # TAG_BLACKFIDEID or TAG_WHITEFIDEID.
+        "type": None,  # TAG_BLACKTYPE or TAG_WHITETYPE.
     }
     _attribute_order = (
         "name",
@@ -48,6 +49,7 @@ class _PlayerValue(ValueList):
         "stage",
         "team",
         "fideid",
+        "type",
     )
     assert set(_attribute_order) == set(attributes)
 
@@ -61,9 +63,10 @@ class _PlayerValue(ValueList):
         self.stage = None
         self.team = None
         self.fideid = None
+        self.type = None
 
     def alias_index_key(self):
-        """Return the key for the playeralias or persionalias index."""
+        """Return the key for the playeralias or personalias index."""
         return repr(
             (
                 self.name,
@@ -73,6 +76,7 @@ class _PlayerValue(ValueList):
                 self.stage,
                 self.team,
                 self.fideid,
+                self.type,
             )
         )
 
@@ -90,6 +94,7 @@ class _PlayerValue(ValueList):
             self.stage,
             self.team,
             self.fideid,
+            self.type,
         ) = literal_eval(value)
 
     def set_alias_index_key(self, value):
@@ -106,6 +111,7 @@ class _PlayerValue(ValueList):
             self.stage,
             self.team,
             self.fideid,
+            self.type,
         ) = value
 
     def alias_index(self):
@@ -118,6 +124,7 @@ class _PlayerValue(ValueList):
             self.stage,
             self.team,
             self.fideid,
+            self.type,
         )
 
 

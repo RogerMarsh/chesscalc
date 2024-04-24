@@ -36,6 +36,7 @@ class PlayersRow(playerrecord.PlayerDBrecord, datarow.DataRow):
             (4, constants.TAG_SECTION, "u4"),
             (5, constants.TAG_STAGE, "u5"),
             (6, "Team", "u6"),
+            (7, "Type", "u7"),
         )
     ]
 
@@ -61,6 +62,7 @@ class PlayersRow(playerrecord.PlayerDBrecord, datarow.DataRow):
                 (4, tkinter.CENTER),
                 (5, tkinter.CENTER),
                 (6, tkinter.CENTER),
+                (7, tkinter.CENTER),
             )
         ]
 
@@ -80,6 +82,7 @@ class PlayersRow(playerrecord.PlayerDBrecord, datarow.DataRow):
                 value.section if value.section is not None else "",
                 value.stage if value.stage is not None else "",
                 value.team if value.team is not None else "",
+                value.type if value.type is not None else "",
             ),
             **kargs
         )
