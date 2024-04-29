@@ -37,6 +37,12 @@ class TimeControlDBvalue(ValueList):
         self.alias = None
         self.identity = None
 
+    # Should self.timecontrol be self.name?
+    @property
+    def name(self):
+        """Return timecontrol."""
+        return self.timecontrol
+
     def empty(self):
         """(Re)Initialize value attribute."""
         self.timecontrol = None

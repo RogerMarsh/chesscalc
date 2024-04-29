@@ -11,7 +11,7 @@ from solentware_bind.gui.bindings import Bindings
 
 
 class Report(Bindings):
-    """Define widget to display import action reports."""
+    """Define widget to display action reports."""
 
     def __init__(self, master, database, labeltext):
         """Create the report widget."""
@@ -39,5 +39,18 @@ class Report(Bindings):
 
     @property
     def frame(self):
-        """Return the top frame of the rule widget."""
+        """Return the top frame of the report widget."""
         return self._frame
+
+    @property
+    def report_text(self):
+        """Return the tkinter.Text object of the report widget."""
+        return self._report
+
+    def append_text(self, text):
+        """Append text to the report widget."""
+        widget = self.report_text
+        widget.configure(state=tkinter.NORMAL)
+        widget.insert(tkinter.END, text)
+        widget.configure(state=tkinter.DISABLED)
+        widget.see(tkinter.END)

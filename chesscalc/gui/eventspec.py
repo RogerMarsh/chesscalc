@@ -29,6 +29,7 @@ class EventSpec:
     menu_database_apply_aliases = ("", "Apply Aliases", "", 0)
     menu_database_export_identities = ("", "Export Identities", "", 0)
     menu_database_mirror_identities = ("", "Mirror Identities", "", 0)
+    menu_database_remove_pgn_file = ("", "Remove PGN File", "", 0)
     menu_database_delete = ("", "Delete", "", 0)
     menu_database_quit = ("", "Quit", "", 0)
     menu_player_identify = ("", "Identify Player", "", 0)

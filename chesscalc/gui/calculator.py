@@ -40,6 +40,7 @@ from . import ruleinsert
 from . import ruleshow
 from . import reportapply
 from . import reportmirror
+from . import reportremovepgn
 from ..core import identity
 from ..core import tab_from_selection
 from ..core import export
@@ -154,6 +155,7 @@ class Calculator(Bindings):
         self._calculations_tab = None
         self._rule_tabs = {}
         self._report_tabs = {}
+        self._remove_pgn_tabs = {}
         self._games = None
         self._players = None
         self._persons = None
@@ -228,6 +230,12 @@ class Calculator(Bindings):
                 menu1,
                 EventSpec.menu_database_export_identities,
                 self._database_export_identities,
+            ),
+            (menu1,) + _MENU_SEPARATOR,
+            (
+                menu1,
+                EventSpec.menu_database_remove_pgn_file,
+                self._database_remove_pgn_file,
             ),
             (menu1,) + _MENU_SEPARATOR,
             (menu1, EventSpec.menu_database_delete, self._database_delete),
@@ -796,6 +804,55 @@ class Calculator(Bindings):
                 # done what is needed.
                 return False
         return None
+
+    def _database_remove_pgn_file(self):
+        """Remove games imported from a PGN file from the database."""
+        if not self._set_lock_to_eventspec_name(
+            EventSpec.menu_database_remove_pgn_file
+        ):
+            return
+        if not self._is_games_tab_visible(
+            EventSpec.menu_database_remove_pgn_file[1],
+            "Remove games from PGN file",
+        ):
+            return
+        frame = tkinter.ttk.Frame(master=self._notebook)
+        tab = reportremovepgn.ReportRemovePGN(frame, self.database)
+        try:
+            self._remove_pgn_tabs[frame.winfo_pathname(frame.winfo_id())] = tab
+        except tkinter.TclError as exc:
+            self._remove_pgn_tabs[workarounds.winfo_pathname(frame, exc)] = tab
+        self._notebook.add(frame, text="PGN report")
+        self._notebook.select(frame)
+        self._apply_lock()
+        try:
+            if self._games.remove_pgn_file(
+                tab, self._update_widget_and_join_loop
+            ):
+                for grid in (
+                    self._games.data_grid,
+                    self._persons.data_grid,
+                    self._events.data_grid,
+                    self._time_controls.data_grid,
+                    self._modes.data_grid,
+                    self._terminations.data_grid,
+                    self._player_types.data_grid,
+                    self._selectors.data_grid,
+                    self._players.players_grid,
+                    self._players.persons_grid,
+                ):
+                    grid.clear_selections()
+                    grid.clear_bookmarks()
+                    grid.fill_view_with_top()
+        finally:
+            self._clear_lock()
+        self._notebook.select(self._games_tab)
+
+    def _is_games_tab_visible(self, title, prefix):
+        """Return True if event tab is visible or False if not."""
+        return self._is_instance_tab_visible(
+            self._games, self._games_tab, "games", title, prefix
+        )
 
     def _database_delete(self):
         """Delete performance calculation database."""
@@ -2364,6 +2421,8 @@ class Calculator(Bindings):
             del self._report_tabs[tab]
         elif tab in self._rule_tabs:
             del self._rule_tabs[tab]
+        elif tab in self._remove_pgn_tabs:
+            del self._remove_pgn_tabs[tab]
 
     def _report_apply(self, menu_event_spec):
         """Return tab if a selection rule tab is visible, False otherwise."""
@@ -2375,7 +2434,11 @@ class Calculator(Bindings):
             )
             return False
         tab = self._notebook.select()
-        if tab not in self._report_tabs and tab not in self._rule_tabs:
+        if (
+            tab not in self._report_tabs
+            and tab not in self._rule_tabs
+            and tab not in self._remove_pgn_tabs
+        ):
             tkinter.messagebox.showinfo(
                 parent=self.widget,
                 title=menu_event_spec[1],

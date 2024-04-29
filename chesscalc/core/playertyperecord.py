@@ -37,6 +37,12 @@ class PlayerTypeDBvalue(ValueList):
         self.alias = None
         self.identity = None
 
+    # Should self.playertype be self.name?
+    @property
+    def name(self):
+        """Return playertype."""
+        return self.playertype
+
     def empty(self):
         """(Re)Initialize value attribute."""
         self.playertype = None

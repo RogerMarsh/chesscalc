@@ -37,6 +37,12 @@ class ModeDBvalue(ValueList):
         self.alias = None
         self.identity = None
 
+    # Should self.mode be self.name?
+    @property
+    def name(self):
+        """Return mode."""
+        return self.mode
+
     def empty(self):
         """(Re)Initialize value attribute."""
         self.mode = None

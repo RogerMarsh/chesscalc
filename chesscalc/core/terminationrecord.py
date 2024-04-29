@@ -37,6 +37,12 @@ class TerminationDBvalue(ValueList):
         self.alias = None
         self.identity = None
 
+    # Should self.termination be self.name?
+    @property
+    def name(self):
+        """Return termination."""
+        return self.termination
+
     def empty(self):
         """(Re)Initialize value attribute."""
         self.termination = None
