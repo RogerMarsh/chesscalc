@@ -10,6 +10,7 @@ import tkinter.messagebox
 import tkinter.filedialog
 import multiprocessing
 from multiprocessing import dummy
+import datetime
 
 from solentware_bind.gui.bindings import Bindings
 from solentware_bind.gui.exceptionhandler import ExceptionHandler
@@ -234,8 +235,8 @@ class Calculator(Bindings):
             (menu1,) + _MENU_SEPARATOR,
             (
                 menu1,
-                EventSpec.menu_database_remove_pgn_file,
-                self._database_remove_pgn_file,
+                EventSpec.menu_database_remove_games,
+                self._database_remove_games,
             ),
             (menu1,) + _MENU_SEPARATOR,
             (menu1, EventSpec.menu_database_delete, self._database_delete),
@@ -344,7 +345,7 @@ class Calculator(Bindings):
             (menu5,) + _MENU_SEPARATOR,
             (menu5, EventSpec.menu_calculate_calculate, self._calculate),
             (menu5,) + _MENU_SEPARATOR,
-            (menu5, EventSpec.menu_calculate_save, self._save),
+            (menu5, EventSpec.menu_calculate_save, self._calculate_save),
             (menu5,) + _MENU_SEPARATOR,
             (menu6,) + _MENU_SEPARATOR,
             (menu6, EventSpec.menu_report_save, self._report_save),
@@ -805,15 +806,15 @@ class Calculator(Bindings):
                 return False
         return None
 
-    def _database_remove_pgn_file(self):
-        """Remove games imported from a PGN file from the database."""
+    def _database_remove_games(self):
+        """Remove selected imported games from the database."""
         if not self._set_lock_to_eventspec_name(
-            EventSpec.menu_database_remove_pgn_file
+            EventSpec.menu_database_remove_games
         ):
             return
         if not self._is_games_tab_visible(
-            EventSpec.menu_database_remove_pgn_file[1],
-            "Remove games from PGN file",
+            EventSpec.menu_database_remove_games[1],
+            "Remove games",
         ):
             return
         frame = tkinter.ttk.Frame(master=self._notebook)
@@ -2381,33 +2382,74 @@ class Calculator(Bindings):
             self._clear_lock()
         return
 
-    def _save(self):
-        """Save calculted player performances from games selected by rule."""
-        if not self._set_lock_to_eventspec_name(EventSpec.menu_calculate_save):
+    def _save(self, menu_event_spec, report_type):
+        """Save report in active report tab."""
+        if not self._set_lock_to_eventspec_name(menu_event_spec):
             return
-        tab = self._selectors_apply(EventSpec.menu_calculate_save)
+        tab = report_type(menu_event_spec)
         if not tab:
             return
+        filename = os.path.join(
+            self.database_folder,
+            "_".join(
+                (
+                    menu_event_spec[1].split()[-1],
+                    "".join(
+                        datetime.datetime.isoformat(
+                            datetime.datetime.today()
+                        ).split(".")[:-1]
+                    ).replace("T", "_"),
+                )
+            ),
+        )
+        if os.path.exists(filename):
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=menu_event_spec[1],
+                message="".join(
+                    (
+                        os.path.basename(filename),
+                        " exists\n\nPlease try again to get a new timestamp",
+                    )
+                ),
+            )
+            return
+        if tab in self._report_tabs:
+            frame = self._report_tabs[tab]
+        elif tab in self._rule_tabs:
+            frame = self._rule_tabs[tab]
+        elif tab in self._remove_pgn_tabs:
+            frame = self._remove_pgn_tabs[tab]
+        else:
+            # Should have been caught by 'tab' test near top of method.
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=menu_event_spec[1],
+                message="Unable to locate tab text to save",
+            )
+            return
+        with open(filename, mode="w", encoding="utf-8") as file:
+            file.write(frame.report_text.get("1.0", tkinter.END))
         tkinter.messagebox.showinfo(
             parent=self.widget,
-            title=EventSpec.menu_calculate_save[1],
-            message="Save not implemented yet",
+            title=menu_event_spec[1],
+            message="".join(
+                (
+                    menu_event_spec[1].split()[-1],
+                    " saved as\n\n",
+                    filename,
+                )
+            ),
         )
         return
 
+    def _calculate_save(self):
+        """Save calculted player performances from games selected by rule."""
+        self._save(EventSpec.menu_calculate_save, self._selectors_apply)
+
     def _report_save(self):
         """Save report on apply identities."""
-        if not self._set_lock_to_eventspec_name(EventSpec.menu_report_save):
-            return
-        tab = self._report_apply(EventSpec.menu_report_close)
-        if not tab:
-            return
-        tkinter.messagebox.showinfo(
-            parent=self.widget,
-            title=EventSpec.menu_calculate_save[1],
-            message="Save report not implemented yet",
-        )
-        return
+        self._save(EventSpec.menu_report_save, self._report_apply)
 
     def _report_close(self):
         """Close report on apply identities."""

@@ -32,7 +32,6 @@ def delete_selected_file_or_bookmarked_games(
     All players derived from any game must not be on the known person index.
 
     """
-    answer["message"] = "Do nothing"
     database.start_read_only_transaction()
     try:
         if selection:
@@ -67,6 +66,10 @@ def delete_selected_file_or_bookmarked_games(
         database.backout()
         raise
     database.commit()
+    if selection:
+        tab.append_text("Games from file deleted.")
+    else:
+        tab.append_text("Selected games deleted.")
 
 
 def _delete_player(database, tab, value, tag):

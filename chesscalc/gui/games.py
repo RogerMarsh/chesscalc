@@ -40,7 +40,7 @@ class Games(Bindings):
 
     def remove_pgn_file(self, tab, update_widget_and_join_loop):
         """Remove games imported from PGN file os selected from database."""
-        title = EventSpec.menu_database_remove_pgn_file[1]
+        title = EventSpec.menu_database_remove_games[1]
         database = self.get_database(title)
         if not database:
             return None
