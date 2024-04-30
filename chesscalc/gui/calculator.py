@@ -47,6 +47,7 @@ from ..core import tab_from_selection
 from ..core import export
 from ..core import apply_identities
 from ..core import mirror_identities
+from ..core import playerrecord
 
 ExceptionHandler.set_application_name(APPLICATION_NAME)
 
@@ -2518,7 +2519,48 @@ class Calculator(Bindings):
 
     def _apply_person_identities_and_prepare_report(self, import_file, answer):
         """Set person identities from import file and put report in answer."""
-        identities = export.read_export_file(import_file)
+        try:
+            identities = export.read_export_file(import_file)
+        except (
+            ValueError,
+            TypeError,
+            SyntaxError,
+            MemoryError,
+            RecursionError,
+        ):
+            answer["error"] = "".join(
+                (
+                    "Unable to evaluate text from file\n\n",
+                    import_file,
+                )
+            )
+            return
+        error = "".join(
+            (
+                "Unexpected data format extracted from file\n\n",
+                import_file,
+            )
+        )
+        element_length = len(playerrecord.PersonValue.attributes)
+        if not isinstance(identities, list):
+            answer["error"] = error
+            return
+        for item in identities:
+            if not isinstance(item, set):
+                answer["error"] = error
+                return
+            for element in item:
+                if not isinstance(element, tuple):
+                    answer["error"] = error
+                    return
+                if len(element) != element_length:
+                    answer["error"] = error
+                    return
+                for node in element:
+                    if node is None or isinstance(node, str):
+                        continue
+                    answer["error"] = error
+                    return
         answer["report"] = apply_identities.verify_and_apply_identities(
             self.database, identities
         )
@@ -2532,6 +2574,13 @@ class Calculator(Bindings):
         )
         thread.start()
         self._update_widget_and_join_loop(thread)
+        if "error" in answer:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                message=answer["error"],
+                title=EventSpec.menu_database_apply_aliases[1],
+            )
+            return
         self._add_report_to_notebook(
             import_file,
             reportapply.ReportApply,
@@ -2544,7 +2593,44 @@ class Calculator(Bindings):
         self, import_file, answer
     ):
         """Set person identities from import file and put report in answer."""
-        identities = export.read_export_file(import_file)
+        try:
+            identities = export.read_export_file(import_file)
+        except (
+            ValueError,
+            TypeError,
+            SyntaxError,
+            MemoryError,
+            RecursionError,
+        ):
+            answer["error"] = "".join(
+                (
+                    "Unable to evaluate text from file\n\n",
+                    import_file,
+                )
+            )
+            return
+        error = "".join(
+            (
+                "Unexpected data format extracted from file\n\n",
+                import_file,
+            )
+        )
+        item_length = len(playerrecord.PersonValue.attributes)
+        if not isinstance(identities, list):
+            answer["error"] = error
+            return
+        for item in identities:
+            if not isinstance(item, tuple):
+                answer["error"] = error
+                return
+            if len(item) != item_length:
+                answer["error"] = error
+                return
+            for element in item:
+                if element is None or isinstance(element, str):
+                    continue
+                answer["error"] = error
+                return
         answer["report"] = mirror_identities.verify_and_mirror_identities(
             self.database, identities
         )
@@ -2558,6 +2644,13 @@ class Calculator(Bindings):
         )
         thread.start()
         self._update_widget_and_join_loop(thread)
+        if "error" in answer:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                message=answer["error"],
+                title=EventSpec.menu_database_mirror_identities[1],
+            )
+            return
         self._add_report_to_notebook(
             import_file,
             reportmirror.ReportMirror,

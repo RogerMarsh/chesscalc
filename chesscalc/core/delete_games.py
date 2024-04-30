@@ -32,6 +32,7 @@ def delete_selected_file_or_bookmarked_games(
     All players derived from any game must not be on the known person index.
 
     """
+    del answer
     database.start_read_only_transaction()
     try:
         if selection:
