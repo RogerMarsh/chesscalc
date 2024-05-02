@@ -127,7 +127,16 @@ class ExportEventPersons(_ExportSelected):
         try:
             exportedpersons = database.recordlist_nil(filespec.PLAYER_FILE_DEF)
             for item in self._selected:
-                eventvalue.load_alias_index_key(item[0])
+                itemevent = database.recordlist_record_number(
+                    filespec.EVENT_FILE_DEF,
+                    key=encode_record_selector(item[1]),
+                )
+                event_cursor = itemevent.create_recordsetbase_cursor()
+                event_data = event_cursor.next()
+                if event_data is None:
+                    continue
+                eventvalue.load(event_data[1])
+                del event_data, event_cursor, itemevent
                 selector = encode_record_selector(eventvalue.alias_index_key())
                 itemevents = database.recordlist_key(
                     filespec.EVENT_FILE_DEF,
