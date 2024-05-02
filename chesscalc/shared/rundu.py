@@ -12,50 +12,16 @@ Spawn the deferred update process by the multiprocessing module.
 """
 import sys
 import importlib
-import os
-import datetime
-import traceback
 
 if sys.platform.startswith("openbsd"):
     import resource
 
-from .. import (
-    ERROR_LOG,
-    APPLICATION_NAME,
-)
+from .. import write_error_to_log
 from ..gui import performancedu
 
 
 class RunduError(Exception):
     """Exception class for rundu module."""
-
-
-def write_error_to_log(directory):
-    """Write the exception to the error log with a time stamp."""
-    with open(
-        os.path.join(directory, ERROR_LOG),
-        "a",
-        encoding="utf-8",
-    ) as file:
-        file.write(
-            "".join(
-                (
-                    "\n\n\n",
-                    " ".join(
-                        (
-                            APPLICATION_NAME,
-                            "exception report at",
-                            datetime.datetime.isoformat(
-                                datetime.datetime.today()
-                            ),
-                        )
-                    ),
-                    "\n\n",
-                    traceback.format_exc(),
-                    "\n\n",
-                )
-            )
-        )
 
 
 def rundu(

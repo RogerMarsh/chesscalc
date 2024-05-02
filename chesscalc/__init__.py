@@ -13,6 +13,10 @@ The performances are not grades because the results of calculations in previous
 runs are not used in this calculation.
 
 """
+import os
+import datetime
+import traceback
+
 import solentware_base.core.constants as sb_c_constants
 
 APPLICATION_NAME = "ChessPerfCalc"
@@ -32,3 +36,35 @@ APPLICATION_DATABASE_MODULE = {
 }
 
 del sb_c_constants
+
+
+def write_error_to_log(directory):
+    """Write the exception to the error log with a time stamp.
+
+    Consider using the ExceptionHandler.report_exception(...) method if
+    the write_error_to_log() call is in an instance of a subclass of the
+    solentware_bind.gui.exceptionhandler.ExceptionHandler class.
+
+    """
+    with open(
+        os.path.join(directory, ERROR_LOG),
+        "a",
+        encoding="utf-8",
+    ) as file:
+        file.write(
+            "".join(
+                (
+                    "\n\n\n",
+                    " ".join(
+                        (
+                            APPLICATION_NAME,
+                            "exception report at",
+                            datetime.datetime.now().isoformat(),
+                        )
+                    ),
+                    "\n\n",
+                    traceback.format_exc(),
+                    "\n\n",
+                )
+            )
+        )

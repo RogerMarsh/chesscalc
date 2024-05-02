@@ -56,10 +56,9 @@ class IncreaseDataProcess:
 
     def _report_to_log(self, text):
         """Add text to report queue with timestamp."""
-        day, hms = datetime.datetime.isoformat(
-            datetime.datetime.today()
-        ).split("T")
-        hms = hms.split(".")[0]
+        day, hms = (
+            datetime.datetime.now().isoformat(timespec="seconds").split("T")
+        )
         self.report_queue.put("".join((day, " ", hms, "  ", text, "\n")))
 
     def _report_to_log_text_only(self, text):
@@ -204,10 +203,9 @@ class IncreaseIndexProcess:
 
     def _report_to_log(self, text):
         """Add text to report queue with timestamp."""
-        day, hms = datetime.datetime.isoformat(
-            datetime.datetime.today()
-        ).split("T")
-        hms = hms.split(".")[0]
+        day, hms = (
+            datetime.datetime.now().isoformat(timespec="seconds").split("T")
+        )
         self.report_queue.put("".join((day, " ", hms, "  ", text, "\n")))
 
     def _report_to_log_text_only(self, text):
@@ -366,10 +364,9 @@ class DeferredUpdateProcess:
 
     def _report_to_log(self, text):
         """Add text to report queue with timestamp."""
-        day, hms = datetime.datetime.isoformat(
-            datetime.datetime.today()
-        ).split("T")
-        hms = hms.split(".")[0]
+        day, hms = (
+            datetime.datetime.now().isoformat(timespec="seconds").split("T")
+        )
         self.report_queue.put("".join((day, " ", hms, "  ", text, "\n")))
 
     def _report_to_log_text_only(self, text):
@@ -568,10 +565,9 @@ class DeferredUpdate(Bindings):
 
     def _report_to_log(self, text):
         """Add text to report queue with timestamp."""
-        day, hms = datetime.datetime.isoformat(
-            datetime.datetime.today()
-        ).split("T")
-        hms = hms.split(".")[0]
+        day, hms = (
+            datetime.datetime.now().isoformat(timespec="seconds").split("T")
+        )
         self.report_queue.put("".join((day, " ", hms, "  ", text, "\n")))
 
     def _report_to_log_text_only(self, text):

@@ -7,6 +7,7 @@
 import tkinter
 import os
 from multiprocessing import dummy
+import datetime
 
 from solentware_bind.gui.bindings import Bindings
 
@@ -14,8 +15,6 @@ from . import eventsgrid
 from .eventspec import EventSpec
 from ..core import identify_event
 from ..core import export
-from ..core import configuration
-from ..core import constants
 
 
 class EventsError(Exception):
@@ -289,34 +288,54 @@ class Events(Bindings):
                 title=title,
             )
             return False
-        conf = configuration.Configuration()
-        initdir = conf.get_configuration_value(
-            constants.RECENT_EXPORT_DIRECTORY
-        )
-        export_file = tkinter.filedialog.asksaveasfilename(
-            parent=self.frame,
-            title=title,
-            initialdir=initdir,
-            initialfile="export-identities.txt",
-        )
-        if not export_file:
+        while True:
+            export_file = os.path.join(
+                database.home_directory,
+                "_".join(
+                    (
+                        "identities",
+                        datetime.datetime.now().isoformat(
+                            sep="_", timespec="seconds"
+                        ),
+                    )
+                ),
+            )
+            if os.path.exists(export_file):
+                if not tkinter.messagebox.askyesno(
+                    parent=self.frame,
+                    title=title,
+                    message="".join(
+                        (
+                            os.path.basename(export_file),
+                            " exists\n\nPlease try again",
+                            " to get a new timestamp",
+                        )
+                    ),
+                ):
+                    tkinter.messagebox.showinfo(
+                        parent=self.frame,
+                        message="Export of event persons cancelled",
+                        title=title,
+                    )
+                    return False
+                continue
+            thread = dummy.DummyProcess(
+                target=export.write_export_file,
+                args=(export_file, answer["serialized_data"]),
+            )
+            thread.start()
+            update_widget_and_join_loop(thread)
             tkinter.messagebox.showinfo(
                 parent=self.frame,
-                message="Export of event persons cancelled",
+                message="".join(
+                    (
+                        "Persons in selected events exported to\n\n",
+                        export_file,
+                    )
+                ),
                 title=title,
             )
-            return False
-        conf.set_configuration_value(
-            constants.RECENT_EXPORT_DIRECTORY,
-            conf.convert_home_directory_to_tilde(os.path.dirname(export_file)),
-        )
-        thread = dummy.DummyProcess(
-            target=export.write_export_file,
-            args=(export_file, answer["serialized_data"]),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
-        return True
+            return True
 
     def get_database(self, title):
         """Return database if events list is attached to database.

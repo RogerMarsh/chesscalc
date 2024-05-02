@@ -743,34 +743,54 @@ class Calculator(Bindings):
         )
         thread.start()
         self._update_widget_and_join_loop(thread)
-        conf = configuration.Configuration()
-        initdir = conf.get_configuration_value(
-            constants.RECENT_EXPORT_DIRECTORY
-        )
-        export_file = tkinter.filedialog.asksaveasfilename(
-            parent=self.widget,
-            title=title,
-            initialdir=initdir,
-            initialfile="mirror-identities.txt",
-        )
-        if not export_file:
-            tkinter.messagebox.showinfo(
-                parent=self.widget,
-                message="Export of mirror cancelled",
-                title=title,
+        while True:
+            export_file = os.path.join(
+                self.database.home_directory,
+                "_".join(
+                    (
+                        "identities",
+                        datetime.datetime.now().isoformat(
+                            sep="_", timespec="seconds"
+                        ),
+                    )
+                ),
             )
-            self._clear_lock()
-            return False
-        conf.set_configuration_value(
-            constants.RECENT_EXPORT_DIRECTORY,
-            conf.convert_home_directory_to_tilde(os.path.dirname(export_file)),
-        )
+            if os.path.exists(export_file):
+                if not tkinter.messagebox.askyesno(
+                    parent=self.widget,
+                    title=title,
+                    message="".join(
+                        (
+                            os.path.basename(export_file),
+                            " exists\n\nPlease try again",
+                            " to get a new timestamp",
+                        )
+                    ),
+                ):
+                    tkinter.messagebox.showinfo(
+                        parent=self.widget,
+                        message="Export of event persons cancelled",
+                        title=title,
+                    )
+                    return False
+                continue
+            break
         thread = dummy.DummyProcess(
             target=export.write_export_file,
             args=(export_file, answer["serialized_data"]),
         )
         thread.start()
         self._update_widget_and_join_loop(thread)
+        tkinter.messagebox.showinfo(
+            parent=self.widget,
+            message="".join(
+                (
+                    "Selected persons exported to\n\n",
+                    export_file,
+                )
+            ),
+            title=title,
+        )
         self._clear_lock()
         return True
 
@@ -2395,11 +2415,9 @@ class Calculator(Bindings):
             "_".join(
                 (
                     menu_event_spec[1].split()[-1],
-                    "".join(
-                        datetime.datetime.isoformat(
-                            datetime.datetime.today()
-                        ).split(".")[:-1]
-                    ).replace("T", "_"),
+                    datetime.datetime.now().isoformat(
+                        sep="_", timespec="seconds"
+                    ),
                 )
             ),
         )

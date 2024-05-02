@@ -32,10 +32,6 @@ class ExportStatus:
         self.error_message = error_message
 
 
-class ImportRepr(Exception):
-    """Raise if literal_eval does not give [[(), ()], [(), ()], ...]."""
-
-
 class _Export:
     """Export persons from database."""
 
@@ -269,32 +265,6 @@ def _export_aliases_of_person(
         aliases.add(value.alias_index())
     exportedpersons |= itemaliases
     export_data.append(aliases)
-
-
-def import_repr(value):
-    """Return literal evaluation of value."""
-    data = ast.literal_eval(value)
-    if not isinstance(data, list):
-        raise ImportRepr("Data is not a list")
-    for item in data:
-        if not isinstance(item, set):
-            raise ImportRepr("Item in data is not a set")
-        for person in item:
-            if not isinstance(person, tuple):
-                raise ImportRepr("Person in item in data is not a tuple")
-            if len(person) != 7:
-                raise ImportRepr("Length of person in item in data is not 7")
-            for element in person:
-                if element is not None and not isinstance(element, str):
-                    raise ImportRepr(
-                        "".join(
-                            (
-                                "Element of person in item in data is ",
-                                "neither None nor a str",
-                            )
-                        )
-                    )
-    return data
 
 
 def write_export_file(export_file, serialized_data):

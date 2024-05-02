@@ -7,8 +7,6 @@
 'Most' means all database interfaces except DPT.
 """
 import os
-import traceback
-import datetime
 
 from solentware_base.core.segmentsize import SegmentSize
 from solentware_base.core.constants import FILEDESC
@@ -22,7 +20,7 @@ from ..core import playertyperecord
 from ..core import selectorrecord
 from ..core import terminationrecord
 from ..core import timecontrolrecord
-from .. import ERROR_LOG, APPLICATION_NAME
+from .. import ERROR_LOG, write_error_to_log
 from ..core import pgnheaders
 
 
@@ -658,30 +656,7 @@ def _report_exception(cdb, reporter, exception):
     """Write exception to error log file, and reporter if available."""
     errorlog_written = True
     try:
-        with open(
-            os.path.join(cdb.home_directory, ERROR_LOG),
-            "a",
-            encoding="utf-8",
-        ) as errorlog:
-            errorlog.write(
-                "".join(
-                    (
-                        "\n\n\n",
-                        " ".join(
-                            (
-                                APPLICATION_NAME,
-                                "exception report at",
-                                datetime.datetime.isoformat(
-                                    datetime.datetime.today()
-                                ),
-                            )
-                        ),
-                        "\n\n",
-                        traceback.format_exc(),
-                        "\n\n",
-                    )
-                )
-            )
+        write_error_to_log(cdb.home_directory)
     except Exception:
         errorlog_written = False
     if reporter is not None:

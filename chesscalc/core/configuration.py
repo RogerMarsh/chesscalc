@@ -20,6 +20,5 @@ class Configuration(configuration.Configuration):
     _DEFAULT_ITEM_VAULES = (
         (constants.RECENT_DATABASE, "~"),
         (constants.RECENT_PGN_DIRECTORY, "~"),
-        (constants.RECENT_EXPORT_DIRECTORY, "~"),
         (constants.RECENT_IMPORT_DIRECTORY, "~"),
     )
