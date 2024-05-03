@@ -9,7 +9,7 @@
 import os
 
 from solentware_base.core.segmentsize import SegmentSize
-from solentware_base.core.constants import FILEDESC
+from solentware_base.core.constants import FILEDESC, DPT_SYSFUL_FOLDER
 
 from ..core.filespec import FileSpec
 from ..core import eventrecord
@@ -233,11 +233,40 @@ def _post_unset_defer_update_reports(database, file, reporter, dsize):
         reporter.append_text_only("")
 
 
-def do_deferred_update(cdb, *args, file=None, **kwargs):
+def do_deferred_update(dbpath, dbclass, *args, file=None, **kwargs):
     """Open database, delegate to du_import, and close database."""
+    cdb = dbclass(dbpath, allowcreate=True)
     cdb.open_database()
     du_import(cdb, *args, file=file, **kwargs)
     cdb.close_database()
+
+
+def do_su_deferred_update(
+    dbpath, dbclass, pgn_directory, *args, file=None, **kwargs
+):
+    """Open database, delegate to games_du_copy, and close database.
+
+    Argument pgn_directory is supplied but not used in the games_du_copy()
+    call.
+
+    Not implemented: assume du_import() is the relevant function but with
+    DatabaseSU as dbclass.
+
+    """
+
+
+def do_games_deferred_update(
+    dbpath, dbclass, pgn_directory, *args, file=None, **kwargs
+):
+    """Open database, delegate to games_du_copy, and close database.
+
+    Argument pgn_directory is supplied but not used in the games_du_copy()
+    call.
+
+    Not implemented: assume games_du_copy() is the relevant function with
+    DatabaseSU as dbclass.
+
+    """
 
 
 def players_du_copy(
@@ -289,13 +318,16 @@ def players_du_copy(
     cdb.commit()
 
 
-def do_players_deferred_update(cdb, pgn_directory, *args, file=None, **kwargs):
+def do_players_deferred_update(
+    dbpath, dbclass, pgn_directory, *args, file=None, **kwargs
+):
     """Open database, delegate to players_du_copy, and close database.
 
-    Argument pgn_directory is supplied but not used in the events_du_copy()
+    Argument pgn_directory is supplied but not used in the players_du_copy()
     call.
 
     """
+    cdb = _create_database_sysful(dbpath, dbclass)
     cdb.open_database()
     players_du_copy(cdb, *args, file=file, **kwargs)
     cdb.close_database()
@@ -350,13 +382,16 @@ def events_du_copy(
     cdb.commit()
 
 
-def do_events_deferred_update(cdb, pgn_directory, *args, file=None, **kwargs):
+def do_events_deferred_update(
+    dbpath, dbclass, pgn_directory, *args, file=None, **kwargs
+):
     """Open database, delegate to events_du_copy, and close database.
 
     Argument pgn_directory is supplied but not used in the events_du_copy()
     call.
 
     """
+    cdb = _create_database_sysful(dbpath, dbclass)
     cdb.open_database()
     events_du_copy(cdb, *args, file=file, **kwargs)
     cdb.close_database()
@@ -412,14 +447,15 @@ def time_controls_du_copy(
 
 
 def do_time_controls_deferred_update(
-    cdb, pgn_directory, *args, file=None, **kwargs
+    dbpath, dbclass, pgn_directory, *args, file=None, **kwargs
 ):
     """Open database, delegate to time_controls_du_copy, and close database.
 
-    Argument pgn_directory is supplied but not used in the events_du_copy()
-    call.
+    Argument pgn_directory is supplied but not used in the
+    time_controls_du_copy() call.
 
     """
+    cdb = _create_database_sysful(dbpath, dbclass)
     cdb.open_database()
     time_controls_du_copy(cdb, *args, file=file, **kwargs)
     cdb.close_database()
@@ -475,7 +511,8 @@ def modes_du_copy(
 
 
 def do_modes_deferred_update(
-    cdb,
+    dbpath,
+    dbclass,
     pgn_directory,
     *args,
     reporter=None,
@@ -484,12 +521,13 @@ def do_modes_deferred_update(
 ):
     """Open database, delegate to modes_du_copy, and close database.
 
-    Argument pgn_directory is supplied but not used in the events_du_copy()
+    Argument pgn_directory is supplied but not used in the modes_du_copy()
     call.
 
     This is final copy stage so report finished when database is closed.
 
     """
+    cdb = _create_database_sysful(dbpath, dbclass)
     cdb.open_database()
     modes_du_copy(cdb, *args, reporter=reporter, file=file, **kwargs)
     cdb.close_database()
@@ -548,14 +586,15 @@ def terminations_du_copy(
 
 
 def do_terminations_deferred_update(
-    cdb, pgn_directory, *args, file=None, **kwargs
+    dbpath, dbclass, pgn_directory, *args, file=None, **kwargs
 ):
     """Open database, delegate to terminations_du_copy, and close database.
 
-    Argument pgn_directory is supplied but not used in the events_du_copy()
-    call.
+    Argument pgn_directory is supplied but not used in the
+    terminations_du_copy() call.
 
     """
+    cdb = _create_database_sysful(dbpath, dbclass)
     cdb.open_database()
     terminations_du_copy(cdb, *args, file=file, **kwargs)
     cdb.close_database()
@@ -611,17 +650,34 @@ def player_types_du_copy(
 
 
 def do_player_types_deferred_update(
-    cdb, pgn_directory, *args, file=None, **kwargs
+    dbpath, dbclass, pgn_directory, *args, file=None, **kwargs
 ):
     """Open database, delegate to player_types_du_copy, and close database.
 
-    Argument pgn_directory is supplied but not used in the events_du_copy()
-    call.
+    Argument pgn_directory is supplied but not used in the
+    player_types_du_copy() call.
 
     """
+    cdb = _create_database_sysful(dbpath, dbclass)
     cdb.open_database()
     player_types_du_copy(cdb, *args, file=file, **kwargs)
     cdb.close_database()
+
+
+def _create_database_sysful(dbpath, dbclass):
+    """Return a dbclass database instance for dbpath.
+
+    The dbclass' sysfolder argument is set to  a directory in dbpath
+    whose name is defined in the DPT_SYSFUL_FOLDER constant.
+
+    All database engines except DPT ignore the syfolder argument.
+
+    """
+    return dbclass(
+        dbpath,
+        allowcreate=True,
+        sysfolder=os.path.join(dbpath, DPT_SYSFUL_FOLDER),
+    )
 
 
 def _du_report_increases(reporter, file, size_increases):

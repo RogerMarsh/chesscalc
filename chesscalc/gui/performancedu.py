@@ -24,6 +24,7 @@ from .. import (
     APPLICATION_NAME,
 )
 from ..core import filespec
+from ..shared import alldu
 
 
 class _Reporter:
@@ -341,6 +342,7 @@ class DeferredUpdateProcess:
         self,
         database,
         method,
+        du_class,
         report_queue,
         quit_event,
         increases,
@@ -351,6 +353,7 @@ class DeferredUpdateProcess:
         """Provide queues for communication with GUI."""
         self.database = database
         self.method = method
+        self.du_class = du_class
         self.report_queue = report_queue
         self.quit_event = quit_event
         self.increases = increases
@@ -377,6 +380,7 @@ class DeferredUpdateProcess:
         """Invoke method to do the deferred update and display job status."""
         self.method(
             self.home_directory,
+            self.du_class,
             self.pgn_directory,
             file=self.du_file,
             reporter=_Reporter(
@@ -602,7 +606,8 @@ class DeferredUpdate(Bindings):
         self.quit_event.clear()
         self.du_task = DeferredUpdateProcess(
             self.database,
-            self.deferred_update_module.players_su,
+            alldu.do_players_deferred_update,
+            self.deferred_update_module.DatabaseSU,
             self.report_queue,
             self.quit_event,
             self.increases,
@@ -626,7 +631,8 @@ class DeferredUpdate(Bindings):
         self.quit_event.clear()
         self.du_task = DeferredUpdateProcess(
             self.database,
-            self.deferred_update_module.events_su,
+            alldu.do_events_deferred_update,
+            self.deferred_update_module.DatabaseSU,
             self.report_queue,
             self.quit_event,
             self.increases,
@@ -650,7 +656,8 @@ class DeferredUpdate(Bindings):
         self.quit_event.clear()
         self.du_task = DeferredUpdateProcess(
             self.database,
-            self.deferred_update_module.time_controls_su,
+            alldu.do_time_controls_deferred_update,
+            self.deferred_update_module.DatabaseSU,
             self.report_queue,
             self.quit_event,
             self.increases,
@@ -674,7 +681,8 @@ class DeferredUpdate(Bindings):
         self.quit_event.clear()
         self.du_task = DeferredUpdateProcess(
             self.database,
-            self.deferred_update_module.terminations_su,
+            alldu.do_terminations_deferred_update,
+            self.deferred_update_module.DatabaseSU,
             self.report_queue,
             self.quit_event,
             self.increases,
@@ -698,7 +706,8 @@ class DeferredUpdate(Bindings):
         self.quit_event.clear()
         self.du_task = DeferredUpdateProcess(
             self.database,
-            self.deferred_update_module.player_types_su,
+            alldu.do_player_types_deferred_update,
+            self.deferred_update_module.DatabaseSU,
             self.report_queue,
             self.quit_event,
             self.increases,
@@ -722,7 +731,8 @@ class DeferredUpdate(Bindings):
         self.quit_event.clear()
         self.du_task = DeferredUpdateProcess(
             self.database,
-            self.deferred_update_module.modes_su,
+            alldu.do_modes_deferred_update,
+            self.deferred_update_module.DatabaseSU,
             self.report_queue,
             self.quit_event,
             self.increases,
@@ -875,7 +885,8 @@ class DeferredUpdate(Bindings):
         self.quit_event.clear()
         self.du_task = DeferredUpdateProcess(
             self.database,
-            self.deferred_update_module.database_du,
+            alldu.do_deferred_update,
+            self.deferred_update_module.Database,
             self.report_queue,
             self.quit_event,
             self.increases,
