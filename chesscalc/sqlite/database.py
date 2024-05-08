@@ -15,6 +15,10 @@ class Database(database.Database, sqlite3_database.Database):
 
     _deferred_update_process = "chesscalc.sqlite.database_du"
 
+    # The sqlite3 interface gives a sqlite3.programmingerror exception if
+    # database actions are not done in the main thread.
+    can_use_thread = False
+
     def __init__(
         self,
         sqlite3file,

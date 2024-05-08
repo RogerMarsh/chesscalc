@@ -7,7 +7,6 @@
 import tkinter
 import tkinter.ttk
 import ast
-from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
@@ -18,6 +17,7 @@ from ..core import name_lookup
 from ..core import calculate
 from ..core import filespec
 from ..core import playerrecord
+from ..shared import task
 
 
 class PopulatePerson(Exception):
@@ -560,11 +560,6 @@ class Rule(Bindings):
             )
             return False
         answer = {"calculation": None, "values": False}
-        thread = dummy.DummyProcess(
-            target=self._read_data_for_performance_calculation,
-            args=(valid_values, answer),
-        )
-        thread.start()
         self._perfcalc.configure(state=tkinter.NORMAL)
         self._perfcalc.delete("1.0", tkinter.END)
         self._perfcalc.insert(
@@ -572,7 +567,12 @@ class Rule(Bindings):
             "\n\n\t\tPlease wait while performances are calculated.\n\n",
         )
         self._perfcalc.configure(state=tkinter.DISABLED)
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            self._read_data_for_performance_calculation,
+            (valid_values, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if not answer["values"]:
             self._perfcalc.configure(state=tkinter.NORMAL)
             self._perfcalc.delete("1.0", tkinter.END)
@@ -867,9 +867,10 @@ class Rule(Bindings):
         if self._rule.cget("state") == tkinter.NORMAL:
             if rule != self._identity_values.rule:
                 messages.append("Rule name changed")
-        thread = dummy.DummyProcess(
-            target=self._verify_rule_against_database,
-            args=(
+        task.Task(
+            self._database,
+            self._verify_rule_against_database,
+            (
                 messages,
                 event_identity_list,
                 event_name_list,
@@ -887,9 +888,8 @@ class Rule(Bindings):
                 event_identities,
                 event_names,
             ),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+            update_widget_and_join_loop,
+        ).start_and_join()
         if player_identity:
             name = answer["player_name"]
             self._player_name.configure(state=tkinter.NORMAL)

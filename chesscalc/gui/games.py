@@ -5,13 +5,13 @@
 """List the games in the database."""
 
 import tkinter
-from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
 from . import gamesgrid
 from .eventspec import EventSpec
 from ..core import delete_games
+from ..shared import task
 
 
 class GamesError(Exception):
@@ -69,12 +69,12 @@ class Games(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=delete_games.delete_selected_file_or_bookmarked_games,
-            args=(database, games_bmk, games_sel, tab, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            delete_games.delete_selected_file_or_bookmarked_games,
+            (database, games_bmk, games_sel, tab, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,

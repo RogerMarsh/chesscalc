@@ -9,13 +9,13 @@ on others.
 
 """
 import tkinter
-from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
 from . import playertypesgrid
 from .eventspec import EventSpec
 from ..core import identify_playertype
+from ..shared import task
 
 
 class PlayerTypesError(Exception):
@@ -85,12 +85,12 @@ class PlayerTypes(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_playertype.identify,
-            args=(database, new, playertypes_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_playertype.identify,
+            (database, new, playertypes_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -143,12 +143,12 @@ class PlayerTypes(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_playertype.break_bookmarked_aliases,
-            args=(database, new, playertypes_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_playertype.break_bookmarked_aliases,
+            (database, new, playertypes_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -181,12 +181,12 @@ class PlayerTypes(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_playertype.split_aliases,
-            args=(database, playertypes_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_playertype.split_aliases,
+            (database, playertypes_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -219,12 +219,12 @@ class PlayerTypes(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_playertype.change_aliases,
-            args=(database, playertypes_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_playertype.change_aliases,
+            (database, playertypes_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,

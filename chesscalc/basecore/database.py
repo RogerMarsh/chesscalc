@@ -13,6 +13,16 @@ from .. import APPLICATION_NAME, ERROR_LOG
 class Database:
     """Provide methods common to all database engine interfaces."""
 
+    # Non *_du database actions are done in separate threads by default,
+    # not the main thread.  Override with 'can_use_thread = False' in
+    # subclasses if necessary.
+    # For SQLite3 the apsw interface is happy with the default, but the
+    # sqlite3 interface gives a sqlite3.programmingerror exception.
+    # For Berkeley DB the bsddb3 and berkeleydb interfaces are happy with
+    # the default, but the tcl via tkinter interface gives a RuntimeError
+    # exception.
+    can_use_thread = True
+
     def use_deferred_update_process(self):
         """Return path to deferred update module."""
         return self._deferred_update_process

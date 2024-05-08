@@ -6,7 +6,6 @@
 
 import tkinter
 import os
-from multiprocessing import dummy
 import datetime
 
 from solentware_bind.gui.bindings import Bindings
@@ -15,6 +14,7 @@ from . import eventsgrid
 from .eventspec import EventSpec
 from ..core import identify_event
 from ..core import export
+from ..shared import task
 
 
 class EventsError(Exception):
@@ -84,12 +84,12 @@ class Events(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_event.identify,
-            args=(database, new, events_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_event.identify,
+            (database, new, events_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -142,12 +142,12 @@ class Events(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_event.break_bookmarked_aliases,
-            args=(database, new, events_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_event.break_bookmarked_aliases,
+            (database, new, events_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -180,12 +180,12 @@ class Events(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_event.split_aliases,
-            args=(database, events_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_event.split_aliases,
+            (database, events_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -218,12 +218,12 @@ class Events(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_event.change_aliases,
-            args=(database, events_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_event.change_aliases,
+            (database, events_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -258,12 +258,12 @@ class Events(Bindings):
             )
             return False
         answer = {"status": None, "serialized_data": None}
-        thread = dummy.DummyProcess(
-            target=self._export_players_in_selected_events,
-            args=(database, events_bmk, events_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            self._export_players_in_selected_events,
+            (database, events_bmk, events_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["status"] is None:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -319,12 +319,12 @@ class Events(Bindings):
                     )
                     return False
                 continue
-            thread = dummy.DummyProcess(
-                target=export.write_export_file,
-                args=(export_file, answer["serialized_data"]),
-            )
-            thread.start()
-            update_widget_and_join_loop(thread)
+            task.Task(
+                database,
+                export.write_export_file,
+                (export_file, answer["serialized_data"]),
+                update_widget_and_join_loop,
+            ).start_and_join()
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 message="".join(

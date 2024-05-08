@@ -5,7 +5,6 @@
 """List the players in the database."""
 
 import tkinter
-from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
@@ -13,6 +12,7 @@ from . import playersgrid
 from . import personsgrid
 from .eventspec import EventSpec
 from ..core import identify_person
+from ..shared import task
 
 
 class PlayersError(Exception):
@@ -123,12 +123,12 @@ class Players(Bindings):
         else:
             identified = players_sel
             new.difference_update(set(players_sel))
-        thread = dummy.DummyProcess(
-            target=identify_person.identify_players_as_person,
-            args=(database, new, identified),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_person.identify_players_as_person,
+            (database, new, identified),
+            update_widget_and_join_loop,
+        ).start_and_join()
         return True
 
     def identify_by_name(self, update_widget_and_join_loop):
@@ -190,12 +190,12 @@ class Players(Bindings):
             identified = persons_sel
         else:
             identified = players_sel
-        thread = dummy.DummyProcess(
-            target=identify_person.identify_players_by_name_as_person,
-            args=(database, set(players_sel), identified),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_person.identify_players_by_name_as_person,
+            (database, set(players_sel), identified),
+            update_widget_and_join_loop,
+        ).start_and_join()
         return True
 
     def match_players_by_name(self, update_widget_and_join_loop):
@@ -221,12 +221,12 @@ class Players(Bindings):
                 ),
             ):
                 return False
-        thread = dummy.DummyProcess(
-            target=identify_person.identify_all_players_by_name_as_persons,
-            args=(database,),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_person.identify_all_players_by_name_as_persons,
+            (database,),
+            update_widget_and_join_loop,
+        ).start_and_join()
         return True
 
     def get_database(self, title):

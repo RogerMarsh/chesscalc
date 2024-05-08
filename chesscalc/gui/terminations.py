@@ -11,13 +11,13 @@ Perhaps to confirm an expected game did not occur.
 
 """
 import tkinter
-from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
 from . import terminationsgrid
 from .eventspec import EventSpec
 from ..core import identify_termination
+from ..shared import task
 
 
 class TerminationsError(Exception):
@@ -87,12 +87,12 @@ class Terminations(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_termination.identify,
-            args=(database, new, terminations_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_termination.identify,
+            (database, new, terminations_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -145,12 +145,12 @@ class Terminations(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_termination.break_bookmarked_aliases,
-            args=(database, new, terminations_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_termination.break_bookmarked_aliases,
+            (database, new, terminations_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -183,12 +183,12 @@ class Terminations(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_termination.split_aliases,
-            args=(database, terminations_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_termination.split_aliases,
+            (database, terminations_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -221,12 +221,12 @@ class Terminations(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_termination.change_aliases,
-            args=(database, terminations_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_termination.change_aliases,
+            (database, terminations_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,

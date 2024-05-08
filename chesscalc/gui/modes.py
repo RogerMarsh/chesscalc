@@ -9,13 +9,13 @@ or 'online'.
 
 """
 import tkinter
-from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
 from . import modesgrid
 from .eventspec import EventSpec
 from ..core import identify_mode
+from ..shared import task
 
 
 class ModesError(Exception):
@@ -85,12 +85,12 @@ class Modes(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_mode.identify,
-            args=(database, new, modes_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_mode.identify,
+            (database, new, modes_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -143,12 +143,12 @@ class Modes(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_mode.break_bookmarked_aliases,
-            args=(database, new, modes_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_mode.break_bookmarked_aliases,
+            (database, new, modes_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -181,12 +181,12 @@ class Modes(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_mode.split_aliases,
-            args=(database, modes_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_mode.split_aliases,
+            (database, modes_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -219,12 +219,12 @@ class Modes(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_mode.change_aliases,
-            args=(database, modes_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_mode.change_aliases,
+            (database, modes_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,

@@ -6,7 +6,6 @@
 
 import tkinter
 import os
-from multiprocessing import dummy
 import datetime
 
 from solentware_bind.gui.bindings import Bindings
@@ -15,6 +14,7 @@ from . import personsgrid
 from .eventspec import EventSpec
 from ..core import identify_person
 from ..core import export
+from ..shared import task
 
 
 class PersonsError(Exception):
@@ -94,12 +94,12 @@ class Persons(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_person.break_person_into_picked_players,
-            args=(database, persons_sel, aliases, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_person.break_person_into_picked_players,
+            (database, persons_sel, aliases, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -166,12 +166,12 @@ class Persons(Bindings):
         ):
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_person.split_person_into_all_players,
-            args=(database, persons_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_person.split_person_into_all_players,
+            (database, persons_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -235,12 +235,12 @@ class Persons(Bindings):
         ):
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_person.change_identified_person,
-            args=(database, persons_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_person.change_identified_person,
+            (database, persons_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -275,12 +275,12 @@ class Persons(Bindings):
             )
             return False
         answer = {"status": None, "serialized_data": None}
-        thread = dummy.DummyProcess(
-            target=self._export_selected_players,
-            args=(database, persons_bmk, persons_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            self._export_selected_players,
+            (database, persons_bmk, persons_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["status"] is None:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -336,12 +336,12 @@ class Persons(Bindings):
                     )
                     return False
                 continue
-            thread = dummy.DummyProcess(
-                target=export.write_export_file,
-                args=(export_file, answer["serialized_data"]),
-            )
-            thread.start()
-            update_widget_and_join_loop(thread)
+            task.Task(
+                database,
+                export.write_export_file,
+                (export_file, answer["serialized_data"]),
+                update_widget_and_join_loop,
+            ).start_and_join()
             tkinter.messagebox.showinfo(
                 parent=self.frame,
                 message="".join(

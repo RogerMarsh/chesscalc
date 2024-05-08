@@ -5,13 +5,13 @@
 """List the time controls in the database."""
 
 import tkinter
-from multiprocessing import dummy
 
 from solentware_bind.gui.bindings import Bindings
 
 from . import timecontrolsgrid
 from .eventspec import EventSpec
 from ..core import identify_timecontrol
+from ..shared import task
 
 
 class TimeControlsError(Exception):
@@ -81,12 +81,12 @@ class TimeControls(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_timecontrol.identify,
-            args=(database, new, time_controls_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_timecontrol.identify,
+            (database, new, time_controls_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -139,12 +139,12 @@ class TimeControls(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_timecontrol.break_bookmarked_aliases,
-            args=(database, new, time_controls_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_timecontrol.break_bookmarked_aliases,
+            (database, new, time_controls_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -177,12 +177,12 @@ class TimeControls(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_timecontrol.split_aliases,
-            args=(database, time_controls_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_timecontrol.split_aliases,
+            (database, time_controls_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,
@@ -215,12 +215,12 @@ class TimeControls(Bindings):
             )
             return False
         answer = {"message": None}
-        thread = dummy.DummyProcess(
-            target=identify_timecontrol.change_aliases,
-            args=(database, time_controls_sel, answer),
-        )
-        thread.start()
-        update_widget_and_join_loop(thread)
+        task.Task(
+            database,
+            identify_timecontrol.change_aliases,
+            (database, time_controls_sel, answer),
+            update_widget_and_join_loop,
+        ).start_and_join()
         if answer["message"]:
             tkinter.messagebox.showinfo(
                 parent=self.frame,

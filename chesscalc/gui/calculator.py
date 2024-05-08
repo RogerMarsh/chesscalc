@@ -9,7 +9,6 @@ import tkinter.ttk
 import tkinter.messagebox
 import tkinter.filedialog
 import multiprocessing
-from multiprocessing import dummy
 import datetime
 
 from solentware_bind.gui.bindings import Bindings
@@ -48,6 +47,7 @@ from ..core import export
 from ..core import apply_identities
 from ..core import mirror_identities
 from ..core import playerrecord
+from ..shared import task
 
 ExceptionHandler.set_application_name(APPLICATION_NAME)
 
@@ -737,12 +737,12 @@ class Calculator(Bindings):
             return None
         self._apply_lock()
         answer = {"serialized_data": None}
-        thread = dummy.DummyProcess(
-            target=self._export_player_identities,
-            args=(self.database, answer),
-        )
-        thread.start()
-        self._update_widget_and_join_loop(thread)
+        task.Task(
+            self.database,
+            self._export_player_identities,
+            (self.database, answer),
+            self._update_widget_and_join_loop,
+        ).start_and_join()
         while True:
             export_file = os.path.join(
                 self.database.home_directory,
@@ -775,12 +775,12 @@ class Calculator(Bindings):
                     return False
                 continue
             break
-        thread = dummy.DummyProcess(
-            target=export.write_export_file,
-            args=(export_file, answer["serialized_data"]),
-        )
-        thread.start()
-        self._update_widget_and_join_loop(thread)
+        task.Task(
+            self.database,
+            export.write_export_file,
+            (export_file, answer["serialized_data"]),
+            self._update_widget_and_join_loop,
+        ).start_and_join()
         tkinter.messagebox.showinfo(
             parent=self.widget,
             message="".join(
@@ -2586,12 +2586,12 @@ class Calculator(Bindings):
     def _verify_and_apply_person_identities(self, import_file):
         """Verify imported player identifications and apply if consistent."""
         answer = {"report": None}
-        thread = dummy.DummyProcess(
-            target=self._apply_person_identities_and_prepare_report,
-            args=(import_file, answer),
-        )
-        thread.start()
-        self._update_widget_and_join_loop(thread)
+        task.Task(
+            self.database,
+            self._apply_person_identities_and_prepare_report,
+            (import_file, answer),
+            self._update_widget_and_join_loop,
+        ).start_and_join()
         if "error" in answer:
             tkinter.messagebox.showinfo(
                 parent=self.widget,
@@ -2656,12 +2656,12 @@ class Calculator(Bindings):
     def _verify_and_mirror_person_identities(self, import_file):
         """Verify imported player identifications and apply if consistent."""
         answer = {"report": None}
-        thread = dummy.DummyProcess(
-            target=self._mirror_person_identities_and_prepare_report,
-            args=(import_file, answer),
-        )
-        thread.start()
-        self._update_widget_and_join_loop(thread)
+        task.Task(
+            self.database,
+            self._mirror_person_identities_and_prepare_report,
+            (import_file, answer),
+            self._update_widget_and_join_loop,
+        ).start_and_join()
         if "error" in answer:
             tkinter.messagebox.showinfo(
                 parent=self.widget,

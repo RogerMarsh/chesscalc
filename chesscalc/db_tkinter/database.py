@@ -15,6 +15,10 @@ class Database(database.Database, db_tkinter_database.Database):
 
     _deferred_update_process = "chesscalc.db_tkinter.database_du"
 
+    # The tcl via tkinter interface gives a RuntimeError exception if
+    # database actions are not done in the main thread.
+    can_use_thread = False
+
     def __init__(
         self,
         DBfile,
