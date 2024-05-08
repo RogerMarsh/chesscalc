@@ -25,8 +25,8 @@ def identify(database, bookmarks, selection, answer):
     """
     answer["message"] = identify_item.identify(
         database,
-        bookmarks,
-        selection,
+        {_event(database, *b) for b in bookmarks},
+        [_event(database, *s) for s in selection],
         eventrecord.EventDBvalue,
         eventrecord.EventDBrecord,
         filespec.EVENT_FILE_DEF,
@@ -47,8 +47,8 @@ def break_bookmarked_aliases(database, bookmarks, selection, answer):
     """
     answer["message"] = identify_item.break_bookmarked_aliases(
         database,
-        bookmarks,
-        selection,
+        {_event(database, *b) for b in bookmarks},
+        [_event(database, *s) for s in selection],
         eventrecord.EventDBvalue,
         eventrecord.EventDBrecord,
         filespec.EVENT_FILE_DEF,
@@ -67,7 +67,7 @@ def split_aliases(database, selection, answer):
     """
     answer["message"] = identify_item.split_aliases(
         database,
-        selection,
+        [_event(database, *s) for s in selection],
         eventrecord.EventDBvalue,
         eventrecord.EventDBrecord,
         filespec.EVENT_FILE_DEF,
@@ -89,7 +89,7 @@ def change_aliases(database, selection, answer):
     """
     answer["message"] = identify_item.change_aliases(
         database,
-        selection,
+        [_event(database, *s) for s in selection],
         eventrecord.EventDBvalue,
         eventrecord.EventDBrecord,
         filespec.EVENT_FILE_DEF,
@@ -98,3 +98,27 @@ def change_aliases(database, selection, answer):
         filespec.EVENT_IDENTITY_FIELD_DEF,
         "event",
     )
+
+
+def _event(database, name, record_number):
+    """Return fule name of event and record number for record number.
+
+    Events are sorted for display by name.  Identify actions need the
+    full name of the event which can be found by looking up the
+    record number.
+
+    """
+    database.start_read_only_transaction()
+    try:
+        recordlist = database.recordlist_record_number(
+            filespec.EVENT_FILE_DEF, key=record_number
+        )
+        primary_record = identify_item.get_first_item_on_recordlist(
+            database, recordlist, filespec.EVENT_FILE_DEF
+        )
+    finally:
+        database.end_read_only_transaction()
+    event_record = eventrecord.EventDBrecord()
+    event_record.load_record(primary_record)
+    assert name == event_record.value.event
+    return (event_record.value.alias_index_key(), record_number)
