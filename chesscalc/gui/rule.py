@@ -568,7 +568,7 @@ class Rule(Bindings):
         )
         self._perfcalc.configure(state=tkinter.DISABLED)
         task.Task(
-            database,
+            self._database,
             self._read_data_for_performance_calculation,
             (valid_values, answer),
             update_widget_and_join_loop,
