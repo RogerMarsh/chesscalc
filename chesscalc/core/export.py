@@ -74,7 +74,7 @@ class ExportPersons(_ExportSelected):
             for item in self._selected:
                 itemperson = database.recordlist_record_number(
                     filespec.PLAYER_FILE_DEF,
-                    key=encode_record_selector(item[1]),
+                    key=item[1],
                 )
                 cursor = itemperson.create_recordsetbase_cursor()
                 data = cursor.next()
@@ -129,7 +129,7 @@ class ExportEventPersons(_ExportSelected):
             for item in self._selected:
                 itemevent = database.recordlist_record_number(
                     filespec.EVENT_FILE_DEF,
-                    key=encode_record_selector(item[1]),
+                    key=item[1],
                 )
                 event_cursor = itemevent.create_recordsetbase_cursor()
                 event_data = event_cursor.next()
