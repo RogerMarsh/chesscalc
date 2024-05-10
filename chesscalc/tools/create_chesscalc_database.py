@@ -4,6 +4,9 @@
 
 """Create chesscalc database with chosen database engine and segment size."""
 
+import os
+import tkinter
+
 from solentware_base.tools import create_database
 
 try:
@@ -45,6 +48,7 @@ try:
     from ..lmdb import database as lmdb_calc
 except ImportError:  # Not ModuleNotFoundError for Pythons earlier than 3.6
     lmdb_calc = None
+from .. import REPORT_DIRECTORY
 
 
 class CreateChessCalcDatabase(create_database.CreateDatabase):
@@ -89,6 +93,43 @@ class CreateChessCalcDatabase(create_database.CreateDatabase):
                 dpt_calc.dptnofistat.dpt_database._dpt.dptapi
             ] = dpt_calc.Database
         super().__init__(title="Create ChessCalc Database", engines=engines)
+
+    def create_folder_and_database(self, event=None):
+        """Delegate to superclass if directory name is allowed.
+
+        Some directory names are reserved for specific purposes, such as
+        <directory>/_reports for reports generated from the database; so
+        _reports/_reports is not available as the name of a database.
+
+        """
+        path = self.directory.get()
+        if os.path.split(path)[-1] == REPORT_DIRECTORY:
+            tkinter.messagebox.showerror(
+                parent=self.root,
+                message="".join(
+                    (
+                        "Cannot name new performance calculation ",
+                        "database directory\n\n'",
+                        REPORT_DIRECTORY,
+                        "'\n\nbecause\n\n'",
+                        os.path.join(REPORT_DIRECTORY, REPORT_DIRECTORY),
+                        "'\n\nis reserved as report directory name and ",
+                        "cannot be the database file name",
+                    )
+                ),
+            )
+            return
+        super().create_folder_and_database(event=event)
+        if self.directory.get() == "":
+            # The database directory has just been created so neither
+            # exception should be raised, but ignore if one of them is
+            # raised.
+            try:
+                if path != os.path.abspath(path):
+                    path = os.path.expanduser(os.path.join("~", path))
+                os.mkdir(os.path.join(path, REPORT_DIRECTORY))
+            except (FileExistsError, FileNotFoundError):
+                pass
 
 
 if __name__ == "__main__":

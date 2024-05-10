@@ -15,6 +15,7 @@ from .eventspec import EventSpec
 from ..core import identify_event
 from ..core import export
 from ..shared import task
+from .. import REPORT_DIRECTORY
 
 
 class EventsError(Exception):
@@ -288,9 +289,22 @@ class Events(Bindings):
                 title=title,
             )
             return False
+        directory = os.path.join(database.home_directory, REPORT_DIRECTORY)
+        if not os.path.isdir(directory):
+            tkinter.messagebox.showinfo(
+                parent=self.frame,
+                title=title,
+                message="".join(
+                    (
+                        directory,
+                        " is not a directory or does not exist\n\n",
+                        "Please create this directory",
+                    )
+                ),
+            )
         while True:
             export_file = os.path.join(
-                database.home_directory,
+                directory,
                 "_".join(
                     (
                         "identities",

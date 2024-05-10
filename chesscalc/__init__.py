@@ -21,6 +21,7 @@ import solentware_base.core.constants as sb_c_constants
 
 APPLICATION_NAME = "ChessPerfCalc"
 ERROR_LOG = "ErrorLog"
+REPORT_DIRECTORY = "_reports"
 
 # Map database module names to application module
 APPLICATION_DATABASE_MODULE = {

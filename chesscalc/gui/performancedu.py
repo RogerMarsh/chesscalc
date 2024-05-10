@@ -19,10 +19,7 @@ from solentware_bind.gui.bindings import Bindings
 
 from solentware_base.core import constants as sb_core_constants
 
-from .. import (
-    ERROR_LOG,
-    APPLICATION_NAME,
-)
+from .. import ERROR_LOG, APPLICATION_NAME, REPORT_DIRECTORY
 from ..core import filespec
 from ..shared import alldu
 
@@ -951,16 +948,51 @@ class DeferredUpdate(Bindings):
             title="Dismiss",
             message="".join(
                 (
-                    "Do you want to dismiss the import log?",
-                    "\n\nThe log will be saved to\n'LatestImportLog.txt'\n",
-                    "on dismissal, replacing any existing content.",
+                    "Do you want to dismiss the import log?\n\n",
+                    "The log will be saved in\n'ImportLog_<time stamp>'\n",
+                    "on dismissal.",
                 )
             ),
         ):
-            with open(
-                os.path.join(self.home_directory, "LatestImportLog.txt"),
-                mode="w",
-                encoding="utf-8",
-            ) as logfile:
-                logfile.write(self.report.get("1.0", tkinter.END))
+            directory = os.path.join(self.home_directory, REPORT_DIRECTORY)
+            if not os.path.isdir(directory):
+                tkinter.messagebox.showinfo(
+                    parent=self.root,
+                    title="Dismiss",
+                    message="".join(
+                        (
+                            directory,
+                            " is not a directory or does not exist\n\n",
+                            "Please create this directory",
+                        )
+                    ),
+                )
+            while True:
+                log_file = os.path.join(
+                    directory,
+                    "_".join(
+                        (
+                            "ImportLog",
+                            datetime.datetime.now().isoformat(
+                                sep="_", timespec="seconds"
+                            ),
+                        )
+                    ),
+                )
+                if os.path.exists(log_file):
+                    tkinter.messagebox.showinfo(
+                        parent=self.root,
+                        title="Dismiss",
+                        message="".join(
+                            (
+                                os.path.basename(log_file),
+                                " exists\n\nPlease try again",
+                                " to get a new timestamp",
+                            )
+                        ),
+                    )
+                    continue
+                with open(log_file, mode="w", encoding="utf-8") as logfile:
+                    logfile.write(self.report.get("1.0", tkinter.END))
+                break
             self.root.destroy()

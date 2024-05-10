@@ -228,6 +228,11 @@ class Rule(Bindings):
         """Return the top frame of the rule widget."""
         return self._frame
 
+    @property
+    def report_text(self):
+        """Return tkinter.Text object containing performance calculation."""
+        return self._perfcalc
+
     def get_rule_name_from_tab(self):
         """Return name displayed in the rule name widget."""
         return self._rule.get()

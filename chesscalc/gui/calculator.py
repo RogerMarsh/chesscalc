@@ -23,7 +23,7 @@ from .eventspec import EventSpec
 from ..core import configuration
 from ..core import constants
 from ..core import filespec
-from .. import APPLICATION_DATABASE_MODULE, ERROR_LOG
+from .. import APPLICATION_DATABASE_MODULE, ERROR_LOG, REPORT_DIRECTORY
 from ..shared import rundu
 from . import games
 from . import players
@@ -743,9 +743,24 @@ class Calculator(Bindings):
             (self.database, answer),
             self._update_widget_and_join_loop,
         ).start_and_join()
+        directory = os.path.join(
+            self.database.home_directory, REPORT_DIRECTORY
+        )
+        if not os.path.isdir(directory):
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=title,
+                message="".join(
+                    (
+                        directory,
+                        " is not a directory or does not exist\n\n",
+                        "Please create this directory",
+                    )
+                ),
+            )
         while True:
             export_file = os.path.join(
-                self.database.home_directory,
+                directory,
                 "_".join(
                     (
                         "identities",
@@ -973,6 +988,23 @@ class Calculator(Bindings):
             )
             return
 
+        if os.path.basename(database_folder) == REPORT_DIRECTORY:
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                message="".join(
+                    (
+                        "Cannot name new performance calculation ",
+                        "database directory\n\n'",
+                        REPORT_DIRECTORY,
+                        "'\n\nbecause\n\n'",
+                        os.path.join(REPORT_DIRECTORY, REPORT_DIRECTORY),
+                        "'\n\nis reserved as report directory name and ",
+                        "cannot be the database file name",
+                    )
+                ),
+                title="New",
+            )
+            return
         if os.path.exists(database_folder):
             modules = modulequery.modules_for_existing_databases(
                 database_folder, filespec.FileSpec()
@@ -1006,6 +1038,10 @@ class Calculator(Bindings):
                     title="New",
                 )
                 return
+            try:
+                os.mkdir(os.path.join(database_folder, REPORT_DIRECTORY))
+            except (FileExistsError, FileNotFoundError):
+                pass
         conf.set_configuration_value(
             constants.RECENT_DATABASE,
             conf.convert_home_directory_to_tilde(database_folder),
@@ -2410,8 +2446,22 @@ class Calculator(Bindings):
         tab = report_type(menu_event_spec)
         if not tab:
             return
+        directory = os.path.join(self.database_folder, REPORT_DIRECTORY)
+        if not os.path.isdir(directory):
+            tkinter.messagebox.showinfo(
+                parent=self.widget,
+                title=menu_event_spec[1],
+                message="".join(
+                    (
+                        directory,
+                        " is not a directory or does not exist\n\n",
+                        "Please create this directory and try again",
+                    )
+                ),
+            )
+            return
         filename = os.path.join(
-            self.database_folder,
+            directory,
             "_".join(
                 (
                     menu_event_spec[1].split()[-1],

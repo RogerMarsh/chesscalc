@@ -7,7 +7,7 @@
 import os
 import shutil
 
-from .. import APPLICATION_NAME, ERROR_LOG
+from .. import APPLICATION_NAME, ERROR_LOG, REPORT_DIRECTORY
 
 
 class Database:
@@ -36,8 +36,9 @@ class Database:
         """Delete database and return message about items not deleted."""
         listnames = set(n for n in os.listdir(self.home_directory))
         homenames = set(n for n in names if os.path.basename(n) in listnames)
-        if ERROR_LOG in listnames:
-            homenames.add(ERROR_LOG)
+        for name in (ERROR_LOG, REPORT_DIRECTORY):
+            if name in listnames:
+                homenames.add(name)
         if len(listnames - set(os.path.basename(h) for h in homenames)):
             message = "".join(
                 (
