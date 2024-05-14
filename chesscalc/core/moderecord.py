@@ -4,8 +4,6 @@
 
 """Record definition classes for Mode PGN tag data."""
 
-from ast import literal_eval
-
 from solentware_base.core.record import KeyData
 from solentware_base.core.record import ValueList
 from solentware_base.core.record import Record
@@ -51,11 +49,11 @@ class ModeDBvalue(ValueList):
 
     def alias_index_key(self):
         """Return the key for the modealias index."""
-        return repr(self.mode)
+        return self.mode
 
     def load_alias_index_key(self, value):
         """Bind attributes for the modealias index to items in value."""
-        self.mode = literal_eval(value)
+        self.mode = value
 
     def pack(self):
         """Delegate to generate playing mode data then add index data.
@@ -242,7 +240,7 @@ class ModeDBImporter(ModeDBrecord):
             record = cursor.next()
             if record is None:
                 break
-            this_record = literal_eval(record[0])
+            this_record = record[0]
             if prev_record == this_record:
                 continue
             prev_record = this_record

@@ -18,6 +18,10 @@ class LmdbDatabaseduError(Exception):
 class Database(alldu.Alldu, litedu.Litedu, lmdbdu_database.Database):
     """Provide custom deferred update for chess performance database."""
 
+    # Tag value "" may be given for use as an index value.
+    # Symas LMDB is known to not support zero length bytestring keys.
+    zero_length_keys_supported = False
+
     def __init__(self, DBfile, **kargs):
         """Delegate with LmdbDatabaseduError as exception class."""
         super().__init__(DBfile, LmdbDatabaseduError, **kargs)

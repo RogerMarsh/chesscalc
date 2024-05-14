@@ -4,8 +4,6 @@
 
 """Record definition classes for BlackType and WhiteType PGN tag data."""
 
-from ast import literal_eval
-
 from solentware_base.core.record import KeyData
 from solentware_base.core.record import ValueList
 from solentware_base.core.record import Record
@@ -51,11 +49,11 @@ class PlayerTypeDBvalue(ValueList):
 
     def alias_index_key(self):
         """Return the key for the playertypealias index."""
-        return repr(self.playertype)
+        return self.playertype
 
     def load_alias_index_key(self, value):
         """Bind attributes for the playertypealias index to items in value."""
-        self.playertype = literal_eval(value)
+        self.playertype = value
 
     def pack(self):
         """Delegate to generate player type data then add index data.
@@ -247,7 +245,7 @@ class PlayerTypeDBImporter(PlayerTypeDBrecord):
             record = cursor.next()
             if record is None:
                 break
-            this_record = literal_eval(record[0])
+            this_record = record[0]
             if prev_record == this_record:
                 continue
             prev_record = this_record

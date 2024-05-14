@@ -770,6 +770,10 @@ class Alldu:
     32768 in an attempt to avoid a MemoryError exception.
     """
 
+    # Tag value "" may be given for use as an index value.
+    # Symas LMDB is known to not support zero length bytestring keys.
+    zero_length_keys_supported = True
+
     # The optimum chunk size is the segment size.
     # Assuming 2Gb memory:
     # A default FreeBSD user process will not cause a MemoryError exception for

@@ -561,6 +561,32 @@ class GameDBImporter(GameDBrecord):
                             )
                         )
                     continue
+
+                # Symas LMDB does not supported zero length bytestring keys.
+                if not database.zero_length_keys_supported:
+                    headers = self.value.headers
+                    for name in (
+                        constants.TAG_TIMECONTROL,
+                        constants.TAG_MODE,
+                        constants.TAG_TERMINATION,
+                    ):
+                        if headers.get(name) == "":
+                            del headers[name]
+                            if reporter is not None:
+                                reporter.append_text_only(
+                                    "".join(
+                                        (
+                                            "Game ",
+                                            reference[constants.GAME],
+                                            " in ",
+                                            reference[constants.FILE],
+                                            " : tag ",
+                                            name,
+                                            ' with value "" ignored.',
+                                        )
+                                    )
+                                )
+
                 copy_number += 1
                 self.key.recno = None
                 self.put_record(self.database, filespec.GAME_FILE_DEF)

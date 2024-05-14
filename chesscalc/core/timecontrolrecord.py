@@ -4,8 +4,6 @@
 
 """Record definition classes for TimeControl PGN tag data."""
 
-from ast import literal_eval
-
 from solentware_base.core.record import KeyData
 from solentware_base.core.record import ValueList
 from solentware_base.core.record import Record
@@ -51,11 +49,11 @@ class TimeControlDBvalue(ValueList):
 
     def alias_index_key(self):
         """Return the key for the timealias index."""
-        return repr(self.timecontrol)
+        return self.timecontrol
 
     def load_alias_index_key(self, value):
         """Bind attributes for the timealias index to items in value."""
-        self.timecontrol = literal_eval(value)
+        self.timecontrol = value
 
     def pack(self):
         """Delegate to generate time control data then add index data.
@@ -138,7 +136,6 @@ class TimeControlDBImporter(TimeControlDBrecord):
             record = cursor.next()
             if record is None:
                 break
-            # this_record = literal_eval(record[0])
             this_record = record[0]
             if prev_record == this_record:
                 continue
@@ -247,7 +244,7 @@ class TimeControlDBImporter(TimeControlDBrecord):
             record = cursor.next()
             if record is None:
                 break
-            this_record = literal_eval(record[0])
+            this_record = record[0]
             if prev_record == this_record:
                 continue
             prev_record = this_record
