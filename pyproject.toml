@@ -10,7 +10,7 @@ line-length = 79
 
 [project]
 name = "chesscalc"
-version = "2.0.0.dev7"
+version = "2.0.0.dev8"
 authors = [
   { name="Roger Marsh", email="roger.marsh@solentware.co.uk" },
 ]
@@ -31,7 +31,7 @@ license = {file = "LICENCE"}
 readme = "README"
 dependencies = [
     "solentware-misc==1.7.dev0",
-    "solentware-base==5.2.dev2",
+    "solentware-base==5.2.dev3",
     "solentware-grid==3.0.dev0",
     "pgn-read==2.4.dev0",
 ]
