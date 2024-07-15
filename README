@@ -8,13 +8,13 @@ Calculate player performances from chess game results
 Description
 ===========
 
-This package provides methods to calculate player performances and performance statistics.
+This package provides methods to calculate player performances.
 
-Calculate player performances from a set of game results.
+Calculate player performances from results of games imported from `PGN`_ format files.
 
-Display a list of player performances based only on the given results.
+Provide facilities to resolve player identities where inconsistencies exist in the PGN Tag Values for games involving the same player.
 
-Display various calculations and statistics for the given results.
+Provide facilties to resolve inconsistent identities, time controls or playing modes for example, derived from other PGN Tag Values.
 
 
 Installation Instructions
@@ -58,9 +58,20 @@ Or use the facilities of your desktop (Microsoft Windows, GNOME, KDE, ...) to se
 Notes
 =====
 
-The current implementation does just enough to support the `ChessResults`_ package.
+ChessCalc makes no attempt to ease the problems arising from not using PGN Tags in the way envisaged in the PGN specification.  For example:
+
+    Not using the WhiteType and BlackType tags to indicate human or algorithmic players.
+
+    Not using the TimeControl tag to indicate the time controls.  This determines if the game is standard, rapid, or blitz (using English Chess Federation terms); or some other distinctions.
+
+    Not using the Mode tag to indicate Online or Over The Board play.
+
+ChessCalc does use the WhiteTeam and BlackTeam tags which appear in PGN files published by `TWIC`_.  At time of writing I have not seen these PGN tags elsewhere.
+
+The legacy sub-package contains some of the implementation prior to version 2.0.0 but this will be removed in the future.
 
 
 .. _Python: https://python.org
 .. _pip: https://packaging.python.org/installing
-.. _ChessResults: http://solentware.co.uk/grading.html
+.. _PGN: https://www.chessclub.com/help/PGN-spec
+.. _TWIC: https://theweekinchess.com
