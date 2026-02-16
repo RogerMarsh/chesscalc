@@ -71,15 +71,21 @@ class SelectorsRow(selectorrecord.SelectorDBrecord, datarow.DataRow):
                 value.from_date if value.from_date is not None else "",
                 value.to_date if value.to_date is not None else "",
                 value.mode_identity if value.mode_identity is not None else "",
-                value.time_control_identity
-                if value.time_control_identity is not None
-                else "",
-                value.person_identity
-                if value.person_identity is not None
-                else "",
-                value.event_identities
-                if value.event_identities is not None
-                else "",
+                (
+                    value.time_control_identity
+                    if value.time_control_identity is not None
+                    else ""
+                ),
+                (
+                    value.person_identity
+                    if value.person_identity is not None
+                    else ""
+                ),
+                (
+                    value.event_identities
+                    if value.event_identities is not None
+                    else ""
+                ),
             ),
             **kargs
         )

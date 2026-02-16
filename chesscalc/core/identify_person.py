@@ -514,9 +514,9 @@ def split_person_into_all_players(database, person, answer):
         person_record.load_record(primary_record)
         if person_record.value.identity != person_record.value.alias:
             database.backout()
-            answer[
-                "message"
-            ] = "Cannot split: selection is not the identified person"
+            answer["message"] = (
+                "Cannot split: selection is not the identified person"
+            )
             return
         identity = person_record.value.alias
         recordlist = database.recordlist_key(
@@ -546,9 +546,9 @@ def split_person_into_all_players(database, person, answer):
                 alias_record.load_record(primary_record)
                 if identity != alias_record.value.alias:
                     database.backout()
-                    answer[
-                        "message"
-                    ] = "Cannot split: selection is not for identified person"
+                    answer["message"] = (
+                        "Cannot split: selection is not for identified person"
+                    )
                     return
                 player_record = playerrecord.PlayerDBrecord()
                 player_record.load_record(primary_record)
@@ -601,9 +601,9 @@ def break_person_into_picked_players(database, person, aliases, answer):
         person_record.load_record(primary_record)
         if person_record.value.identity != person_record.value.alias:
             database.backout()
-            answer[
-                "message"
-            ] = "Cannot break: selection is not the identified person"
+            answer["message"] = (
+                "Cannot break: selection is not the identified person"
+            )
             return
         identity = person_record.value.identity
         gamelist = database.recordlist_key(
@@ -700,9 +700,9 @@ def change_identified_person(database, player, answer):
         selection_record.load_record(primary_record)
         if selection_record.value.identity == selection_record.value.alias:
             database.backout()
-            answer[
-                "message"
-            ] = "Not changed: selection is already the identified person"
+            answer["message"] = (
+                "Not changed: selection is already the identified person"
+            )
             return
         recordlist = database.recordlist_key(
             filespec.PLAYER_FILE_DEF,
@@ -739,9 +739,9 @@ def change_identified_person(database, player, answer):
                 )
                 if selection_record.value.alias != alias_record.value.alias:
                     database.backout()
-                    answer[
-                        "message"
-                    ] = "Cannot change: alias is not for identified person"
+                    answer["message"] = (
+                        "Cannot change: alias is not for identified person"
+                    )
                     return
                 clone_record = alias_record.clone()
                 clone_record.value.alias = selection_record.value.identity

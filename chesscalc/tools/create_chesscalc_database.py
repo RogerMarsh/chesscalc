@@ -65,15 +65,15 @@ class CreateChessCalcDatabase(create_database.CreateDatabase):
         """Build the user interface."""
         engines = {}
         if unqlite_calc:
-            engines[
-                unqlite_calc.unqlite_database.unqlite
-            ] = unqlite_calc.Database
+            engines[unqlite_calc.unqlite_database.unqlite] = (
+                unqlite_calc.Database
+            )
         if vedis_calc:
             engines[vedis_calc.vedis_database.vedis] = vedis_calc.Database
         if sqlite3_calc:
-            engines[
-                sqlite3_calc.sqlite3_database.sqlite3
-            ] = sqlite3_calc.Database
+            engines[sqlite3_calc.sqlite3_database.sqlite3] = (
+                sqlite3_calc.Database
+            )
         if apsw_calc:
             engines[apsw_calc.apsw_database.apsw] = apsw_calc.Database
         if db_calc:
@@ -81,17 +81,17 @@ class CreateChessCalcDatabase(create_database.CreateDatabase):
         if lmdb_calc:
             engines[lmdb_calc.lmdb_database.lmdb] = lmdb_calc.Database
         if berkeleydb_calc:
-            engines[
-                berkeleydb_calc.berkeleydb_database.berkeleydb
-            ] = berkeleydb_calc.Database
+            engines[berkeleydb_calc.berkeleydb_database.berkeleydb] = (
+                berkeleydb_calc.Database
+            )
         if dbtkinter_calc:
-            engines[
-                dbtkinter_calc.db_tkinter_database.db_tcl
-            ] = dbtkinter_calc.Database
+            engines[dbtkinter_calc.db_tkinter_database.db_tcl] = (
+                dbtkinter_calc.Database
+            )
         if dpt_calc:
-            engines[
-                dpt_calc.dptnofistat.dpt_database._dpt.dptapi
-            ] = dpt_calc.Database
+            engines[dpt_calc.dptnofistat.dpt_database._dpt.dptapi] = (
+                dpt_calc.Database
+            )
         super().__init__(title="Create ChessCalc Database", engines=engines)
 
     def create_folder_and_database(self, event=None):
