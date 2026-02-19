@@ -84,6 +84,8 @@ class Population:
                         game_opponent.create_recordsetbase_cursor()
                     )
                     record = game_opponent_cursor.first()
+                    game_opponent_cursor.close()
+                    game_opponent.close()
                     if record is None:
                         continue
                     person_record.load_record(record)
@@ -106,6 +108,8 @@ class Population:
                         game_opponent.create_recordsetbase_cursor()
                     )
                     record = game_opponent_cursor.first()
+                    game_opponent_cursor.close()
+                    game_opponent.close()
                     if record is None:
                         continue
                     person_record.load_record(record)
@@ -114,8 +118,11 @@ class Population:
                         measure,
                     )
                     opponents.append(value.identity)
+            game_cursor.close()
+            person_games.close()
             if opponents:
                 persons[player_identity] = person_detail
+        person_cursor.close()
 
     def __deepcopy__(self, memo):
         """Return deep copy of self."""

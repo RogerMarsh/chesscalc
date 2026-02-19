@@ -116,6 +116,7 @@ def _event(database, name, record_number):
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.EVENT_FILE_DEF
         )
+        recordlist.close()
     finally:
         database.end_read_only_transaction()
     event_record = eventrecord.EventDBrecord()

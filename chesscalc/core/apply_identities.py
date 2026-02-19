@@ -65,10 +65,14 @@ class _NameStatus:
             count = personlist.count_records()
             if count > 1:
                 self.message = "Player by name record is not unique."
+                personlist.close()
                 return
-            record = personlist.create_recordsetbase_cursor(
+            plcursor = personlist.create_recordsetbase_cursor(
                 internalcursor=True
-            ).first()
+            )
+            record = plcursor.first()
+            plcursor.close()
+            personlist.close()
             if record:
                 not_identified[name] = record
                 continue
@@ -80,10 +84,14 @@ class _NameStatus:
             count = personlist.count_records()
             if count > 1:
                 self.message = "Person by name record is not unique."
+                personlist.close()
                 return
-            record = personlist.create_recordsetbase_cursor(
+            plcursor = personlist.create_recordsetbase_cursor(
                 internalcursor=True
-            ).first()
+            )
+            record = plcursor.first()
+            plcursor.close()
+            personlist.close()
             if record:
                 person_record.load_record(record)
                 alias = person_record.value.alias
@@ -164,17 +172,20 @@ class _NameStatus:
                 database, filespec.PLAYER_FILE_DEF, None, person_record
             )
 
-            persongames |= database.recordlist_key(
+            recordlist_key = database.recordlist_key(
                 filespec.GAME_FILE_DEF,
                 filespec.GAME_PLAYER_FIELD_DEF,
                 key=encode_record_selector(value.alias_index_key()),
             )
+            persongames |= recordlist_key
+            recordlist_key.close()
         database.file_records_under(
             filespec.GAME_FILE_DEF,
             filespec.GAME_PERSON_FIELD_DEF,
             persongames,
             encode_record_selector(person),
         )
+        persongames.close()
 
 
 def verify_and_apply_identities(database, identities):

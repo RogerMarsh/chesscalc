@@ -40,24 +40,26 @@ def identify_players_as_person(database, players, person):
     """
     database.start_transaction()
     try:
-        gamelist = database.recordlist_nil(filespec.GAME_FILE_DEF)
         recordlist = database.recordlist_record_number(
             filespec.PLAYER_FILE_DEF, key=person[0][1]
         )
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise PlayerToPerson(
                 repr(person[0]).join(("Person record ", " does not exist"))
             )
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
         )
+        recordlist.close()
         player_record = playerrecord.PlayerDBrecord()
         player_record.load_record(primary_record)
         alias = player_record.value.alias
         selector = database.encode_record_selector(
             player_record.value.alias_index_key()
         )
+        gamelist = database.recordlist_nil(filespec.GAME_FILE_DEF)
 
         # May be adding aliases to an existing known player.
         current_gamelist = database.recordlist_key(
@@ -69,26 +71,28 @@ def identify_players_as_person(database, players, person):
         if current_gamelist is not None:
             gamelist |= current_gamelist
         current_gamelist.close()
-        gamelist |= database.recordlist_key(
+        selector_list = database.recordlist_key(
             filespec.GAME_FILE_DEF,
             filespec.GAME_PLAYER_FIELD_DEF,
             key=selector,
         )
+        gamelist |= selector_list
+        selector_list.close()
         recordlist = database.recordlist_key(
             filespec.PLAYER_FILE_DEF,
             filespec.PERSON_ALIAS_FIELD_DEF,
             key=selector,
         )
         count = recordlist.count_records()
-        if (
-            count
-            + database.recordlist_key(
-                filespec.PLAYER_FILE_DEF,
-                filespec.PLAYER_ALIAS_FIELD_DEF,
-                key=selector,
-            ).count_records()
-            != 1
-        ):
+        recordlist.close()
+        selector_list = database.recordlist_key(
+            filespec.PLAYER_FILE_DEF,
+            filespec.PLAYER_ALIAS_FIELD_DEF,
+            key=selector,
+        )
+        if count + selector_list.count_records() != 1:
+            selector_list.close()
+            gamelist.close()
             if count:
                 raise PlayerToPerson("Duplicate references for person")
             raise PlayerToPerson(
@@ -96,6 +100,7 @@ def identify_players_as_person(database, players, person):
                     ("Player reference for ", " does not exist")
                 )
             )
+        selector_list.close()
         if count == 0:
             person_record = playerrecord.PlayerDBrecord(
                 valueclass=playerrecord.PersonDBvalue
@@ -115,21 +120,26 @@ def identify_players_as_person(database, players, person):
             )
             count = recordlist.count_records()
             if count == 0:
+                recordlist.close()
+                gamelist.close()
                 raise PlayerToPerson(
                     repr(person[0]).join(("Player record ", " does not exist"))
                 )
             primary_record = identify_item.get_first_item_on_recordlist(
                 database, recordlist, filespec.PLAYER_FILE_DEF
             )
+            recordlist.close()
             player_record = playerrecord.PlayerDBrecord()
             player_record.load_record(primary_record)
-            gamelist |= database.recordlist_key(
+            selector_list = database.recordlist_key(
                 filespec.GAME_FILE_DEF,
                 filespec.GAME_PLAYER_FIELD_DEF,
                 key=database.encode_record_selector(
                     player_record.value.alias_index_key()
                 ),
             )
+            gamelist |= selector_list
+            selector_list.close()
             person_record = playerrecord.PlayerDBrecord(
                 valueclass=playerrecord.PersonDBvalue
             )
@@ -148,6 +158,7 @@ def identify_players_as_person(database, players, person):
             gamelist,
             database.encode_record_selector(alias),
         )
+        gamelist.close()
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise
@@ -173,18 +184,19 @@ def identify_players_by_name_as_person(database, players, person):
     encode_record_selector = database.encode_record_selector
     database.start_transaction()
     try:
-        gamelist = database.recordlist_nil(filespec.GAME_FILE_DEF)
         recordlist = database.recordlist_record_number(
             filespec.PLAYER_FILE_DEF, key=person[0][1]
         )
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise PlayerToPerson(
                 repr(person[0]).join(("Person record ", " does not exist"))
             )
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
         )
+        recordlist.close()
         player_record = playerrecord.PlayerDBrecord()
         player_record.load_record(primary_record)
         if player_record.value.alias != player_record.value.identity:
@@ -196,6 +208,7 @@ def identify_players_by_name_as_person(database, players, person):
             )
             count = recordlist.count_records()
             if count == 0:
+                recordlist.close()
                 raise PlayerToPerson(
                     repr(person[0]).join(
                         ("Person record for alias ", " does not exist")
@@ -204,6 +217,7 @@ def identify_players_by_name_as_person(database, players, person):
             primary_record = identify_item.get_first_item_on_recordlist(
                 database, recordlist, filespec.PLAYER_FILE_DEF
             )
+            recordlist.close()
             player_record.load_record(primary_record)
             assert player_record.value.alias == player_record.value.identity
         selector = encode_record_selector(
@@ -217,29 +231,32 @@ def identify_players_by_name_as_person(database, players, person):
             key=encode_record_selector(player_record.value.alias),
         )
 
+        gamelist = database.recordlist_nil(filespec.GAME_FILE_DEF)
         if current_gamelist is not None:
             gamelist |= current_gamelist
         current_gamelist.close()
-        gamelist |= database.recordlist_key(
+        selector_list = database.recordlist_key(
             filespec.GAME_FILE_DEF,
             filespec.GAME_PLAYER_FIELD_DEF,
             key=selector,
         )
+        gamelist |= selector_list
+        selector_list.close()
         recordlist = database.recordlist_key(
             filespec.PLAYER_FILE_DEF,
             filespec.PERSON_ALIAS_FIELD_DEF,
             key=selector,
         )
         count = recordlist.count_records()
-        if (
-            count
-            + database.recordlist_key(
-                filespec.PLAYER_FILE_DEF,
-                filespec.PLAYER_ALIAS_FIELD_DEF,
-                key=selector,
-            ).count_records()
-            != 1
-        ):
+        recordlist.close()
+        recordlist = database.recordlist_key(
+            filespec.PLAYER_FILE_DEF,
+            filespec.PLAYER_ALIAS_FIELD_DEF,
+            key=selector,
+        )
+        if count + recordlist.count_records() != 1:
+            selector_list.close()
+            gamelist.close()
             if count:
                 raise PlayerToPerson("Duplicate references for person")
             raise PlayerToPerson(
@@ -247,6 +264,7 @@ def identify_players_by_name_as_person(database, players, person):
                     ("Player reference for ", " does not exist")
                 )
             )
+        recordlist.close()
         if count == 0:
             # A known player was not selected so the selection on the new
             # player list becomes a known player and all the other entries
@@ -277,6 +295,7 @@ def identify_players_by_name_as_person(database, players, person):
             count = recordlist.count_records()
             if count == 0:
                 # Assume players set refered to same entry as person list.
+                recordlist.close()
                 continue
             cursor = recordlist.create_recordsetbase_cursor()
             while True:
@@ -297,17 +316,22 @@ def identify_players_by_name_as_person(database, players, person):
                     database, filespec.PLAYER_FILE_DEF, None, person_record
                 )
 
-                gamelist |= database.recordlist_key(
+                aliaslist |= database.recordlist_key(
                     filespec.GAME_FILE_DEF,
                     filespec.GAME_PLAYER_FIELD_DEF,
                     key=encode_record_selector(player_value.alias_index_key()),
                 )
+                gamelist |= aliaslist
+                aliaslist.close()
+            cursor.close()
+            recordlist.close()
         database.file_records_under(
             filespec.GAME_FILE_DEF,
             filespec.GAME_PERSON_FIELD_DEF,
             gamelist,
             database.encode_record_selector(alias),
         )
+        gamelist.close()
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise
@@ -430,20 +454,24 @@ def identify_all_players_by_name_as_persons(database):
                         database, filespec.PLAYER_FILE_DEF, None, person_record
                     )
 
-                    gamelist |= database.recordlist_key(
+                    aliaslist = database.recordlist_key(
                         filespec.GAME_FILE_DEF,
                         filespec.GAME_PLAYER_FIELD_DEF,
                         key=encode_record_selector(
                             player_record.value.alias_index_key()
                         ),
                     )
+                    gamelist |= aliaslist
+                    aliaslist.close()
                 database.file_records_under(
                     filespec.GAME_FILE_DEF,
                     filespec.GAME_PERSON_FIELD_DEF,
                     gamelist,
                     database.encode_record_selector(alias),
                 )
+                name_cursor.close()
                 name_new.close()
+                gamelist.close()
                 continue
             gamelist = database.recordlist_nil(filespec.GAME_FILE_DEF)
             alias = value.alias
@@ -467,20 +495,24 @@ def identify_all_players_by_name_as_persons(database):
                     database, filespec.PLAYER_FILE_DEF, None, person_record
                 )
 
-                gamelist |= database.recordlist_key(
+                aliaslist = database.recordlist_key(
                     filespec.GAME_FILE_DEF,
                     filespec.GAME_PLAYER_FIELD_DEF,
                     key=encode_record_selector(
                         player_record.value.alias_index_key()
                     ),
                 )
+                gamelist |= aliaslist
+                aliaslist.close()
             database.file_records_under(
                 filespec.GAME_FILE_DEF,
                 filespec.GAME_PERSON_FIELD_DEF,
                 gamelist,
                 database.encode_record_selector(alias),
             )
+            name_cursor.close()
             name_new.close()
+            gamelist.close()
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise
@@ -502,12 +534,14 @@ def split_person_into_all_players(database, person, answer):
         )
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise PersonToPlayer(
                 repr(person[0]).join(("Person record ", " does not exist"))
             )
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
         )
+        recordlist.close()
         person_record = playerrecord.PlayerDBrecord(
             valueclass=playerrecord.PersonDBvalue
         )
@@ -526,6 +560,7 @@ def split_person_into_all_players(database, person, answer):
         )
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise PlayerToPerson("Cannot split: no players with this identity")
         cursor = database.database_cursor(
             filespec.PLAYER_FILE_DEF,
@@ -562,6 +597,7 @@ def split_person_into_all_players(database, person, answer):
                 )
         finally:
             cursor.close()
+            recordlist.close()
         database.unfile_records_under(
             filespec.GAME_FILE_DEF,
             filespec.GAME_PERSON_FIELD_DEF,
@@ -589,12 +625,14 @@ def break_person_into_picked_players(database, person, aliases, answer):
         )
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise PersonToPlayer(
                 repr(person[0]).join(("Person record ", " does not exist"))
             )
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
         )
+        recordlist.close()
         person_record = playerrecord.PlayerDBrecord(
             valueclass=playerrecord.PersonDBvalue
         )
@@ -617,6 +655,7 @@ def break_person_into_picked_players(database, person, aliases, answer):
             )
             count = recordlist.count_records()
             if count == 0:
+                recordlist.close()
                 raise PersonToPlayer(
                     repr(alias[0]).join(
                         ("Cannot break: alias record ", " does not exist")
@@ -627,9 +666,12 @@ def break_person_into_picked_players(database, person, aliases, answer):
                 recordlist,
                 filespec.PLAYER_FILE_DEF,
             )
+            recordlist.close()
             player_record = playerrecord.PlayerDBrecord()
             player_record.load_record(primary_record)
             if identity != player_record.value.alias:
+                recordlist.close()
+                gamelist.close()
                 database.backout()
                 answer["message"] = "".join(
                     (
@@ -639,15 +681,15 @@ def break_person_into_picked_players(database, person, aliases, answer):
                     )
                 )
                 return
-            gamelist.remove_recordset(
-                database.recordlist_key(
-                    filespec.GAME_FILE_DEF,
-                    filespec.GAME_PLAYER_FIELD_DEF,
-                    key=database.encode_record_selector(
-                        player_record.value.alias_index_key()
-                    ),
-                )
+            aliaslist = database.recordlist_key(
+                filespec.GAME_FILE_DEF,
+                filespec.GAME_PLAYER_FIELD_DEF,
+                key=database.encode_record_selector(
+                    player_record.value.alias_index_key()
+                ),
             )
+            gamelist.remove_recordset(aliaslist)
+            aliaslist.close()
             alias_record = playerrecord.PlayerDBrecord(
                 valueclass=playerrecord.PersonDBvalue
             )
@@ -666,6 +708,7 @@ def break_person_into_picked_players(database, person, aliases, answer):
             gamelist,
             database.encode_record_selector(identity),
         )
+        gamelist.close()
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise
@@ -688,12 +731,14 @@ def change_identified_person(database, player, answer):
         )
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise PersonIdentity(
                 repr(player[0]).join(("Person record ", " does not exist"))
             )
         primary_record = identify_item.get_first_item_on_recordlist(
             database, recordlist, filespec.PLAYER_FILE_DEF
         )
+        recordlist.close()
         selection_record = playerrecord.PlayerDBrecord(
             valueclass=playerrecord.PersonDBvalue
         )
@@ -711,6 +756,7 @@ def change_identified_person(database, player, answer):
         )
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise PersonIdentity(
                 "Cannot change: no players with this identity"
             )
@@ -738,6 +784,7 @@ def change_identified_person(database, player, answer):
                     )
                 )
                 if selection_record.value.alias != alias_record.value.alias:
+                    gamelist.close()
                     database.backout()
                     answer["message"] = (
                         "Cannot change: alias is not for identified person"
@@ -751,6 +798,7 @@ def change_identified_person(database, player, answer):
                 )
         finally:
             cursor.close()
+            recordlist.close()
         database.unfile_records_under(
             filespec.GAME_FILE_DEF,
             filespec.GAME_PERSON_FIELD_DEF,
@@ -762,6 +810,7 @@ def change_identified_person(database, player, answer):
             gamelist,
             database.encode_record_selector(selection_record.value.identity),
         )
+        gamelist.close()
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise

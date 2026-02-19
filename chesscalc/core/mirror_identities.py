@@ -71,10 +71,14 @@ class _NameStatus:
         count = personlist.count_records()
         if count > 1:
             self.message = "Player by name record is not unique."
+            personlist.close()
             return
-        record = personlist.create_recordsetbase_cursor(
+        cursor = personlist.create_recordsetbase_cursor(
             internalcursor=True
-        ).first()
+        )
+        record = cursor.first()
+        cursor.close()
+        personlist.close()
         if record:
             not_identified[name] = record
             self.message = "Player by name is not on known player list."
@@ -87,10 +91,13 @@ class _NameStatus:
         count = personlist.count_records()
         if count > 1:
             self.message = "Person by name record is not unique."
+            personlist.close()
             return
-        record = personlist.create_recordsetbase_cursor(
+        cursor = personlist.create_recordsetbase_cursor(
             internalcursor=True
-        ).first()
+        )
+        record = cursor.first()
+        cursor.close()
         if record:
             person_record.load_record(record)
             alias = person_record.value.alias
@@ -99,12 +106,15 @@ class _NameStatus:
                     identified_primary[alias] = {name: record}
                 else:
                     identified_primary[alias][name] = record
+                personlist.close()
                 return
             if alias not in identified_alias:
                 identified_alias[alias] = {name: record}
             else:
                 identified_alias[alias][name] = record
+            personlist.close()
             return
+        personlist.close()
         not_on_database.add(name)
 
     def identify_names(self, database):
@@ -139,6 +149,7 @@ class _NameStatus:
             persongames,
             key=encode_record_selector(person_record.value.identity),
         )
+        persongames.close()
         value = playerrecord.PersonValue()
         player_record = playerrecord.PlayerDBrecord(
             valueclass=playerrecord.PersonDBvalue
@@ -173,6 +184,8 @@ class _NameStatus:
                         database, filespec.PLAYER_FILE_DEF, None, person_record
                     )
 
+                cursor.close()
+                personaliases.close()
                 break
             break
 

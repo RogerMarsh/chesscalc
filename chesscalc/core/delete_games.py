@@ -45,6 +45,7 @@ def delete_selected_file_or_bookmarked_games(
             tab.append_text("Deleting nothing.")
             return
         if gamelist.count_records() == 0:
+            gamelist.close()
             tab.append_text("No games in selection or bookmarks to delete.")
             return
     finally:
@@ -57,6 +58,7 @@ def delete_selected_file_or_bookmarked_games(
         _adjust_termination_identities(database, gamelist, tab)
         _adjust_time_control_identities(database, gamelist, tab)
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
+        gamelist.close()
         database.backout()
         raise
     database.commit()
@@ -64,8 +66,10 @@ def delete_selected_file_or_bookmarked_games(
     try:
         _delete_games(database, gamelist, tab)
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
+        gamelist.close()
         database.backout()
         raise
+    gamelist.close()
     database.commit()
     if selection:
         tab.append_text("Games from file deleted.")
@@ -104,7 +108,9 @@ def _delete_player(database, tab, value, tag):
                     )
                 )
                 person_record.delete_record(database, filespec.PLAYER_FILE_DEF)
+            cursor.close()
             break
+        item.close()
     else:
         return
     tab.append_text(value.join(("Player ", " deleted.\n")))
@@ -136,6 +142,8 @@ def _delete_item(database, tab, file, field, value, recordclass, name, tag):
         item_record.load_record(database.get_primary_record(file, record[0]))
         item_record.delete_record(database, file)
         tab.append_text("".join((name, " ", value, " deleted.\n")))
+    cursor.close()
+    item.close()
 
 
 def _delete_time_control(database, tab, value, tag):
@@ -196,13 +204,15 @@ def _delete_player_type(database, tab, value, tag):
 
 def _game_records_exist_for_value(database, field, value):
     """Delete game from games associated with player type on database."""
-    return bool(
-        database.recordlist_key(
-            filespec.GAME_FILE_DEF,
-            field,
-            key=database.encode_record_selector(value),
-        ).count_records()
+    games = database.recordlist_key(
+        filespec.GAME_FILE_DEF,
+        field,
+        key=database.encode_record_selector(value),
     )
+    try:
+        return bool(games.count_records())
+    finally:
+        games.close()
 
 
 _tags = {
@@ -247,17 +257,17 @@ def _delete_games(database, gamelist, tab):
             if tag_value is None:
                 continue
             function(database, tab, game_value, tag)
+    cursor.close()
 
 
 def _known_players_for_games(database, gamelist, tab):
     """Return known players in games in gamelist on database."""
     tab.append_text("Finding games which involve a known player.\n")
-    games = (
-        database.recordlist_all(
-            filespec.GAME_FILE_DEF, filespec.GAME_PERSON_FIELD_DEF
-        )
-        & gamelist
+    allgames = database.recordlist_all(
+        filespec.GAME_FILE_DEF, filespec.GAME_PERSON_FIELD_DEF
     )
+    games = allgames & gamelist
+    allgames.close()
     games_count = games.count_records()
     if games_count == 0:
         tab.append_text("No games for deletion refer to known players.\n")
@@ -284,12 +294,15 @@ def _known_players_for_games(database, gamelist, tab):
         for player in (game_value.white_key(), game_value.black_key()):
             if player in found_players:
                 continue
-            persons_in_games |= database.recordlist_key(
+            alias_games = database.recordlist_key(
                 filespec.PLAYER_FILE_DEF,
                 filespec.PERSON_ALIAS_FIELD_DEF,
                 key=player,
             )
+            persons_in_games |= alias_games
+            alias_games.close()
             found_players.add(player)
+    cursor.close()
     return persons_in_games
 
 
@@ -325,6 +338,8 @@ def _adjust_known_player_identities(database, gamelist, tab):
         other_links.remove_recordset(known_players)
         other_links_cursor = other_links.create_recordsetbase_cursor()
         other_record = other_links_cursor.next()
+        other_links_cursor.close()
+        other_links.close()
         if other_record:
             _adjust_known_player_identity(
                 database, links, other_record, old_identity
@@ -334,6 +349,9 @@ def _adjust_known_player_identities(database, gamelist, tab):
                     ("Adjust identity ", ".\n")
                 )
             )
+        links.close()
+    cursor.close()
+    known_players.close()
 
 
 def _adjust_known_player_identity(database, links, other_record, old_identity):
@@ -375,6 +393,7 @@ def _adjust_known_player_identity(database, links, other_record, old_identity):
         person_record.edit_record(
             database, filespec.PLAYER_FILE_DEF, None, edited_person_record
         )
+    links_cursor.close()
     database.unfile_records_under(
         filespec.GAME_FILE_DEF,
         filespec.GAME_PERSON_FIELD_DEF,
@@ -386,18 +405,21 @@ def _adjust_known_player_identity(database, links, other_record, old_identity):
         gamelist,
         encode_record_selector(new_identity),
     )
+    gamelist.close()
 
 
 def _find_games_for_selected_game_pgn_file(database, selection, tab):
     """Return database records referenced via selection and report to tab."""
     tab.append_text("Attempting to delete all games for a PGN file.\n")
+    selected_game = database.recordlist_record_number(
+        filespec.GAME_FILE_DEF, key=selection[0][1]
+    )
     primary_record = identify_item.get_first_item_on_recordlist(
         database,
-        database.recordlist_record_number(
-            filespec.GAME_FILE_DEF, key=selection[0][1]
-        ),
+        selected_game,
         filespec.GAME_FILE_DEF,
     )
+    selected_game.close()
     if primary_record is None:
         tab.append_text("Record for selection not found.")
         return database.recordlist_nil(filespec.GAME_FILE_DEF)
@@ -445,6 +467,7 @@ def _find_bookmarked_games(database, bookmarks, tab):
             database, gamerecordlist, filespec.GAME_FILE_DEF
         )
         if primary_record is None:
+            gamerecordlist.close()
             tab.append_text("Record for one of bookmarks not found.")
             return recordlist
         game_record.load_record(primary_record)
@@ -454,6 +477,7 @@ def _find_bookmarked_games(database, bookmarks, tab):
         else:
             filename_record_counts[filename] += 1
         recordlist |= gamerecordlist
+        gamerecordlist.close()
     for filename, count in filename_record_counts.items():
         tab.append_text(
             "".join(
@@ -602,10 +626,15 @@ def _items_for_games(
                 if tagvalue != item:
                     continue
                 if item not in found_items:
-                    items_in_games |= database.recordlist_record_number(
+                    item_game = database.recordlist_record_number(
                         file, key=item_record.key.recno
                     )
+                    items_in_games |= item_game
+                    item_game.close()
                     found_items.add(item)
+            tag_cursor.close()
+    cursor.close()
+    games.close()
     return items_in_games
 
 
@@ -716,6 +745,7 @@ def _adjust_item_identities(database, itemlist, tab, file, recordclass, name):
                         )
                     )
                 )
+        cursor.close()
         if adjusted_items:
             edited_links_item_record = recordclass()
             edited_links_item_record.load_record(links_record)
@@ -723,3 +753,5 @@ def _adjust_item_identities(database, itemlist, tab, file, recordclass, name):
             links_item_record.edit_record(
                 database, file, None, edited_links_item_record
             )
+    links_cursor.close()
+    links.close()

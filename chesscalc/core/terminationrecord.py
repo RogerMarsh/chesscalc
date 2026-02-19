@@ -151,13 +151,16 @@ class TerminationDBImporter(TerminationDBrecord):
                     reporter.append_text_only("")
                     reporter.append_text("Copy stopped.")
                 return False
-            if database.recordlist_key(
+            recordlist_key = database.recordlist_key(
                 filespec.TERMINATION_FILE_DEF,
                 filespec.TERMINATION_ALIAS_FIELD_DEF,
                 key=database.encode_record_selector(alias),
-            ).count_records():
+            )
+            if recordlist_key.count_records():
+                recordlist_key.close()
                 onfile_count += 1
                 continue
+            recordlist_key.close()
             copy_count += 1
             pid = (
                 identity.get_next_termination_identity_value_after_allocation(
@@ -191,6 +194,7 @@ class TerminationDBImporter(TerminationDBrecord):
                             )
                         )
                     )
+        cursor.close()
         if reporter is not None:
             reporter.append_text_only("")
             reporter.append_text(
@@ -259,14 +263,19 @@ class TerminationDBImporter(TerminationDBrecord):
                 if reporter is not None:
                     reporter.append_text_only("")
                     reporter.append_text("Count stopped.")
+                cursor.close()
                 return None
-            if database.recordlist_key(
+            recordlist_key = database.recordlist_key(
                 filespec.TERMINATION_FILE_DEF,
                 filespec.TERMINATION_ALIAS_FIELD_DEF,
                 key=database.encode_record_selector(alias),
-            ).count_records():
+            )
+            if recordlist_key.count_records():
+                recordlist_key.close()
                 continue
+            recordlist_key.close()
             count += 1
+        cursor.close()
         if reporter is not None:
             reporter.append_text(
                 str(count) + " termination names to be copied from games."

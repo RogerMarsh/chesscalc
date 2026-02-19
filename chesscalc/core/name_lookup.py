@@ -42,6 +42,7 @@ def get_player_record_from_identity(database, identity):
         recordlist,
         filespec.PLAYER_FILE_DEF,
     )
+    recordlist.close()
     if primary_record is None:
         return None
     person_record = playerrecord.PlayerDBrecord()
@@ -62,6 +63,7 @@ def get_known_player_record_from_identity(database, identity):
         recordlist,
         filespec.PLAYER_FILE_DEF,
     )
+    recordlist.close()
     if primary_record is None:
         return None
     person_record = playerrecord.PlayerDBrecord()
@@ -97,6 +99,7 @@ def get_time_control_record_from_identity(database, identity):
         recordlist,
         filespec.TIME_FILE_DEF,
     )
+    recordlist.close()
     if primary_record is None:
         return None
     time_control_record = timecontrolrecord.TimeControlDBrecord()
@@ -130,6 +133,7 @@ def get_mode_record_from_identity(database, identity):
         recordlist,
         filespec.MODE_FILE_DEF,
     )
+    recordlist.close()
     if primary_record is None:
         return None
     mode_record = moderecord.ModeDBrecord()
@@ -163,6 +167,7 @@ def get_termination_record_from_identity(database, identity):
         recordlist,
         filespec.TERMINATION_FILE_DEF,
     )
+    recordlist.close()
     if primary_record is None:
         return None
     mode_record = terminationrecord.TerminationDBrecord()
@@ -196,6 +201,7 @@ def get_player_type_record_from_identity(database, identity):
         recordlist,
         filespec.PLAYERTYPE_FILE_DEF,
     )
+    recordlist.close()
     if primary_record is None:
         return None
     mode_record = playertyperecord.PlayerTypeDBrecord()
@@ -229,6 +235,7 @@ def get_event_record_from_identity(database, identity):
         recordlist,
         filespec.EVENT_FILE_DEF,
     )
+    recordlist.close()
     if primary_record is None:
         return None
     event_record = eventrecord.EventDBrecord()

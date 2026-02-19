@@ -78,6 +78,8 @@ class ExportPersons(_ExportSelected):
                 )
                 cursor = itemperson.create_recordsetbase_cursor()
                 data = cursor.next()
+                cursor.close()
+                itemperson.close()
                 if data is None:
                     continue
                 value.load(data[1])
@@ -86,8 +88,12 @@ class ExportPersons(_ExportSelected):
                     filespec.PERSON_ALIAS_FIELD_DEF,
                     key=encode_record_selector(value.alias_index_key()),
                 )
-                if (exportedpersons & itempersons).count_records():
+                exported_item = exportedpersons & itempersons
+                if exported_item.count_records():
+                    exported_item.close()
+                    itempersons.close()
                     continue
+                exported_item.close()
                 try:
                     _export_aliases_of_person(
                         itempersons,
@@ -98,11 +104,15 @@ class ExportPersons(_ExportSelected):
                         value,
                     )
                 except ExportPersonError as exc:
+                    itempersons.close()
+                    exportedpersons.close()
                     return ExportStatus(
                         error_message=_generate_exception_report(
                             exc, value.alias_index_key()
                         )
                     )
+                itempersons.close()
+            exportedpersons.close()
         finally:
             database.end_read_only_transaction()
         return ExportStatus()
@@ -134,8 +144,12 @@ class ExportEventPersons(_ExportSelected):
                 event_cursor = itemevent.create_recordsetbase_cursor()
                 event_data = event_cursor.next()
                 if event_data is None:
+                    event_cursor.close()
+                    itemevent.close()
                     continue
                 eventvalue.load(event_data[1])
+                event_cursor.close()
+                itemevent.close()
                 del event_data, event_cursor, itemevent
                 selector = encode_record_selector(eventvalue.alias_index_key())
                 itemevents = database.recordlist_key(
@@ -144,11 +158,14 @@ class ExportEventPersons(_ExportSelected):
                     key=selector,
                 )
                 count = itemevents.count_records()
+                itemevents.close()
                 if count == 0:
+                    exportedpersons.close()
                     return ExportStatus(
                         error_message="Event record does not exist"
                     )
                 if count > 1:
+                    exportedpersons.close()
                     return ExportStatus(
                         error_message="Event record duplicated"
                     )
@@ -173,8 +190,12 @@ class ExportEventPersons(_ExportSelected):
                             filespec.PERSON_ALIAS_FIELD_DEF,
                             key=selector,
                         )
-                        if (exportedpersons & itempersons).count_records():
+                        exported_and_item = exportedpersons & itempersons
+                        if exported_and_item.count_records():
+                            exported_and_item.close()
+                            itempersons.close()
                             continue
+                        exported_and_item.close()
                         try:
                             _export_aliases_of_person(
                                 itempersons,
@@ -185,11 +206,19 @@ class ExportEventPersons(_ExportSelected):
                                 value,
                             )
                         except ExportPersonError as exc:
+                            itempersons.close()
+                            cursor.close()
+                            itemgames.close()
+                            exportedpersons.close()
                             return ExportStatus(
                                 error_message=_generate_exception_report(
                                     exc, player_alias
                                 )
                             )
+                        itempersons.close()
+                cursor.close()
+                itemgames.close()
+            exportedpersons.close()
         finally:
             database.end_read_only_transaction()
         return ExportStatus()
@@ -221,6 +250,8 @@ class ExportIdentities(_Export):
                 value.load(data[1])
                 if value.alias == value.identity:
                     export_data.append(value.alias_index())
+            cursor.close()
+            persons.close()
         finally:
             database.end_read_only_transaction()
 
@@ -273,6 +304,8 @@ def _export_aliases_of_person(
         value.load(data[1])
         aliases.add(value.alias_index())
     exportedpersons |= itemaliases
+    cursor.close()
+    itemaliases.close()
     export_data.append(aliases)
 
 

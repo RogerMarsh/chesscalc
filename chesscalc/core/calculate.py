@@ -288,28 +288,30 @@ class Calculate:
                     key=database.encode_record_selector(key),
                 )
                 player_cursor = player_list.create_recordsetbase_cursor()
-                try:
-                    record = player_cursor.first()
+                record = player_cursor.first()
+                player_cursor.close()
+                player_list.close()
+                if record is None:
+                    continue
+                player.load_record(record)
+                if player.value.identity != player.value.alias:
+                    alias_list = database.recordlist_key(
+                        filespec.PLAYER_FILE_DEF,
+                        filespec.PLAYER_KNOWN_FIELD_DEF,
+                        key=database.encode_record_selector(
+                            player.value.alias
+                        ),
+                    )
+                    alias_list_cursor = (
+                        alias_list.create_recordsetbase_cursor()
+                    )
+                    record = alias_list_cursor.first()
+                    alias_list_cursor.close()
+                    alias_list.close()
                     if record is None:
                         continue
                     player.load_record(record)
-                    if player.value.identity != player.value.alias:
-                        alias_list = database.recordlist_key(
-                            filespec.PLAYER_FILE_DEF,
-                            filespec.PLAYER_KNOWN_FIELD_DEF,
-                            key=database.encode_record_selector(
-                                player.value.alias
-                            ),
-                        )
-                        record = (
-                            alias_list.create_recordsetbase_cursor().first()
-                        )
-                        if record is None:
-                            continue
-                        player.load_record(record)
-                    person_list.place_record_number(player.key.pack())
-                finally:
-                    player_cursor.close()
+                person_list.place_record_number(player.key.pack())
         self.selected_players = person_list
 
     def set_player_populations_from_selected_games(self):
@@ -394,7 +396,9 @@ class Calculate:
                         person_opponent.create_recordsetbase_cursor()
                     )
                     record = opponent_cursor.first()
+                    opponent_cursor.close()
                     if record is None:
+                        person_opponent.close()
                         continue
                     person_record.load_record(record)
                     if (
@@ -411,9 +415,11 @@ class Calculate:
                         )
                     person_connected |= person_opponent
                     person_opponent.close()
+            game_cursor.close()
             self.add_player_and_opponents_to_population(person_connected)
             person_connected.close()
             person_games.close()
+        person_cursor.close()
 
     def set_player_population_from_selected_player(self):
         """Bind self.player_populations to list of sets of connected players.
@@ -440,10 +446,11 @@ class Calculate:
         )
         cursor = person_list.create_recordsetbase_cursor()
         person_record.load_record(cursor.first())
+        cursor.close()
+        person_list.close()
 
         # Create list again based on alias, which is sometimes same as
         # identity, to fit loop that builds the playerset.
-        cursor.close()
         person_list = recordlist_key(
             filespec.PLAYER_FILE_DEF,
             filespec.PLAYER_LINKS_FIELD_DEF,
@@ -490,6 +497,7 @@ class Calculate:
                             person_opponent.create_recordsetbase_cursor()
                         )
                         record = opponent_cursor.first()
+                        opponent_cursor.close()
                         if record is None:
                             continue
                         person_record.load_record(record)
@@ -507,6 +515,8 @@ class Calculate:
                             )
                         person_connected |= person_opponent
                         person_opponent.close()
+                game_cursor.close()
+                person_games.close()
             person_cursor.close()
             person_list = recordlist_nil(filespec.PLAYER_FILE_DEF)
             person_list |= person_connected
@@ -538,11 +548,13 @@ class Calculate:
         playersets = self.playersets
         while playersets:
             playerset = playersets.pop()
-            if (playerset & player_and_opponents).count_records():
+            selected = playerset & player_and_opponents
+            if selected.count_records():
                 playerset |= player_and_opponents
                 merged.append(playerset)
             else:
                 not_merged.append(playerset)
+            selected.close()
         if merged:
             playerset = merged.pop()
             while merged:
@@ -607,14 +619,13 @@ class Calculate:
                 person_record.load_record(record)
                 alias_index_key = person_record.value.alias_index_key()
                 person_alias = person_record.value.alias
-                person_games = (
-                    database.recordlist_key(
-                        filespec.GAME_FILE_DEF,
-                        filespec.GAME_PERSON_FIELD_DEF,
-                        key=encode_record_selector(person_record.value.alias),
-                    )
-                    & selected_games
+                alias_games = database.recordlist_key(
+                    filespec.GAME_FILE_DEF,
+                    filespec.GAME_PERSON_FIELD_DEF,
+                    key=encode_record_selector(person_record.value.alias),
                 )
+                person_games = alias_games & selected_games
+                alias_games.close()
                 _add_opponents_of_person_in_games_to_players(
                     person_opponents,
                     person_games,
@@ -622,6 +633,7 @@ class Calculate:
                     person_alias,
                     helpers,
                 )
+                person_games.close()
                 opponent_cursor = (
                     person_opponents.create_recordsetbase_cursor()
                 )
@@ -637,16 +649,13 @@ class Calculate:
                     person_record.load_record(record)
                     alias_index_key = person_record.value.alias_index_key()
                     person_alias = person_record.value.alias
-                    opponent_games = (
-                        database.recordlist_key(
-                            filespec.GAME_FILE_DEF,
-                            filespec.GAME_PERSON_FIELD_DEF,
-                            key=encode_record_selector(
-                                person_record.value.alias
-                            ),
-                        )
-                        & selected_games
+                    alias_games = database.recordlist_key(
+                        filespec.GAME_FILE_DEF,
+                        filespec.GAME_PERSON_FIELD_DEF,
+                        key=encode_record_selector(person_record.value.alias),
                     )
+                    opponent_games = alias_games & selected_games
+                    alias_games.close()
                     _add_opponents_of_person_in_games_to_players(
                         opponent_opponents,
                         opponent_games,
@@ -654,9 +663,16 @@ class Calculate:
                         person_alias,
                         helpers,
                     )
-                    if (person_opponents & opponent_opponents).count_records():
+                    opponent_games.close()
+                    both_opponents = person_opponents & opponent_opponents
+                    if both_opponents.count_records():
+                        both_opponents.close()
                         convergent = True
                         break
+                    both_opponents.close()
+                opponent_cursor.close()
+                person_opponents.close()
+            person_cursor.close()
             self.convergent.append(convergent)
 
 
@@ -689,6 +705,8 @@ def _add_opponents_of_person_in_games_to_players(
             )
             game_opponent_cursor = game_opponent.create_recordsetbase_cursor()
             record = game_opponent_cursor.first()
+            game_opponent_cursor.close()
+            game_opponent.close()
             if record is None:
                 continue
             person_record.load_record(record)
@@ -700,6 +718,8 @@ def _add_opponents_of_person_in_games_to_players(
                 key=encode_record_selector(person_record.value.alias),
             )
             players |= game_opponent
+            game_opponent.close()
+    cursor.close()
 
 
 def _get_games_for_identity(

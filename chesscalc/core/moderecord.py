@@ -145,14 +145,18 @@ class ModeDBImporter(ModeDBrecord):
                 if reporter is not None:
                     reporter.append_text_only("")
                     reporter.append_text("Copy stopped.")
+                cursor.close()
                 return False
-            if database.recordlist_key(
+            recordlist_key = database.recordlist_key(
                 filespec.MODE_FILE_DEF,
                 filespec.MODE_ALIAS_FIELD_DEF,
                 key=database.encode_record_selector(alias),
-            ).count_records():
+            )
+            if recordlist_key.count_records():
+                recordlist_key.close()
                 onfile_count += 1
                 continue
+            recordlist_key.close()
             copy_count += 1
             pid = identity.get_next_mode_identity_value_after_allocation(
                 database
@@ -184,6 +188,7 @@ class ModeDBImporter(ModeDBrecord):
                             )
                         )
                     )
+        cursor.close()
         if reporter is not None:
             reporter.append_text_only("")
             reporter.append_text(
@@ -250,14 +255,19 @@ class ModeDBImporter(ModeDBrecord):
                 if reporter is not None:
                     reporter.append_text_only("")
                     reporter.append_text("Count stopped.")
+                cursor.close()
                 return None
-            if database.recordlist_key(
+            recordlist_key = database.recordlist_key(
                 filespec.MODE_FILE_DEF,
                 filespec.MODE_ALIAS_FIELD_DEF,
                 key=database.encode_record_selector(alias),
-            ).count_records():
+            )
+            if recordlist_key.count_records():
+                recordlist_key.close()
                 continue
+            recordlist_key.close()
             count += 1
+        cursor.close()
         if reporter is not None:
             reporter.append_text(
                 str(count) + " mode names to be copied from games."

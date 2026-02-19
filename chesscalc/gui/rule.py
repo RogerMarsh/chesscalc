@@ -1477,6 +1477,8 @@ def _non_calculable_sort_key(player, database, lookup):
         filespec.PLAYER_FILE_DEF, None, recordset=playerset
     )
     record = person_cursor.first()
+    person_cursor.close()
+    playerset.close()
     if record is None:
         raise NonCalculableSortKey(
             "No record found for player code " + str(player.code)

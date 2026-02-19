@@ -121,13 +121,16 @@ class IdentityDBrecord(Record):
 def _create_identity_record_if_not_exists(database, key_type):
     """Create record for next identity if it does not exist."""
     database.start_read_only_transaction()
-    if database.recordlist_key(
+    recordlist_key = database.recordlist_key(
         filespec.IDENTITY_FILE_DEF,
         filespec.IDENTITY_TYPE_FIELD_DEF,
         key=database.encode_record_selector(key_type),
-    ).count_records():
+    )
+    if recordlist_key.count_records():
+        recordlist_key.close()
         database.end_read_only_transaction()
         return
+    recordlist_key.close()
     database.end_read_only_transaction()
     record = IdentityDBrecord()
     record.value.code = 0
@@ -192,18 +195,22 @@ def _get_next_identity_value_after_allocation(database, keytype, exception):
     )
     count = recordlist.count_records()
     if count == 0:
+        recordlist.close()
         raise exception("Identity code cannot be allocated")
     if count > 1:
+        recordlist.close()
         raise exception("Duplicate identity codes available")
     cursor = database.database_cursor(
         filespec.IDENTITY_FILE_DEF,
         None,
         recordset=recordlist,
     )
-    record = IdentityDBrecord(valueclass=NextIdentityDBvalue)
     instance = cursor.first()
+    cursor.close()
+    recordlist.close()
     if not instance:
         raise exception("Identity code record expected but not found")
+    record = IdentityDBrecord(valueclass=NextIdentityDBvalue)
     record.load_record(instance)
     new_record = record.clone()
     value = new_record.value

@@ -47,16 +47,19 @@ def identify(
         recordlist = database.recordlist_key(file, alias_field, key=selector)
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise ItemIdentity(
                 item_name.join(("Cannot identify: ", " record does not exist"))
             )
         if count > 1:
+            recordlist.close()
             raise ItemIdentity(
                 item_name.join(("Cannot identify: ", " record duplicated"))
             )
         primary_record = get_first_item_on_recordlist(
             database, recordlist, file
         )
+        recordlist.close()
         selection_record = recordclass()
         selection_record.load_record(primary_record)
         for bookmark in bookmarks:
@@ -67,12 +70,14 @@ def identify(
             )
             count = recordlist.count_records()
             if count > 1:
+                recordlist.close()
                 raise ItemIdentity(
                     item_name.join(
                         ("Cannot identify: ", " alias record duplicated")
                     )
                 )
             if count == 0:
+                recordlist.close()
                 raise ItemIdentity(
                     item_name.join(
                         ("Cannot identify: ", " alias record does not exist")
@@ -81,6 +86,7 @@ def identify(
             primary_record = get_first_item_on_recordlist(
                 database, recordlist, file
             )
+            recordlist.close()
             item_record = recordclass()
             item_record.load_record(primary_record)
             if item_record.value.alias != item_record.value.identity:
@@ -131,16 +137,19 @@ def break_bookmarked_aliases(
         recordlist = database.recordlist_key(file, alias_field, key=selector)
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise ItemIdentity(
                 item_name.join(("Cannot break: ", " record does not exist"))
             )
         if count > 1:
+            recordlist.close()
             raise ItemIdentity(
                 item_name.join(("Cannot break: ", " record duplicated"))
             )
         primary_record = get_first_item_on_recordlist(
             database, recordlist, file
         )
+        recordlist.close()
         selection_record = recordclass()
         selection_record.load_record(primary_record)
         if selection_record.value.identity != selection_record.value.alias:
@@ -157,12 +166,14 @@ def break_bookmarked_aliases(
             )
             count = recordlist.count_records()
             if count > 1:
+                recordlist.close()
                 raise ItemIdentity(
                     item_name.join(
                         ("Cannot break: ", " alias record duplicated")
                     )
                 )
             if count == 0:
+                recordlist.close()
                 raise ItemIdentity(
                     item_name.join(
                         ("Cannot break: ", " alias record does not exist")
@@ -171,6 +182,7 @@ def break_bookmarked_aliases(
             primary_record = get_first_item_on_recordlist(
                 database, recordlist, file
             )
+            recordlist.close()
             item_record = recordclass()
             item_record.load_record(primary_record)
             if item_record.value.alias != identity:
@@ -222,10 +234,12 @@ def split_aliases(
         recordlist = database.recordlist_key(file, alias_field, key=selector)
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise ItemIdentity(
                 item_name.join(("Cannot split: ", " record does not exist"))
             )
         if count > 1:
+            recordlist.close()
             raise ItemIdentity(
                 item_name.join(("Cannot split: ", " record duplicated"))
             )
@@ -234,6 +248,7 @@ def split_aliases(
         )
         selection_record = recordclass()
         selection_record.load_record(primary_record)
+        recordlist.close()
         if selection_record.value.identity != selection_record.value.alias:
             database.backout()
             return " ".join(
@@ -246,6 +261,7 @@ def split_aliases(
         )
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise ItemIdentity(
                 item_name.join(("Cannot split: no ", "s with this identity"))
             )
@@ -267,6 +283,7 @@ def split_aliases(
                 item_record.edit_record(database, file, None, clone_record)
         finally:
             cursor.close()
+        recordlist.close()
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise
@@ -302,16 +319,19 @@ def change_aliases(
         recordlist = database.recordlist_key(file, alias_field, key=selector)
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise ItemIdentity(
                 item_name.join(("Cannot change: ", " record does not exist"))
             )
         if count > 1:
+            recordlist.close()
             raise ItemIdentity(
                 item_name.join(("Cannot change: ", " record duplicated"))
             )
         primary_record = get_first_item_on_recordlist(
             database, recordlist, file
         )
+        recordlist.close()
         selection_record = recordclass()
         selection_record.load_record(primary_record)
         if selection_record.value.identity == selection_record.value.alias:
@@ -329,6 +349,7 @@ def change_aliases(
         )
         count = recordlist.count_records()
         if count == 0:
+            recordlist.close()
             raise ItemIdentity(
                 item_name.join(("Cannot change: no ", "s with this identity"))
             )
@@ -360,6 +381,7 @@ def change_aliases(
                 item_record.edit_record(database, file, None, clone_record)
         finally:
             cursor.close()
+        recordlist.close()
     except:  # pycodestyle E722: pylint is happy with following 'raise'.
         database.backout()
         raise
@@ -378,6 +400,7 @@ def get_first_item_on_recordlist(database, recordlist, file):
     """
     cursor = database.database_cursor(file, None, recordset=recordlist)
     record = cursor.first()
+    cursor.close()
     if record is None:
         return None
     return database.get_primary_record(file, record[0])
@@ -394,13 +417,16 @@ def get_identity_item_on_recordlist(valueclass, database, recordlist, file):
     """
     value = valueclass()
     cursor = database.database_cursor(file, None, recordset=recordlist)
-    while True:
-        record = cursor.next()
-        if record is None:
-            return None
-        primary_record = database.get_primary_record(file, record[0])
-        if primary_record is None:
-            continue
-        value.load(primary_record[1])
-        if value.alias == value.identity:
-            return primary_record
+    try:
+        while True:
+            record = cursor.next()
+            if record is None:
+                return None
+            primary_record = database.get_primary_record(file, record[0])
+            if primary_record is None:
+                continue
+            value.load(primary_record[1])
+            if value.alias == value.identity:
+                return primary_record
+    finally:
+        cursor.close()
