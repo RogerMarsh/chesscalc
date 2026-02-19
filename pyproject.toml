@@ -10,7 +10,7 @@ line-length = 79
 
 [project]
 name = "chesscalc"
-version = "2.0.5.dev8"
+version = "2.0.5.dev9"
 authors = [
   { name="Roger Marsh", email="roger.marsh@solentware.co.uk" },
 ]
@@ -58,6 +58,7 @@ packages = [
     "chesscalc.gui",
     "chesscalc.shared",
     "chesscalc.help_",
+    "chesscalc.tools",
 ]
 
 [tool.setuptools.package-data]
