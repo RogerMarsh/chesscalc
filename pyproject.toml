@@ -10,16 +10,17 @@ line-length = 79
 
 [project]
 name = "chesscalc"
-version = "2.0.5.dev9"
+version = "2.0.5.dev10"
 authors = [
   { name="Roger Marsh", email="roger.marsh@solentware.co.uk" },
 ]
 description = "Calculate player performances in chess games."
 classifiers = [
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Topic :: Games/Entertainment :: Board Games",
     "Intended Audience :: End Users/Desktop",

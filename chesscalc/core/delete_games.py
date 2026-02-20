@@ -98,16 +98,15 @@ def _delete_player(database, tab, value, tag):
                     valueclass=playerrecord.PersonDBvalue
                 )
             cursor = item.create_recordsetbase_cursor()
-            while True:
-                record = cursor.next()
-                if record is None:
-                    break
+            record = cursor.first()
+            while record:
                 person_record.load_record(
                     database.get_primary_record(
                         filespec.PLAYER_FILE_DEF, record[0]
                     )
                 )
                 person_record.delete_record(database, filespec.PLAYER_FILE_DEF)
+                record = cursor.next()
             cursor.close()
             break
         item.close()
@@ -135,13 +134,12 @@ def _delete_item(database, tab, file, field, value, recordclass, name, tag):
     )
     item_record = recordclass()
     cursor = item.create_recordsetbase_cursor()
-    while True:
-        record = cursor.next()
-        if record is None:
-            break
+    record = cursor.first()
+    while record:
         item_record.load_record(database.get_primary_record(file, record[0]))
         item_record.delete_record(database, file)
         tab.append_text("".join((name, " ", value, " deleted.\n")))
+        record = cursor.next()
     cursor.close()
     item.close()
 
@@ -241,10 +239,8 @@ def _delete_games(database, gamelist, tab):
     game_record = gamerecord.GameDBrecord()
     game_value = game_record.value
     cursor = gamelist.create_recordsetbase_cursor()
-    while True:
-        record = cursor.next()
-        if record is None:
-            break
+    record = cursor.first()
+    while record:
         record = database.get_primary_record(filespec.GAME_FILE_DEF, record[0])
         game_record.load_record(record)
         game_record.delete_record(database, filespec.GAME_FILE_DEF)
@@ -257,6 +253,7 @@ def _delete_games(database, gamelist, tab):
             if tag_value is None:
                 continue
             function(database, tab, game_value, tag)
+        record = cursor.next()
     cursor.close()
 
 
@@ -285,10 +282,8 @@ def _known_players_for_games(database, gamelist, tab):
     game_record = gamerecord.GameDBrecord()
     game_value = game_record.value
     cursor = games.create_recordsetbase_cursor()
-    while True:
-        record = cursor.next()
-        if record is None:
-            break
+    record = cursor.first()
+    while record:
         record = database.get_primary_record(filespec.GAME_FILE_DEF, record[0])
         game_record.load_record(record)
         for player in (game_value.white_key(), game_value.black_key()):
@@ -302,6 +297,7 @@ def _known_players_for_games(database, gamelist, tab):
             persons_in_games |= alias_games
             alias_games.close()
             found_players.add(player)
+        record = cursor.next()
     cursor.close()
     return persons_in_games
 
@@ -320,10 +316,8 @@ def _adjust_known_player_identities(database, gamelist, tab):
     person_value = person_record.value
     encode_record_selector = database.encode_record_selector
     cursor = known_players.create_recordsetbase_cursor()
-    while True:
-        record = cursor.next()
-        if record is None:
-            break
+    record = cursor.first()
+    while record:
         person_record.load_record(
             database.get_primary_record(filespec.PLAYER_FILE_DEF, record[0])
         )
@@ -337,7 +331,7 @@ def _adjust_known_player_identities(database, gamelist, tab):
         other_links |= links
         other_links.remove_recordset(known_players)
         other_links_cursor = other_links.create_recordsetbase_cursor()
-        other_record = other_links_cursor.next()
+        other_record = other_links_cursor.first()
         other_links_cursor.close()
         other_links.close()
         if other_record:
@@ -350,6 +344,7 @@ def _adjust_known_player_identities(database, gamelist, tab):
                 )
             )
         links.close()
+        record = cursor.next()
     cursor.close()
     known_players.close()
 
@@ -380,10 +375,8 @@ def _adjust_known_player_identity(database, links, other_record, old_identity):
         key=encode_record_selector(old_identity),
     )
     links_cursor = links.create_recordsetbase_cursor()
-    while True:
-        links_record = links_cursor.next()
-        if links_record is None:
-            break
+    links_record = links_cursor.first()
+    while links_record:
         links_record = database.get_primary_record(
             filespec.PLAYER_FILE_DEF, links_record[0]
         )
@@ -393,6 +386,7 @@ def _adjust_known_player_identity(database, links, other_record, old_identity):
         person_record.edit_record(
             database, filespec.PLAYER_FILE_DEF, None, edited_person_record
         )
+        links_record = links_cursor.next()
     links_cursor.close()
     database.unfile_records_under(
         filespec.GAME_FILE_DEF,
@@ -607,23 +601,20 @@ def _items_for_games(
     item_record = recordclass()
     cursor = games.create_recordsetbase_cursor()
     game_record = gamerecord.GameDBrecord()
-    while True:
-        record = cursor.next()
-        if record is None:
-            break
+    record = cursor.first()
+    while record:
         game_record.load_record(record)
         for tag in tags:
             tagvalue = game_record.value.headers.get(tag)
             if tagvalue is None:
                 continue
             tag_cursor = taglist.create_recordsetbase_cursor()
-            while True:
-                tag_record = tag_cursor.next()
-                if tag_record is None:
-                    break
+            tag_record = tag_cursor.first()
+            while tag_record:
                 item_record.load_record(tag_record)
                 item = item_record.value.name
                 if tagvalue != item:
+                    tag_record = tag_cursor.next()
                     continue
                 if item not in found_items:
                     item_game = database.recordlist_record_number(
@@ -632,7 +623,9 @@ def _items_for_games(
                     items_in_games |= item_game
                     item_game.close()
                     found_items.add(item)
+                tag_record = tag_cursor.next()
             tag_cursor.close()
+        record = cursor.next()
     cursor.close()
     games.close()
     return items_in_games
@@ -710,21 +703,18 @@ def _adjust_item_identities(database, itemlist, tab, file, recordclass, name):
     item_record = recordclass()
     item_value = item_record.value
     links_cursor = links.create_recordsetbase_cursor()
-    while True:
-        links_record = links_cursor.next()
-        if links_record is None:
-            break
+    links_record = links_cursor.first()
+    while links_record:
         links_record = database.get_primary_record(file, links_record[0])
         links_item_record.load_record(links_record)
         cursor = itemlist.create_recordsetbase_cursor()
         adjusted_items = set()
-        while True:
-            record = cursor.next()
-            if record is None:
-                break
+        record = cursor.first()
+        while record:
             record = database.get_primary_record(file, record[0])
             item_record.load_record(record)
             if item_value.name in adjusted_items:
+                record = cursor.next()
                 continue
             if links_item_value.alias == item_value.alias:
                 edited_item_record.load_record(record)
@@ -745,6 +735,7 @@ def _adjust_item_identities(database, itemlist, tab, file, recordclass, name):
                         )
                     )
                 )
+            record = cursor.next()
         cursor.close()
         if adjusted_items:
             edited_links_item_record = recordclass()
@@ -753,5 +744,6 @@ def _adjust_item_identities(database, itemlist, tab, file, recordclass, name):
             links_item_record.edit_record(
                 database, file, None, edited_links_item_record
             )
+        links_record = links_cursor.next()
     links_cursor.close()
     links.close()

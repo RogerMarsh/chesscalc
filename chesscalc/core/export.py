@@ -77,7 +77,7 @@ class ExportPersons(_ExportSelected):
                     key=item[1],
                 )
                 cursor = itemperson.create_recordsetbase_cursor()
-                data = cursor.next()
+                data = cursor.first()
                 cursor.close()
                 itemperson.close()
                 if data is None:
@@ -142,7 +142,7 @@ class ExportEventPersons(_ExportSelected):
                     key=item[1],
                 )
                 event_cursor = itemevent.create_recordsetbase_cursor()
-                event_data = event_cursor.next()
+                event_data = event_cursor.first()
                 if event_data is None:
                     event_cursor.close()
                     itemevent.close()
@@ -175,10 +175,8 @@ class ExportEventPersons(_ExportSelected):
                     key=selector,
                 )
                 cursor = itemgames.create_recordsetbase_cursor()
-                while True:
-                    data = cursor.next()
-                    if data is None:
-                        break
+                data = cursor.first()
+                while data:
                     gamevalue.load(data[1])
                     for player_alias in (
                         gamevalue.black_key(),
@@ -216,6 +214,7 @@ class ExportEventPersons(_ExportSelected):
                                 )
                             )
                         itempersons.close()
+                    data = cursor.next()
                 cursor.close()
                 itemgames.close()
             exportedpersons.close()
@@ -243,13 +242,12 @@ class ExportIdentities(_Export):
                 filespec.PLAYER_FILE_DEF, filespec.PERSON_ALIAS_FIELD_DEF
             )
             cursor = persons.create_recordsetbase_cursor()
-            while True:
-                data = cursor.next()
-                if data is None:
-                    break
+            data = cursor.first()
+            while data:
                 value.load(data[1])
                 if value.alias == value.identity:
                     export_data.append(value.alias_index())
+                data = cursor.next()
             cursor.close()
             persons.close()
         finally:
@@ -297,12 +295,11 @@ def _export_aliases_of_person(
     )
     aliases = set()
     cursor = itemaliases.create_recordsetbase_cursor()
-    while True:
-        data = cursor.next()
-        if data is None:
-            break
+    data = cursor.first()
+    while data:
         value.load(data[1])
         aliases.add(value.alias_index())
+        data = cursor.next()
     exportedpersons |= itemaliases
     cursor.close()
     itemaliases.close()

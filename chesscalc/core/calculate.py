@@ -276,10 +276,8 @@ class Calculate:
         game = gamerecord.GameDBrecord()
         player = playerrecord.PlayerDBrecord()
         cursor = self.selected_games.create_recordsetbase_cursor()
-        while True:
-            record = cursor.next()
-            if record is None:
-                break
+        record = cursor.first()
+        while record:
             game.load_record(record)
             for key in game.value.black_key(), game.value.white_key():
                 player_list = database.recordlist_key(
@@ -312,6 +310,7 @@ class Calculate:
                         continue
                     player.load_record(record)
                 person_list.place_record_number(player.key.pack())
+            record = cursor.next()
         self.selected_players = person_list
 
     def set_player_populations_from_selected_games(self):
@@ -361,10 +360,8 @@ class Calculate:
         person_record = playerrecord.PlayerDBrecord()
         game_record = gamerecord.GameDBrecord()
         person_cursor = self.selected_players.create_recordsetbase_cursor()
-        while True:
-            record = person_cursor.next()
-            if record is None:
-                break
+        record = person_cursor.first()
+        while record:
             person_record.load_record(record)
             person_connected = recordlist_nil(filespec.PLAYER_FILE_DEF)
             person_connected.place_record_number(person_record.key.pack())
@@ -376,10 +373,8 @@ class Calculate:
             )
             person_games &= selected_games
             game_cursor = person_games.create_recordsetbase_cursor()
-            while True:
-                record = game_cursor.next()
-                if record is None:
-                    break
+            record = game_cursor.first()
+            while record:
                 game_record.load_record(record)
                 for game_player in (
                     game_record.value.black_key(),
@@ -415,10 +410,12 @@ class Calculate:
                         )
                     person_connected |= person_opponent
                     person_opponent.close()
+                record = game_cursor.next()
             game_cursor.close()
             self.add_player_and_opponents_to_population(person_connected)
             person_connected.close()
             person_games.close()
+            record = person_cursor.next()
         person_cursor.close()
 
     def set_player_population_from_selected_player(self):
@@ -464,10 +461,8 @@ class Calculate:
             playerset |= person_list
             person_connected = recordlist_nil(filespec.PLAYER_FILE_DEF)
             person_cursor = person_list.create_recordsetbase_cursor()
-            while True:
-                record = person_cursor.next()
-                if record is None:
-                    break
+            record = person_cursor.first()
+            while record:
                 person_record.load_record(record)
                 alias_index_key = person_record.value.alias_index_key()
                 person_games = recordlist_key(
@@ -477,10 +472,8 @@ class Calculate:
                 )
                 person_games &= selected_games
                 game_cursor = person_games.create_recordsetbase_cursor()
-                while True:
-                    record = game_cursor.next()
-                    if record is None:
-                        break
+                record = game_cursor.first()
+                while record:
                     game_record.load_record(record)
                     for game_player in (
                         game_record.value.black_key(),
@@ -515,8 +508,10 @@ class Calculate:
                             )
                         person_connected |= person_opponent
                         person_opponent.close()
+                    record = game_cursor.next()
                 game_cursor.close()
                 person_games.close()
+                record = person_cursor.next()
             person_cursor.close()
             person_list = recordlist_nil(filespec.PLAYER_FILE_DEF)
             person_list |= person_connected
@@ -609,13 +604,11 @@ class Calculate:
         for playerset in self.playersets:
             convergent = False
             person_cursor = playerset.create_recordsetbase_cursor()
-            while True:
+            record = person_cursor.first()
+            while record:
                 if convergent:
                     break
                 person_opponents = recordlist_nil(filespec.PLAYER_FILE_DEF)
-                record = person_cursor.next()
-                if record is None:
-                    break
                 person_record.load_record(record)
                 alias_index_key = person_record.value.alias_index_key()
                 person_alias = person_record.value.alias
@@ -637,15 +630,13 @@ class Calculate:
                 opponent_cursor = (
                     person_opponents.create_recordsetbase_cursor()
                 )
-                while True:
+                record = opponent_cursor.first()
+                while record:
                     if convergent:
                         break
                     opponent_opponents = recordlist_nil(
                         filespec.PLAYER_FILE_DEF
                     )
-                    record = opponent_cursor.next()
-                    if record is None:
-                        break
                     person_record.load_record(record)
                     alias_index_key = person_record.value.alias_index_key()
                     person_alias = person_record.value.alias
@@ -670,8 +661,11 @@ class Calculate:
                         convergent = True
                         break
                     both_opponents.close()
+                    opponent_opponents.close()
+                    record = opponent_cursor.next()
                 opponent_cursor.close()
                 person_opponents.close()
+                record = person_cursor.next()
             person_cursor.close()
             self.convergent.append(convergent)
 
@@ -687,10 +681,8 @@ def _add_opponents_of_person_in_games_to_players(
         encode_record_selector,
     ) = helpers
     cursor = games.create_recordsetbase_cursor()
-    while True:
-        record = cursor.next()
-        if record is None:
-            break
+    record = cursor.first()
+    while record:
         game_record.load_record(record)
         for game_player in (
             game_record.value.black_key(),
@@ -719,6 +711,7 @@ def _add_opponents_of_person_in_games_to_players(
             )
             players |= game_opponent
             game_opponent.close()
+        record = cursor.next()
     cursor.close()
 
 
@@ -745,10 +738,8 @@ def _get_games_for_identity(
     cursor = recordlist.create_recordsetbase_cursor()
     games = database.recordlist_nil(filespec.GAME_FILE_DEF)
     try:
-        while True:
-            record = cursor.next()
-            if not record:
-                break
+        record = cursor.first()
+        while record:
             item_record = recordclass()
             item_record.load_record(
                 database.get_primary_record(file, record[0])
@@ -762,6 +753,7 @@ def _get_games_for_identity(
             )
             games |= item_games
             item_games.close()
+            record = cursor.next()
     finally:
         cursor.close()
     return games

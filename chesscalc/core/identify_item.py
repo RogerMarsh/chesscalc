@@ -267,20 +267,20 @@ def split_aliases(
             )
         cursor = database.database_cursor(file, None, recordset=recordlist)
         try:
-            while True:
-                record = cursor.next()
-                if not record:
-                    break
+            record = cursor.first()
+            while record:
                 item_record = recordclass()
                 item_record.load_record(
                     database.get_primary_record(file, record[0])
                 )
                 if item_record.value.alias == item_record.value.identity:
+                    record = cursor.next()
                     continue
                 clone_record = item_record.clone()
                 clone_record.value.alias = clone_record.value.identity
                 assert item_record.srkey == clone_record.srkey
                 item_record.edit_record(database, file, None, clone_record)
+                record = cursor.next()
         finally:
             cursor.close()
         recordlist.close()
@@ -359,10 +359,8 @@ def change_aliases(
             recordset=recordlist,
         )
         try:
-            while True:
-                record = cursor.next()
-                if not record:
-                    break
+            record = cursor.first()
+            while record:
                 item_record = recordclass()
                 item_record.load_record(
                     database.get_primary_record(file, record[0])
@@ -379,6 +377,7 @@ def change_aliases(
                 clone_record.value.alias = selection_record.value.identity
                 assert item_record.srkey == clone_record.srkey
                 item_record.edit_record(database, file, None, clone_record)
+                record = cursor.next()
         finally:
             cursor.close()
         recordlist.close()
@@ -418,15 +417,15 @@ def get_identity_item_on_recordlist(valueclass, database, recordlist, file):
     value = valueclass()
     cursor = database.database_cursor(file, None, recordset=recordlist)
     try:
-        while True:
-            record = cursor.next()
-            if record is None:
-                return None
+        record = cursor.first()
+        while record:
             primary_record = database.get_primary_record(file, record[0])
             if primary_record is None:
+                record = cursor.next()
                 continue
             value.load(primary_record[1])
             if value.alias == value.identity:
                 return primary_record
+            record = cursor.next()
     finally:
         cursor.close()

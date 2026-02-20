@@ -43,10 +43,8 @@ class Population:
         person_record = playerrecord.PlayerDBrecord()
         game_record = gamerecord.GameDBrecord()
         person_cursor = playerset.create_recordsetbase_cursor()
-        while True:
-            record = person_cursor.next()
-            if record is None:
-                break
+        record = person_cursor.first()
+        while record:
             person_record.load_record(record)
             player_identity = person_record.value.identity
             player_alias = person_record.value.alias_index_key()
@@ -61,10 +59,8 @@ class Population:
             opponents = person_detail.opponents
             person_games &= games
             game_cursor = person_games.create_recordsetbase_cursor()
-            while True:
-                record = game_cursor.next()
-                if record is None:
-                    break
+            record = game_cursor.first()
+            while record:
                 game_record.load_record(record)
                 result = game_record.value.headers[constants.TAG_RESULT]
                 for side, game_player in enumerate(
@@ -118,10 +114,12 @@ class Population:
                         measure,
                     )
                     opponents.append(value.identity)
+                record = game_cursor.next()
             game_cursor.close()
             person_games.close()
             if opponents:
                 persons[player_identity] = person_detail
+            record = person_cursor.next()
         person_cursor.close()
 
     def __deepcopy__(self, memo):

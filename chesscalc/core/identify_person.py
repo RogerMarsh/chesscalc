@@ -298,10 +298,8 @@ def identify_players_by_name_as_person(database, players, person):
                 recordlist.close()
                 continue
             cursor = recordlist.create_recordsetbase_cursor()
-            while True:
-                record = cursor.next()
-                if record is None:
-                    break
+            record = cursor.first()
+            while record:
                 record = database.get_primary_record(
                     filespec.PLAYER_FILE_DEF, record[0]
                 )
@@ -323,6 +321,7 @@ def identify_players_by_name_as_person(database, players, person):
                 )
                 gamelist |= aliaslist
                 aliaslist.close()
+                record = cursor.next()
             cursor.close()
             recordlist.close()
         database.file_records_under(
@@ -366,15 +365,14 @@ def identify_all_players_by_name_as_persons(database):
             filespec.PLAYER_FILE_DEF, filespec.PLAYER_LINKS_FIELD_DEF
         )
         cursor = known.create_recordsetbase_cursor()
-        while True:
-            record = cursor.next()
-            if record is None:
-                break
+        record = cursor.first()
+        while record:
             record = database.get_primary_record(
                 filespec.PLAYER_FILE_DEF, record[0]
             )
             player_record.load_record(record)
             name_known_map.setdefault(value.name, set()).add(value.alias)
+            record = cursor.next()
         cursor.close()
         known.close()
         del known
@@ -435,10 +433,8 @@ def identify_all_players_by_name_as_persons(database):
                 )
                 alias = value.alias
                 name_cursor = name_new.create_recordsetbase_cursor()
-                while True:
-                    record = name_cursor.next()
-                    if record is None:
-                        break
+                record = name_cursor.first()
+                while record:
                     record = database.get_primary_record(
                         filespec.PLAYER_FILE_DEF, record[0]
                     )
@@ -463,6 +459,7 @@ def identify_all_players_by_name_as_persons(database):
                     )
                     gamelist |= aliaslist
                     aliaslist.close()
+                    record = name_cursor.next()
                 database.file_records_under(
                     filespec.GAME_FILE_DEF,
                     filespec.GAME_PERSON_FIELD_DEF,
@@ -476,10 +473,8 @@ def identify_all_players_by_name_as_persons(database):
             gamelist = database.recordlist_nil(filespec.GAME_FILE_DEF)
             alias = value.alias
             name_cursor = name_new.create_recordsetbase_cursor()
-            while True:
-                record = name_cursor.next()
-                if record is None:
-                    break
+            record = name_cursor.first()
+            while record:
                 record = database.get_primary_record(
                     filespec.PLAYER_FILE_DEF, record[0]
                 )
@@ -504,6 +499,7 @@ def identify_all_players_by_name_as_persons(database):
                 )
                 gamelist |= aliaslist
                 aliaslist.close()
+                record = name_cursor.next()
             database.file_records_under(
                 filespec.GAME_FILE_DEF,
                 filespec.GAME_PERSON_FIELD_DEF,
@@ -568,10 +564,8 @@ def split_person_into_all_players(database, person, answer):
             recordset=recordlist,
         )
         try:
-            while True:
-                record = cursor.next()
-                if not record:
-                    break
+            record = cursor.first()
+            while record:
                 primary_record = database.get_primary_record(
                     filespec.PLAYER_FILE_DEF, record[0]
                 )
@@ -595,6 +589,7 @@ def split_person_into_all_players(database, person, answer):
                 alias_record.edit_record(
                     database, filespec.PLAYER_FILE_DEF, None, player_record
                 )
+                record = cursor.next()
         finally:
             cursor.close()
             recordlist.close()
@@ -771,10 +766,8 @@ def change_identified_person(database, player, answer):
             recordset=recordlist,
         )
         try:
-            while True:
-                record = cursor.next()
-                if not record:
-                    break
+            record = cursor.first()
+            while record:
                 alias_record = playerrecord.PlayerDBrecord(
                     valueclass=playerrecord.PersonDBvalue
                 )
@@ -796,6 +789,7 @@ def change_identified_person(database, player, answer):
                 alias_record.edit_record(
                     database, filespec.PLAYER_FILE_DEF, None, clone_record
                 )
+                record = cursor.next()
         finally:
             cursor.close()
             recordlist.close()

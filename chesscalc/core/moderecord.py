@@ -130,12 +130,11 @@ class ModeDBImporter(ModeDBrecord):
         onfile_count = 0
         copy_count = 0
         prev_record = None
-        while True:
-            record = cursor.next()
-            if record is None:
-                break
+        record = cursor.first()
+        while record:
             this_record = record[0]
             if prev_record == this_record:
+                record = cursor.next()
                 continue
             game_count += 1
             prev_record = this_record
@@ -155,6 +154,7 @@ class ModeDBImporter(ModeDBrecord):
             if recordlist_key.count_records():
                 recordlist_key.close()
                 onfile_count += 1
+                record = cursor.next()
                 continue
             recordlist_key.close()
             copy_count += 1
@@ -188,6 +188,7 @@ class ModeDBImporter(ModeDBrecord):
                             )
                         )
                     )
+            record = cursor.next()
         cursor.close()
         if reporter is not None:
             reporter.append_text_only("")
@@ -241,12 +242,11 @@ class ModeDBImporter(ModeDBrecord):
         value = self.value
         prev_record = None
         count = 0
-        while True:
-            record = cursor.next()
-            if record is None:
-                break
+        record = cursor.first()
+        while record:
             this_record = record[0]
             if prev_record == this_record:
+                record = cursor.next()
                 continue
             prev_record = this_record
             (value.mode,) = this_record
@@ -264,9 +264,11 @@ class ModeDBImporter(ModeDBrecord):
             )
             if recordlist_key.count_records():
                 recordlist_key.close()
+                record = cursor.next()
                 continue
             recordlist_key.close()
             count += 1
+            record = cursor.next()
         cursor.close()
         if reporter is not None:
             reporter.append_text(

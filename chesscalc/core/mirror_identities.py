@@ -169,10 +169,8 @@ class _NameStatus:
                 cursor = personaliases.create_recordsetbase_cursor(
                     internalcursor=True
                 )
-                while True:
-                    record = cursor.next()
-                    if record is None:
-                        break
+                record = cursor.first()
+                while record:
                     player_record.load_record(record)
                     person_record.load_record(record)
                     person_record.value.alias = person_alias
@@ -184,6 +182,7 @@ class _NameStatus:
                         database, filespec.PLAYER_FILE_DEF, None, person_record
                     )
 
+                    record = cursor.next()
                 cursor.close()
                 personaliases.close()
                 break
