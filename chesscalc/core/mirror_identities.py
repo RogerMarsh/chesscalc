@@ -73,9 +73,7 @@ class _NameStatus:
             self.message = "Player by name record is not unique."
             personlist.close()
             return
-        cursor = personlist.create_recordsetbase_cursor(
-            internalcursor=True
-        )
+        cursor = personlist.create_recordsetbase_cursor(internalcursor=True)
         record = cursor.first()
         cursor.close()
         personlist.close()
@@ -93,9 +91,7 @@ class _NameStatus:
             self.message = "Person by name record is not unique."
             personlist.close()
             return
-        cursor = personlist.create_recordsetbase_cursor(
-            internalcursor=True
-        )
+        cursor = personlist.create_recordsetbase_cursor(internalcursor=True)
         record = cursor.first()
         cursor.close()
         if record:

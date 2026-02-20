@@ -29,8 +29,9 @@ class RuleInsert(rule.Rule):
             message="Cannot delete rule from New",
         )
 
-    def calulate_performances_for_rule(self):
+    def calulate_performances_for_rule(self, update_widget_and_join_loop):
         """Calculate performances for selection rule on database."""
+        del update_widget_and_join_loop
         tkinter.messagebox.showinfo(
             parent=self.frame,
             title=EventSpec.menu_selectors_new[1],

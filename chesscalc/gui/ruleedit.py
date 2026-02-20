@@ -46,8 +46,9 @@ class RuleEdit(rule.Rule):
             return False
         return super().delete_rule()
 
-    def calulate_performances_for_rule(self):
+    def calulate_performances_for_rule(self, update_widget_and_join_loop):
         """Calculate performances for selection rule on database."""
+        del update_widget_and_join_loop
         tkinter.messagebox.showinfo(
             parent=self.frame,
             title=EventSpec.menu_selectors_edit[1],
