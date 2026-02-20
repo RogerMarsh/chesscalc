@@ -10,7 +10,7 @@ line-length = 79
 
 [project]
 name = "chesscalc"
-version = "2.0.5.dev10"
+version = "2.0.5.dev11"
 authors = [
   { name="Roger Marsh", email="roger.marsh@solentware.co.uk" },
 ]

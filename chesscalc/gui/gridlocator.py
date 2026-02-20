@@ -11,6 +11,7 @@ import tkinter
 
 from solentware_grid import datagrid
 from solentware_grid.gui import gridbindings
+from solentware_grid.gui import eventspec
 
 
 class GridLocator(gridbindings.GridBindings, datagrid.DataGridReadOnly):
@@ -37,6 +38,14 @@ class GridLocator(gridbindings.GridBindings, datagrid.DataGridReadOnly):
         self.bindings()
         self.bind(self.scroller, "<KeyPress>", function=self._note_char)
         self.bind(self.scroller, "<KeyRelease>", function=self._locate_key)
+
+        # DataGridReadOnly provides a 'Show' popup menu entry which is not
+        # required.
+        for sequence, function in (
+            (eventspec.EventSpec.launch_show_dialog, ""),
+        ):
+            self.bind(self.frame, sequence[0], function=function)
+        self.menupopup.delete(1)
 
     def show_popup_menu_no_row(self, event=None):
         """Override superclass to do nothing."""
