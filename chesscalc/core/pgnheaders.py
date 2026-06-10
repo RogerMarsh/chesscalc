@@ -12,6 +12,7 @@ Termination Marker, on a single line.  Thus each line is a valid game in
 PGN format ignoring line formatting.
 
 """
+
 import os
 import re
 import json

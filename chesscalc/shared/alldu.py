@@ -6,6 +6,7 @@
 
 'Most' means all database interfaces except DPT.
 """
+
 import os
 
 from solentware_base.core.segmentsize import SegmentSize

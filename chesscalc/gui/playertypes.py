@@ -8,6 +8,7 @@ Two player types are expected, 'human' and 'computer', but there is no ban
 on others.
 
 """
+
 import tkinter
 
 from solentware_bind.gui.bindings import Bindings

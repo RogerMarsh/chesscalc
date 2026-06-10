@@ -9,6 +9,7 @@ thread, but some do not.  The Task class runs a method according to the
 value of a class attribute of the Database instance driving the engine.
 
 """
+
 from multiprocessing import dummy
 
 

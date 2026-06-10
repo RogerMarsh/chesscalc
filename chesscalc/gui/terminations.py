@@ -10,6 +10,7 @@ The termination reason defaults to 'normal'.  Plausible alternatives are
 Perhaps to confirm an expected game did not occur.
 
 """
+
 import tkinter
 
 from solentware_bind.gui.bindings import Bindings

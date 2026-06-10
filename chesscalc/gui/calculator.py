@@ -3,6 +3,7 @@
 # Licence: See LICENCE (BSD licence)
 
 """Chess Performance Calculation application."""
+
 import os
 import tkinter
 import tkinter.ttk

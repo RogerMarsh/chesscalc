@@ -8,6 +8,7 @@ Player identifications are chosen by selecting one or more players, or
 by selecting one or more events and taking all the players in the events.
 
 """
+
 import ast
 
 from . import eventrecord

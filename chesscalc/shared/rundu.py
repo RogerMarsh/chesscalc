@@ -10,6 +10,7 @@ chess performance GUI.
 Spawn the deferred update process by the multiprocessing module.
 
 """
+
 import sys
 import importlib
 

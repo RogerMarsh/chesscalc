@@ -7,6 +7,7 @@
 Derived from performances.py in version 1.3.4 of chesscalc.
 
 """
+
 import copy
 
 from . import gamerecord

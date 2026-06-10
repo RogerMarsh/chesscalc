@@ -8,6 +8,7 @@ The modes are ways of conducting the game, such as 'over the board' (OTB)
 or 'online'.
 
 """
+
 import tkinter
 
 from solentware_bind.gui.bindings import Bindings

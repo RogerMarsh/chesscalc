@@ -8,6 +8,7 @@ The functions support deleting games for a PGN file or selected games from
 a PGN file.
 
 """
+
 from . import filespec
 from . import constants
 from . import identify_item

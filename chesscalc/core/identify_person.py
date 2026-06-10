@@ -8,6 +8,7 @@ The functions support identifying a new player as an existing or new
 person on the database, and undoing these identifications too.
 
 """
+
 from . import playerrecord
 from . import filespec
 from . import identify_item
