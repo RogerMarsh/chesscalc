@@ -2,7 +2,7 @@
 # Copyright 2023 Roger Marsh
 # Licence: See LICENCE (BSD licence)
 
-"""Chess Performance Calculation database using DPT via dptdb.dptapi."""
+"""Chess Performance Calculation database using DPT via dpt_dbms.dptapi."""
 
 import os
 
