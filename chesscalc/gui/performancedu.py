@@ -79,19 +79,26 @@ class IncreaseDataProcess:
     def _increase(self):
         """Increase data size in DPT games file."""
         database = self.database
-        files = (filespec.GAME_FILE_DEF,)
         database.open_database(files=(filespec.GAME_FILE_DEF,))
         try:
-            parameter = database.get_database_parameters(files=files)[
-                filespec.GAME_FILE_DEF
-            ]
+            table = database.table[filespec.GAME_FILE_DEF]
+            parameters = table.get_file_parameters(database.dbenv)
+            parameter = {}
+            for name in ("BSIZE", "BHIGHPG", "DSIZE", "DPGSUSED"):
+                for key, value in parameters.items():
+                    _, fparameter = key
+                    if fparameter == name:
+                        if name in parameter:
+                            raise RuntimeError(
+                                "Cannot increase data size in group context"
+                            )
+                        parameter[name] = value
             bsize = parameter["BSIZE"]
             bused = max(0, parameter["BHIGHPG"])
             bfree = bsize - bused
             dsize = parameter["DSIZE"]
             dused = parameter["DPGSUSED"]
             dfree = dsize - dused
-            table = database.table[filespec.GAME_FILE_DEF]
             specification = database.specification[filespec.GAME_FILE_DEF]
             default_records = specification[sb_core_constants.DEFAULT_RECORDS]
             btod_factor = specification[filespec.BTOD_FACTOR]
@@ -107,7 +114,7 @@ class IncreaseDataProcess:
             bhigh = bfree + max(bdefault, bfree)
             blowrecs = bfree_recs + min(default_records, bfree_recs)
             bhighrecs = bfree_recs + max(default_records, bfree_recs)
-            if len(table.get_extents()) % 2 == 0:
+            if len(table.get_extents(database.dbenv)) % 2 == 0:
                 if not tkinter.messagebox.askokcancel(
                     title="Increase Data Size",
                     message="".join(
@@ -226,19 +233,26 @@ class IncreaseIndexProcess:
     def _increase(self):
         """Increase index size in DPT games file."""
         database = self.database
-        files = (filespec.GAME_FILE_DEF,)
         database.open_database(files=(filespec.GAME_FILE_DEF,))
         try:
-            parameter = database.get_database_parameters(files=files)[
-                filespec.GAME_FILE_DEF
-            ]
+            table = database.table[filespec.GAME_FILE_DEF]
+            parameters = table.get_file_parameters(database.dbenv)
+            parameter = {}
+            for name in ("BSIZE", "BHIGHPG", "DSIZE", "DPGSUSED"):
+                for key, value in parameters.items():
+                    _, fparameter = key
+                    if fparameter == name:
+                        if name in parameter:
+                            raise RuntimeError(
+                                "Cannot increase index size in group context"
+                            )
+                        parameter[name] = value
             bsize = parameter["BSIZE"]
             bused = max(0, parameter["BHIGHPG"])
             bfree = bsize - bused
             dsize = parameter["DSIZE"]
             dused = parameter["DPGSUSED"]
             dfree = dsize - dused
-            table = database.table[filespec.GAME_FILE_DEF]
             specification = database.specification[filespec.GAME_FILE_DEF]
             default_records = specification[sb_core_constants.DEFAULT_RECORDS]
             btod_factor = specification[filespec.BTOD_FACTOR]
@@ -254,7 +268,7 @@ class IncreaseIndexProcess:
             dhigh = dfree + max(ddefault, dfree)
             dlowrecs = dfree_recs + min(default_records, dfree_recs)
             dhighrecs = dfree_recs + max(default_records, dfree_recs)
-            if len(table.get_extents()) % 2 != 0:
+            if len(table.get_extents(database.dbenv)) % 2 != 0:
                 if not tkinter.messagebox.askokcancel(
                     title="Increase Index Size",
                     message="".join(

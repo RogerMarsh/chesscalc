@@ -66,7 +66,7 @@ EVENT_FILE_DEF = "event"
 TIME_FILE_DEF = "time"
 MODE_FILE_DEF = "mode"
 TERMINATION_FILE_DEF = "termination"
-PLAYERTYPE_FILE_DEF = "playertype"
+PLAYERTYPE_FILE_DEF = "typeplayer"
 
 # game file fields.
 GAME_FIELD_DEF = GAME_FILE_DEF
